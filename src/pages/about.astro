@@ -1,0 +1,50 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="About" description="About BigBlog and our mission">
+  <section class="about-page">
+    <div class="container">
+      <p class="page-eyebrow">Our Story</p>
+      <h1 class="page-title">About</h1>
+      <p class="page-subtitle">We believe in the power of well-crafted writing for developers.</p>
+      <p class="page-placeholder">More content coming soon.</p>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .about-page {
+    padding: 5rem 0 6rem;
+  }
+
+  .page-eyebrow {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: var(--space-3);
+  }
+
+  .page-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.03em;
+    line-height: var(--leading-tight);
+    margin-bottom: var(--space-4);
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    max-width: 32rem;
+    margin-bottom: var(--space-8);
+  }
+
+  .page-placeholder {
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+</style>

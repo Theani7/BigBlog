@@ -1,0 +1,41 @@
+{
+  "name": "bigblog",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A premium developer publishing platform built with Astro",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "lint": "eslint . --ext ts,tsx,js,jsx,astro",
+    "lint:fix": "eslint . --ext ts,tsx,js,jsx,astro --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "astro check",
+    "prepare": "husky"
+  },
+  "dependencies": {
+    "astro": "^7.1.3",
+    "@astrojs/tailwind": "^6.0.0",
+    "@astrojs/vercel": "^11.0.0",
+    "lucide-astro": "^0.556.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@typescript-eslint/eslint-plugin": "^8.65.0",
+    "@typescript-eslint/parser": "^8.65.0",
+    "astro-eslint-parser": "^3.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-astro": "^3.0.1",
+    "globals": "^15.0.0",
+    "husky": "^9.1.0",
+    "lint-staged": "^15.2.0",
+    "prettier": "^3.4.0",
+    "prettier-plugin-astro": "^0.14.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "~5.9.0"
+  }
+}

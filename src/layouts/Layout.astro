@@ -1,0 +1,274 @@
+---
+import '../styles/tokens.css';
+import '../styles/global.css';
+
+interface LayoutProps {
+  title: string;
+  description?: string;
+  canonical?: string;
+  breadcrumbs?: Array<{ label: string; href?: string }>;
+}
+
+const { title, description, canonical, breadcrumbs } = Astro.props;
+const siteTitle = 'BigBlog';
+const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
+---
+
+<!doctype html>
+<html lang="en" data-theme="system">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <title>{fullTitle}</title>
+
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="color-scheme" content="light dark" />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/styles/global.css" />
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+
+    <header class="site-header" role="banner">
+      <div class="container header-inner">
+        <a href="/" class="logo" aria-label="BigBlog home">
+          <span class="logo-text">BigBlog</span>
+        </a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <ul class="nav-list">
+            <li><a href="/">Home</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/about">About</a></li>
+            <li><a href="/projects">Projects</a></li>
+            <li><a href="/contact">Contact</a></li>
+          </ul>
+        </nav>
+        <button class="theme-toggle" aria-label="Toggle theme" type="button">
+          <span class="theme-icon" aria-hidden="true"></span>
+        </button>
+      </div>
+    </header>
+
+    <main id="main-content" class="container main-content">
+      {
+        breadcrumbs && (
+          <nav class="breadcrumbs" aria-label="Breadcrumb">
+            <ol class="breadcrumb-list">
+              {breadcrumbs.map((crumb, i) => (
+                <>
+                  {i > 0 && (
+                    <li class="breadcrumb-sep" aria-hidden="true">
+                      /
+                    </li>
+                  )}
+                  <li>
+                    {crumb.href ? (
+                      <a href={crumb.href}>{crumb.label}</a>
+                    ) : (
+                      <span aria-current="page">{crumb.label}</span>
+                    )}
+                  </li>
+                </>
+              ))}
+            </ol>
+          </nav>
+        )
+      }
+      <slot />
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+      <div class="container footer-inner">
+        <p>&copy; {new Date().getFullYear()} BigBlog. Built with Astro.</p>
+      </div>
+    </footer>
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: absolute;
+    top: -100%;
+    left: 0;
+    padding: 0.5rem 1rem;
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    z-index: var(--z-tooltip);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    transition: top var(--duration-fast) var(--ease-default);
+  }
+
+  .skip-link:focus {
+    top: 0;
+  }
+
+  .container {
+    max-width: var(--container-max);
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+  }
+
+  .site-header {
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    height: var(--header-height);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  .logo {
+    text-decoration: none;
+    color: var(--text-primary);
+  }
+
+  .logo-text {
+    font-family: var(--font-sans);
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+  }
+
+  .nav-list {
+    display: flex;
+    list-style: none;
+    gap: var(--space-8);
+    margin: 0;
+    padding: 0;
+  }
+
+  .nav-list a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .nav-list a:hover,
+  .nav-list a:focus-visible {
+    color: var(--text-primary);
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    width: 2.5rem;
+    height: 2.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .theme-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .main-content {
+    min-height: 60vh;
+    padding: var(--space-12) 0;
+  }
+
+  .breadcrumbs {
+    padding: var(--space-4) 0;
+    margin-bottom: var(--space-8);
+  }
+
+  .breadcrumb-list {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+  }
+
+  .breadcrumb-list a {
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+
+  .breadcrumb-list a:hover {
+    color: var(--color-primary);
+  }
+
+  .breadcrumb-sep {
+    color: var(--text-tertiary);
+  }
+
+  .site-footer {
+    border-top: 1px solid var(--border-color);
+    padding: var(--space-8) 0;
+    margin-top: var(--space-16);
+    text-align: center;
+  }
+
+  .site-footer p {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 640px) {
+    .nav-list {
+      gap: var(--space-4);
+    }
+
+    .nav-list a {
+      font-size: var(--text-xs);
+    }
+
+    .main-content {
+      padding: var(--space-8) 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
