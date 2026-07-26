@@ -5,7 +5,7 @@
  * Uses Cloudinary URL transformations for zero-build-time image generation.
  * Supports text overlays for title, author, category, and reading time.
  */
-import type { APIRoute } from 'astro';
+import type { APIRoute, GetStaticPaths } from 'astro';
 import { getCollection } from 'astro:content';
 import { siteConfig } from '@config/site';
 
@@ -184,6 +184,27 @@ export const GET: APIRoute = async ({ params, redirect, url }) => {
   });
 };
 
-export function getStaticPaths() {
-  return [{ params: { slug: undefined } }];
-}
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection('blog');
+  const authors = await getCollection('authors');
+  const series = await getCollection('series');
+
+  const paths: Array<{ params: { slug: string } }> = [];
+
+  for (const post of posts) {
+    const slug = post.data.slug ?? post.slug;
+    paths.push({ params: { slug: `blog/${slug}` } });
+  }
+
+  for (const author of authors) {
+    const slug = author.data.slug ?? author.slug;
+    paths.push({ params: { slug: `author/${slug}` } });
+  }
+
+  for (const s of series) {
+    const slug = s.data.slug ?? s.slug;
+    paths.push({ params: { slug: `series/${slug}` } });
+  }
+
+  return paths;
+};

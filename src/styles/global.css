@@ -149,3 +149,31 @@ img {
     margin: 2cm;
   }
 }
+
+/* ── Content Visibility Optimization ── */
+
+@media (content-visibility: auto) {
+  .site-footer,
+  .newsletter,
+  .newsletter-block,
+  .about-preview,
+  .authors,
+  .series,
+  .tags,
+  .archive,
+  .popular,
+  .testimonials,
+  .cta,
+  .quick-links,
+  .site-stats {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+  }
+
+  .article-page__related,
+  .article-page__series,
+  .article-page__nav {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 300px;
+  }
+}

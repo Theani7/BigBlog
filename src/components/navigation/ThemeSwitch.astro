@@ -9,7 +9,13 @@ interface ThemeSwitchProps {
 const { initialTheme = 'light' } = Astro.props as ThemeSwitchProps;
 ---
 
-<button class="theme-switch" type="button" aria-label="Toggle theme" data-theme={initialTheme}>
+<button
+  class="theme-switch"
+  type="button"
+  aria-label="Toggle theme"
+  data-theme={initialTheme}
+  data-theme-switch
+>
   <Icon name="sun" size="md" class="theme-icon theme-icon--sun" />
   <Icon name="moon" size="md" class="theme-icon theme-icon--moon" />
 </button>
@@ -77,7 +83,7 @@ const { initialTheme = 'light' } = Astro.props as ThemeSwitchProps;
 
 <script is:inline>
   (() => {
-    const button = document.currentScript?.parentElement?.querySelector('.theme-switch');
+    const button = document.querySelector('[data-theme-switch]');
     if (!button) return;
 
     const root = document.documentElement;
@@ -86,13 +92,11 @@ const { initialTheme = 'light' } = Astro.props as ThemeSwitchProps;
       return root.getAttribute('data-theme') || 'light';
     }
 
-    function setTheme(theme: string) {
+    function setTheme(theme) {
       root.setAttribute('data-theme', theme);
       try {
         localStorage.setItem('theme', theme);
-      } catch {
-        // ponytail: localStorage may be unavailable in private browsing or restricted contexts
-      }
+      } catch {}
     }
 
     function cycleTheme() {

@@ -3,7 +3,6 @@ import '../styles/tokens.css';
 import '../styles/global.css';
 import CommandPalette from '../components/navigation/CommandPalette.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
-import { generateSearchIndex } from '../lib/search';
 import { siteConfig, seo as defaultSeo, socials } from '@config/site';
 
 interface LayoutProps {
@@ -45,8 +44,6 @@ const resolvedCanonical = canonical ?? `${siteConfig.url}${currentPath}`;
 const resolvedOgImage = ogImage ?? `${siteConfig.url}${defaultSeo.defaultImage}`;
 const robotsContent = noindex ? 'noindex, nofollow' : (robots ?? 'index, follow');
 
-const searchIndex = await generateSearchIndex();
-
 const navLinks = [
   { label: 'Home', href: '/' },
   { label: 'Blog', href: '/blog' },
@@ -80,9 +77,17 @@ const structuredDataList = structuredData
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={siteDescription} />
@@ -348,7 +353,7 @@ const structuredDataList = structuredData
       </div>
     </footer>
 
-    <CommandPalette searchIndex={JSON.stringify(searchIndex)} />
+    <CommandPalette />
   </body>
 </html>
 
@@ -495,6 +500,58 @@ const structuredDataList = structuredData
     }
 
     applyReaderPrefs();
+
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      const prefetched = new Set();
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const link = entry.target;
+              const href = link.getAttribute('href');
+              if (
+                href &&
+                href.startsWith('/') &&
+                !href.startsWith('//') &&
+                !prefetched.has(href) &&
+                !window.location.pathname.startsWith(href)
+              ) {
+                const a = document.createElement('link');
+                a.rel = 'prefetch';
+                a.href = href;
+                a.as = 'document';
+                document.head.appendChild(a);
+                prefetched.add(href);
+              }
+              observer.unobserve(link);
+            }
+          });
+        },
+        { rootMargin: '200px' }
+      );
+
+      document.querySelectorAll('a[href^="/"]').forEach((link) => {
+        observer.observe(link);
+      });
+
+      document.querySelectorAll('a[href^="/"]').forEach((link) => {
+        link.addEventListener(
+          'mouseenter',
+          () => {
+            const href = link.getAttribute('href');
+            if (href && !prefetched.has(href) && !window.location.pathname.startsWith(href)) {
+              const a = document.createElement('link');
+              a.rel = 'prefetch';
+              a.href = href;
+              a.as = 'document';
+              document.head.appendChild(a);
+              prefetched.add(href);
+            }
+          },
+          { once: true }
+        );
+      });
+    }
   })();
 </script>
 
