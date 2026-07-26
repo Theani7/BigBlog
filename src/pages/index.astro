@@ -1,9 +1,211 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const featured = posts.slice(0, 3);
 ---
 
-<Layout title="Home">
-  <h1>Welcome to the Blog</h1>
-  <p>A new Astro blog powered by Vercel, Cloudflare D1, and Cloudinary.</p>
-  <a href="/blog">Browse Posts</a>
+<Layout title="Blog — Premium Writing">
+  <section class="hero">
+    <div class="hero-accent"></div>
+    <div class="container">
+      <p class="hero-eyebrow">Editorial · Design · Technology</p>
+      <h1 class="hero-title">Ideas worth<br />reading.</h1>
+      <p class="hero-subtitle">A curated space for thoughtful writing on design, technology, and the craft of building things that matter.</p>
+      <a href="/blog" class="cta">Explore the Blog</a>
+    </div>
+  </section>
+
+  <section class="featured">
+    <div class="container">
+      <div class="section-header">
+        <h2 class="section-title">Featured</h2>
+        <a href="/blog" class="section-link">All Posts →</a>
+      </div>
+      <div class="featured-grid">
+        {featured.map((post) => (
+          <article class="featured-card">
+            <a href={`/blog/${post.id}`}>
+              <span class="card-date">{post.data.pubDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+              <h3 class="card-title">{post.data.title}</h3>
+              <p class="card-description">{post.data.description}</p>
+            </a>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="about">
+    <div class="container">
+      <h2 class="about-title">About This Space</h2>
+      <p class="about-text">This blog explores the intersection of design and technology through a lens of craft and intention. Every post is an opportunity to dig deeper into the ideas that shape the way we build.</p>
+    </div>
+  </section>
 </Layout>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    padding: 6rem 0 4rem;
+    overflow: hidden;
+  }
+
+  .hero-accent {
+    position: absolute;
+    top: -20%;
+    right: -10%;
+    width: 60%;
+    height: 80%;
+    background: radial-gradient(ellipse, var(--accent-soft) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .hero > .container {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title {
+    font-family: var(--font-display);
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 700;
+    line-height: 1.05;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-subtitle {
+    font-size: 1.125rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    max-width: 36rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta {
+    display: inline-block;
+    padding: 0.875rem 2rem;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    border-radius: var(--radius);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+  }
+
+  .cta:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .featured {
+    padding: 4rem 0;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+  }
+
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  .section-link {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+
+  .featured-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .featured-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .featured-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .featured-card a {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .card-date {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .card-title {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .card-description {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .about {
+    padding: 4rem 0 6rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .about-title {
+    font-family: var(--font-display);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .about-text {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.8;
+    max-width: 48rem;
+  }
+</style>
