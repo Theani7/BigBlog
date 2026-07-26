@@ -1,0 +1,314 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import { filterDrafts, archive, groupByYear } from '../lib/content';
+import { formatDate } from '../utils/content';
+
+const allPosts = await getCollection('blog');
+const publishedPosts = filterDrafts(allPosts);
+const archiveData = archive(publishedPosts);
+const years = Object.keys(archiveData).sort((a, b) => Number(b) - Number(a));
+
+const allCategories = [...new Set(publishedPosts.map((p) => p.data.category))].sort();
+const allAuthors = [...new Set(publishedPosts.map((p) => p.data.author))].sort();
+
+const pageTitle = 'Archive';
+const pageDescription = 'Browse all articles by date, category, and author.';
+---
+
+<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/archive">
+  <section class="archive-page">
+    <div class="container">
+      <div class="archive-header">
+        <h1 class="page-title">Archive</h1>
+        <p class="page-subtitle">{publishedPosts.length} articles published</p>
+      </div>
+
+      <div class="archive-stats">
+        <div class="archive-stat">
+          <span class="archive-stat-value">{years.length}</span>
+          <span class="archive-stat-label">Years</span>
+        </div>
+        <div class="archive-stat">
+          <span class="archive-stat-value">{allCategories.length}</span>
+          <span class="archive-stat-label">Categories</span>
+        </div>
+        <div class="archive-stat">
+          <span class="archive-stat-value">{allAuthors.length}</span>
+          <span class="archive-stat-label">Authors</span>
+        </div>
+      </div>
+
+      <div class="archive-layout">
+        <div class="archive-main">
+          {
+            years.map((year) => (
+              <section class="archive-year" aria-label={`Articles from ${year}`}>
+                <h2 class="archive-year-title">{year}</h2>
+                {Object.entries(archiveData[year]).map(([month, posts]) => (
+                  <div class="archive-month">
+                    <h3 class="archive-month-title">{month}</h3>
+                    <div class="archive-posts">
+                      {posts.map((post) => (
+                        <a href={`/blog/${post.data.slug ?? post.id}`} class="archive-post">
+                          <span class="archive-post-date">
+                            {post.data.publishedAt.toLocaleDateString('en-US', { day: 'numeric' })}
+                          </span>
+                          <div class="archive-post-content">
+                            <span class="archive-post-title">{post.data.title}</span>
+                            <span class="archive-post-meta">
+                              {post.data.category} · {post.data.author}
+                            </span>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </section>
+            ))
+          }
+        </div>
+
+        <aside class="archive-sidebar" aria-label="Archive sidebar">
+          <section class="sidebar-section">
+            <h3 class="sidebar-heading">Categories</h3>
+            <div class="sidebar-links">
+              {
+                allCategories.map((cat) => (
+                  <a href={`/category/${cat.toLowerCase()}`} class="sidebar-link">
+                    <span>{cat}</span>
+                    <span class="sidebar-count">
+                      {publishedPosts.filter((p) => p.data.category === cat).length}
+                    </span>
+                  </a>
+                ))
+              }
+            </div>
+          </section>
+
+          <section class="sidebar-section">
+            <h3 class="sidebar-heading">Authors</h3>
+            <div class="sidebar-links">
+              {
+                allAuthors.map((author) => (
+                  <a
+                    href={`/author/${author.toLowerCase().replace(/\s+/g, '-')}`}
+                    class="sidebar-link"
+                  >
+                    <span>{author}</span>
+                    <span class="sidebar-count">
+                      {publishedPosts.filter((p) => p.data.author === author).length}
+                    </span>
+                  </a>
+                ))
+              }
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .archive-page {
+    padding: 5rem 0 6rem;
+  }
+
+  .archive-header {
+    margin-bottom: var(--space-6);
+  }
+
+  .page-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.03em;
+    line-height: var(--leading-tight);
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: var(--text-lg);
+    margin: 0;
+  }
+
+  .archive-stats {
+    display: flex;
+    gap: var(--space-8);
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--space-8);
+  }
+
+  .archive-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .archive-stat-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+  }
+
+  .archive-stat-label {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .archive-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+  }
+
+  .archive-year {
+    margin-bottom: var(--space-8);
+  }
+
+  .archive-year-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    margin: 0 0 var(--space-6) 0;
+    padding-bottom: var(--space-3);
+    border-bottom: 2px solid var(--border-color);
+  }
+
+  .archive-month {
+    margin-bottom: var(--space-6);
+  }
+
+  .archive-month-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .archive-posts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .archive-post {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding: var(--space-3) var(--space-4);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .archive-post:hover {
+    background: var(--bg-secondary);
+    text-decoration: none;
+  }
+
+  .archive-post-date {
+    flex-shrink: 0;
+    width: 2rem;
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .archive-post-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .archive-post-title {
+    display: block;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+  }
+
+  .archive-post:hover .archive-post-title {
+    color: var(--color-primary);
+  }
+
+  .archive-post-meta {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .archive-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+  }
+
+  .sidebar-section {
+    padding: var(--space-5);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+  }
+
+  .sidebar-heading {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .sidebar-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default);
+  }
+
+  .sidebar-link:hover {
+    background: var(--bg-tertiary);
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .sidebar-count {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    padding: 0.15em 0.5em;
+    border-radius: var(--radius-full);
+  }
+
+  @media (min-width: 768px) {
+    .archive-layout {
+      grid-template-columns: 1fr 280px;
+      align-items: start;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .archive-post,
+    .sidebar-link {
+      transition: none;
+    }
+  }
+</style>

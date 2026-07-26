@@ -1,0 +1,81 @@
+---
+interface RecentArticle {
+  title: string;
+  url: string;
+  category: string;
+  timestamp: number;
+}
+---
+
+<div class="recently-viewed" id="recently-viewed-section" style="display: none;">
+  <h3 class="sidebar-heading">Recently Viewed</h3>
+  <div class="recently-viewed-list" id="recently-viewed-list"></div>
+</div>
+
+<script>
+  function loadRecentlyViewed() {
+    try {
+      const items = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      const section = document.getElementById('recently-viewed-section');
+      const list = document.getElementById('recently-viewed-list');
+
+      if (!items.length || !section || !list) return;
+
+      section.style.display = '';
+      list.innerHTML = items
+        .slice(0, 5)
+        .map(
+          (item: any) => `
+        <a href="${item.url}" class="recently-viewed-item">
+          <span class="recently-viewed-title">${item.title}</span>
+          <span class="recently-viewed-meta">${item.category}</span>
+        </a>
+      `
+        )
+        .join('');
+    } catch {
+      // localStorage unavailable
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadRecentlyViewed);
+</script>
+
+<style>
+  .recently-viewed-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .recently-viewed-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    text-decoration: none;
+    border-radius: var(--radius-md);
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .recently-viewed-item:hover {
+    background: var(--bg-tertiary);
+    text-decoration: none;
+  }
+
+  .recently-viewed-title {
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    line-height: 1.4;
+  }
+
+  .recently-viewed-item:hover .recently-viewed-title {
+    color: var(--color-primary);
+  }
+
+  .recently-viewed-meta {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+</style>

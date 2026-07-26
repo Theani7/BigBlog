@@ -170,6 +170,11 @@ function calculateRelatedScore(post: Post, currentPost: Post): number {
     score += 2;
   }
 
+  // Same author
+  if (post.data.author.toLowerCase() === currentPost.data.author.toLowerCase()) {
+    score += 1;
+  }
+
   // Same series
   if (
     post.data.series &&
@@ -179,12 +184,19 @@ function calculateRelatedScore(post: Post, currentPost: Post): number {
     score += 2;
   }
 
-  // Recency bonus (posts within 90 days)
+  // Recency bonus (newer posts get higher scores)
   const daysDiff = Math.abs(
     (post.data.publishedAt.valueOf() - currentPost.data.publishedAt.valueOf()) /
       (1000 * 60 * 60 * 24)
   );
-  if (daysDiff < 90) {
+  if (daysDiff < 30) {
+    score += 2;
+  } else if (daysDiff < 90) {
+    score += 1;
+  }
+
+  // Featured bonus
+  if (post.data.featured) {
     score += 1;
   }
 
@@ -296,4 +308,105 @@ export function archive(posts: Post[]): Record<string, Record<string, Post[]>> {
     acc[year][month].push(post);
     return acc;
   }, {});
+}
+
+/**
+ * Get popular tags ranked by frequency.
+ *
+ * @param posts - Array of posts
+ * @param limit - Maximum number of tags
+ * @returns Tags sorted by count
+ */
+export function getPopularTags(posts: Post[], limit = 10): Array<{ name: string; count: number }> {
+  const tagCounts = new Map<string, number>();
+  filterDrafts(posts).forEach((post) => {
+    post.data.tags.forEach((tag) => {
+      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+    });
+  });
+  return Array.from(tagCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/**
+ * Get featured categories ranked by post count.
+ *
+ * @param posts - Array of posts
+ * @returns Categories sorted by count
+ */
+export function getFeaturedCategories(posts: Post[]): Array<{ name: string; count: number }> {
+  const catCounts = new Map<string, number>();
+  filterDrafts(posts).forEach((post) => {
+    catCounts.set(post.data.category, (catCounts.get(post.data.category) || 0) + 1);
+  });
+  return Array.from(catCounts.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+}
+
+/**
+ * Get editor's picks (featured posts or top posts by score).
+ *
+ * @param posts - Array of posts
+ * @param limit - Maximum number of posts
+ * @returns Featured/highlighted posts
+ */
+export function getEditorsPicks(posts: Post[], limit = 4): Post[] {
+  const published = filterDrafts(posts);
+  const featured = published.filter((p) => p.data.featured);
+  if (featured.length >= limit) return featured.slice(0, limit);
+  return sortPosts(published).slice(0, limit);
+}
+
+/**
+ * Calculate a trending score for a post based on recency and popularity signals.
+ *
+ * @param post - The post to score
+ * @param now - Current date for recency calculation
+ * @returns A trending score
+ */
+function calculateTrendingScore(post: Post, now: Date = new Date()): number {
+  let score = 0;
+
+  // Recency (newer = higher)
+  const daysSincePublished = Math.max(
+    0,
+    (now.valueOf() - post.data.publishedAt.valueOf()) / (1000 * 60 * 60 * 24)
+  );
+  if (daysSincePublished < 7) {
+    score += 10;
+  } else if (daysSincePublished < 30) {
+    score += 7;
+  } else if (daysSincePublished < 90) {
+    score += 4;
+  } else if (daysSincePublished < 180) {
+    score += 2;
+  }
+
+  // Featured bonus
+  if (post.data.featured) {
+    score += 5;
+  }
+
+  // Tag count bonus (more tags = broader appeal)
+  score += Math.min(post.data.tags.length, 3);
+
+  return score;
+}
+
+/**
+ * Get trending posts ranked by a trending score.
+ *
+ * @param posts - Array of posts
+ * @param limit - Maximum number of posts
+ * @returns Trending posts
+ */
+export function getTrendingPosts(posts: Post[], limit = 5): Post[] {
+  return filterDrafts(posts)
+    .map((post) => ({ post, score: calculateTrendingScore(post) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map(({ post }) => post);
 }

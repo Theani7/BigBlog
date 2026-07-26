@@ -422,6 +422,22 @@ const pageCanonical =
         setTimeout(() => toast.remove(), 300);
       }, 2000);
     }
+
+    // Track recently viewed articles
+    try {
+      const articleData = {
+        title: document.title.replace(' | BigBlog', ''),
+        url: window.location.pathname,
+        category: document.querySelector('.category-pill__label')?.textContent || '',
+        timestamp: Date.now(),
+      };
+      const recentlyViewed = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      const filtered = recentlyViewed.filter((item: any) => item.url !== articleData.url);
+      filtered.unshift(articleData);
+      localStorage.setItem('recentlyViewed', JSON.stringify(filtered.slice(0, 10)));
+    } catch {
+      // localStorage unavailable
+    }
   });
 </script>
 

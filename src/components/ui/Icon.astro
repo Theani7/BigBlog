@@ -1,12 +1,76 @@
 ---
 import type { ComponentProps } from 'astro/types';
 
+import ArrowRight from 'lucide-astro/ArrowRight';
+import ChevronDown from 'lucide-astro/ChevronDown';
+import ChevronUp from 'lucide-astro/ChevronUp';
+import ChevronLeft from 'lucide-astro/ChevronLeft';
+import ChevronRight from 'lucide-astro/ChevronRight';
+import User from 'lucide-astro/User';
+import AlertCircle from 'lucide-astro/AlertCircle';
+import X from 'lucide-astro/X';
+import Sun from 'lucide-astro/Sun';
+import Moon from 'lucide-astro/Moon';
+import Menu from 'lucide-astro/Menu';
+import Search from 'lucide-astro/Search';
+import Clock from 'lucide-astro/Clock';
+import Mail from 'lucide-astro/Mail';
+import Copy from 'lucide-astro/Copy';
+import Share2 from 'lucide-astro/Share2';
+import Inbox from 'lucide-astro/Inbox';
+import Check from 'lucide-astro/Check';
+import Circle from 'lucide-astro/Circle';
+import WrapText from 'lucide-astro/WrapText';
+
 interface IconProps {
   name: string;
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   color?: string;
   strokeWidth?: number;
 }
+
+const iconMap: Record<string, any> = {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  User,
+  'alert-circle': AlertCircle,
+  AlertCircle,
+  x: X,
+  X,
+  sun: Sun,
+  Sun,
+  moon: Moon,
+  Moon,
+  menu: Menu,
+  Menu,
+  search: Search,
+  Search,
+  clock: Clock,
+  Clock,
+  mail: Mail,
+  Mail,
+  copy: Copy,
+  Copy,
+  'share-2': Share2,
+  Share2,
+  inbox: Inbox,
+  Inbox,
+  check: Check,
+  Check,
+  circle: Circle,
+  Circle,
+  WrapText,
+  'brand-twitter': null,
+  'brand-linkedin': null,
+  'brand-facebook': null,
+  'chevron-down': ChevronDown,
+  'chevron-up': ChevronUp,
+  'chevron-left': ChevronLeft,
+  'chevron-right': ChevronRight,
+};
 
 const {
   name,
@@ -23,10 +87,13 @@ const sizeMap = {
   xl: 32,
 };
 
-const iconComponent = await import(`lucide-astro/dist/${name}.astro`);
-const IconComponent = iconComponent.default ?? iconComponent;
+const IconComponent = iconMap[name] ?? iconMap[name.toLowerCase()];
 ---
 
-<span aria-hidden="true">
-  <IconComponent size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
-</span>
+{
+  IconComponent && (
+    <span aria-hidden="true">
+      <IconComponent size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
+    </span>
+  )
+}
