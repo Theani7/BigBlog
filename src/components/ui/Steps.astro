@@ -1,0 +1,58 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface StepsProps {
+  title?: string;
+}
+
+const { title, children } = Astro.props as StepsProps;
+---
+
+<ol class="steps-list" role="list">
+  {title && <h3 class="steps-title">{title}</h3>}
+  <slot />
+</ol>
+
+<style>
+  .steps-list {
+    counter-reset: step;
+    list-style: none;
+    padding: 0;
+    margin: var(--space-6) 0;
+  }
+
+  .steps-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-4);
+  }
+
+  .steps-list > :global(li) {
+    counter-increment: step;
+    padding: var(--space-3) 0;
+    padding-left: 3rem;
+    position: relative;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .steps-list > :global(li)::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    top: var(--space-3);
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    font-weight: var(--weight-bold);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-full);
+  }
+
+  .steps-list > :global(li:last-child) {
+    border-bottom: none;
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface CalloutProps {
+  type?: 'info' | 'warning' | 'danger' | 'success';
+  title?: string;
+}
+
+const { type = 'info', title, children } = Astro.props as CalloutProps;
+const typeStyles = {
+  info: { bg: 'var(--color-info-light)', border: 'var(--color-info)', icon: 'ℹ️' },
+  warning: { bg: 'var(--color-warning-light)', border: 'var(--color-warning)', icon: '⚠️' },
+  danger: { bg: 'var(--color-danger-light)', border: 'var(--color-danger)', icon: '🚫' },
+  success: { bg: 'var(--color-success-light)', border: 'var(--color-success)', icon: '✅' },
+};
+const style = typeStyles[type];
+---
+
+<div
+  class="callout"
+  style="background: {style.bg}; border-left: 4px solid {style.border};"
+  role="note"
+>
+  {
+    title && (
+      <div class="callout-title">
+        <span aria-hidden="true">{style.icon}</span>
+        <strong>{title}</strong>
+      </div>
+    )
+  }
+  <div class="callout-content">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .callout {
+    padding: var(--space-4) var(--space-6);
+    margin: var(--space-6) 0;
+    border-radius: var(--radius-md);
+  }
+
+  .callout-title {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-2);
+  }
+
+  .callout-content {
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .callout {
+      opacity: 0.9;
+    }
+  }
+</style>

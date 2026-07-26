@@ -1,0 +1,74 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface TabsProps {
+  labels: string[];
+}
+
+const { labels, children } = Astro.props as TabsProps;
+---
+
+<div class="tabs" role="tablist" aria-label="Content tabs">
+  <div class="tabs-list">
+    {
+      labels.map((label, i) => (
+        <button
+          class="tab-btn"
+          role="tab"
+          aria-selected={i === 0 ? 'true' : 'false'}
+          aria-controls={`tab-panel-${i}`}
+          id={`tab-${i}`}
+        >
+          {label}
+        </button>
+      ))
+    }
+  </div>
+  <div class="tabs-panels">
+    {children}
+  </div>
+</div>
+
+<style>
+  .tabs {
+    margin: var(--space-6) 0;
+  }
+
+  .tabs-list {
+    display: flex;
+    border-bottom: 2px solid var(--border-color);
+    gap: 0;
+  }
+
+  .tab-btn {
+    padding: var(--space-3) var(--space-6);
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .tab-btn:hover {
+    color: var(--text-primary);
+  }
+
+  .tab-btn[aria-selected='true'] {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+  }
+
+  .tab-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .tabs-panels {
+    padding: var(--space-4) 0;
+  }
+</style>

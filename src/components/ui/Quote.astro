@@ -1,0 +1,34 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface QuoteProps {
+  cite?: string;
+  author?: string;
+}
+
+const { cite, author, children } = Astro.props as QuoteProps;
+---
+
+<blockquote class="article-quote" cite={cite}>
+  <p><slot /></p>
+  {author && <footer class="quote-author">— {author}</footer>}
+</blockquote>
+
+<style>
+  .article-quote {
+    border-left: 3px solid var(--color-primary);
+    padding: var(--space-4) var(--space-6);
+    margin: var(--space-6) 0;
+    font-style: italic;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  }
+
+  .quote-author {
+    margin-top: var(--space-3);
+    font-size: var(--text-sm);
+    font-style: normal;
+    color: var(--text-tertiary);
+  }
+</style>
