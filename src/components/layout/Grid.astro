@@ -1,0 +1,90 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface GridProps {
+  cols?: number | { sm?: number; md?: number; lg?: number; xl?: number };
+  gap?: 'sm' | 'md' | 'lg';
+  align?: 'start' | 'center' | 'end' | 'stretch';
+  justify?: 'start' | 'center' | 'end' | 'between';
+}
+
+const {
+  cols = 1,
+  gap = 'md',
+  align = 'stretch',
+  justify = 'start',
+  children,
+} = Astro.props as GridProps;
+
+const gapMap = { sm: 'var(--space-2)', md: 'var(--space-4)', lg: 'var(--space-6)' };
+const alignMap = { start: 'start', center: 'center', end: 'end', stretch: 'stretch' };
+const justifyMap = { start: 'start', center: 'center', end: 'end', between: 'space-between' };
+
+const isResponsive = typeof cols === 'object';
+const baseCols = typeof cols === 'number' ? cols : cols.sm || 1;
+const smCols = isResponsive ? cols.sm : undefined;
+const mdCols = isResponsive ? cols.md : undefined;
+const lgCols = isResponsive ? cols.lg : undefined;
+const xlCols = isResponsive ? cols.xl : undefined;
+---
+
+<div
+  class="grid"
+  style={`
+    --grid-cols: ${baseCols};
+    --grid-gap: ${gapMap[gap]};
+    --grid-align: ${alignMap[align]};
+    --grid-justify: ${justifyMap[justify]};
+    ${smCols !== undefined ? `--grid-cols-sm: ${smCols};` : ''}
+    ${mdCols !== undefined ? `--grid-cols-md: ${mdCols};` : ''}
+    ${lgCols !== undefined ? `--grid-cols-lg: ${lgCols};` : ''}
+    ${xlCols !== undefined ? `--grid-cols-xl: ${xlCols};` : ''}
+  `}
+>
+  <slot />
+</div>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--grid-cols), 1fr);
+    gap: var(--grid-gap);
+    align-items: var(--grid-align);
+    justify-items: var(--grid-justify);
+  }
+
+  @media (min-width: 640px) {
+    .grid {
+      grid-template-columns: repeat(var(--grid-cols-sm, var(--grid-cols)), 1fr);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .grid {
+      grid-template-columns: repeat(var(--grid-cols-md, var(--grid-cols)), 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .grid {
+      grid-template-columns: repeat(var(--grid-cols-lg, var(--grid-cols)), 1fr);
+    }
+  }
+
+  @media (min-width: 1280px) {
+    .grid {
+      grid-template-columns: repeat(var(--grid-cols-xl, var(--grid-cols)), 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .grid {
+      transition: none;
+    }
+  }
+
+  .grid:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

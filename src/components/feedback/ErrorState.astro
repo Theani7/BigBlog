@@ -1,0 +1,95 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Icon from '../ui/Icon.astro';
+import Button from '../ui/Button.astro';
+
+interface ErrorStateProps {
+  title?: string;
+  message?: string;
+  retryLabel?: string;
+  onRetry?: string;
+}
+
+const { title, message, retryLabel, onRetry } = Astro.props as ErrorStateProps;
+---
+
+<div class="error-state" role="alert" aria-label={title || 'Error state'} data-error-state>
+  <Surface elevation={0} rounded="lg" padding="lg" bg="primary">
+    <div class="error-state-icon" aria-hidden="true">
+      <Icon name="alert-circle" size="xl" color="var(--color-danger)" />
+    </div>
+    {title && <div class="error-state-title">{title}</div>}
+    {message && <div class="error-state-message">{message}</div>}
+    {
+      retryLabel && (
+        <Button variant="outline" size="sm" data-retry={onRetry || ''} type="button">
+          {retryLabel}
+        </Button>
+      )
+    }
+    <slot />
+  </Surface>
+</div>
+
+<style>
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+  }
+
+  .error-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    background: var(--color-danger-light);
+  }
+
+  .error-state-title {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+  }
+
+  .error-state-message {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 20rem;
+  }
+
+  .error-state:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .error-state {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const errorState = document.currentScript?.parentElement;
+  if (!errorState) return;
+
+  const retryBtn = errorState.querySelector('[data-retry]');
+
+  retryBtn?.addEventListener('click', () => {
+    const retry = retryBtn.dataset.retry;
+    errorState.dispatchEvent(
+      new CustomEvent('retry', {
+        detail: { retry },
+        bubbles: true,
+      })
+    );
+  });
+</script>

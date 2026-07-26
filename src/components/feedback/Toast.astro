@@ -1,0 +1,218 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Icon from '../ui/Icon.astro';
+
+interface ToastProps {
+  type?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  message?: string;
+  duration?: number;
+  dismissible?: boolean;
+}
+
+const {
+  type = 'info',
+  title,
+  message,
+  duration = 5000,
+  dismissible = true,
+} = Astro.props as ToastProps;
+
+const typeIcons = {
+  info: 'info',
+  success: 'check-circle',
+  warning: 'alert-triangle',
+  error: 'x-circle',
+};
+
+const typeColors = {
+  info: 'var(--color-info)',
+  success: 'var(--color-success)',
+  warning: 'var(--color-warning)',
+  error: 'var(--color-danger)',
+};
+---
+
+<div
+  class="toast toast--enter"
+  role="status"
+  aria-live="polite"
+  aria-atomic="true"
+  data-toast={duration}
+  style="--toast-accent: {typeColors[type]};"
+>
+  <Surface elevation={1} rounded="lg" padding="md" bg="primary">
+    <div class="toast-content">
+      <div class="toast-icon" aria-hidden="true">
+        <Icon name={typeIcons[type]} size="lg" color="var(--toast-accent)" />
+      </div>
+      <div class="toast-body">
+        {title && <div class="toast-title">{title}</div>}
+        {message && <div class="toast-message">{message}</div>}
+      </div>
+      {
+        dismissible && (
+          <button
+            class="toast-dismiss"
+            aria-label="Dismiss notification"
+            type="button"
+            data-dismiss
+          >
+            <Icon name="x" size="sm" color="var(--text-tertiary)" />
+          </button>
+        )
+      }
+    </div>
+  </Surface>
+</div>
+
+<style>
+  .toast {
+    position: relative;
+    width: 100%;
+    max-width: 24rem;
+    pointer-events: auto;
+  }
+
+  .toast-content {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+
+  .toast-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin-top: var(--space-0.5);
+  }
+
+  .toast-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .toast-title {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+  }
+
+  .toast-message {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .toast-dismiss {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-6);
+    height: var(--space-6);
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default);
+  }
+
+  .toast-dismiss:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .toast-dismiss:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @keyframes toast-enter {
+    from {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes toast-exit {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  .toast--enter {
+    animation: toast-enter var(--duration-normal) var(--ease-out) forwards;
+  }
+
+  .toast--exit {
+    animation: toast-exit var(--duration-fast) var(--ease-in) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .toast--enter,
+    .toast--exit {
+      animation: none;
+    }
+
+    .toast-dismiss {
+      transition: none;
+    }
+  }
+
+  .toast:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  const toast = document.currentScript?.parentElement;
+  if (!toast) return;
+
+  const dismissBtn = toast.querySelector('[data-dismiss]');
+  let timer: number | undefined;
+
+  function dismiss() {
+    if (toast.classList.contains('toast--exit')) return;
+    clearTimeout(timer);
+    toast.classList.remove('toast--enter');
+    toast.classList.add('toast--exit');
+    toast.addEventListener(
+      'animationend',
+      () => {
+        toast.remove();
+      },
+      { once: true }
+    );
+  }
+
+  dismissBtn?.addEventListener('click', dismiss);
+
+  const duration = toast.dataset.toast ? parseInt(toast.dataset.toast, 10) : 5000;
+
+  if (duration > 0) {
+    timer = window.setTimeout(dismiss, duration);
+  }
+
+  toast.addEventListener('mouseenter', () => clearTimeout(timer));
+  toast.addEventListener('mouseleave', () => {
+    if (duration > 0) {
+      timer = window.setTimeout(dismiss, duration);
+    }
+  });
+</script>

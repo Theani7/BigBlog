@@ -1,0 +1,284 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '@components/layout/Surface.astro';
+import Stack from '@components/layout/Stack.astro';
+import Icon from '@components/ui/Icon.astro';
+
+interface Command {
+  label: string;
+  shortcut?: string;
+  action: () => void;
+}
+
+interface CommandPaletteProps {
+  open: boolean;
+  onClose: () => void;
+  commands: Command[];
+}
+
+const { open, onClose, commands } = Astro.props as CommandPaletteProps;
+---
+
+<div
+  class="command-palette"
+  class:list={[{ 'command-palette--open': open }]}
+  role="dialog"
+  aria-modal="true"
+  aria-label="Command palette"
+>
+  <div class="command-palette-backdrop" aria-hidden="true"></div>
+  <Surface elevation={2} rounded="lg" bg="primary" padding="none" class="command-palette-container">
+    <div class="command-palette-header">
+      <Icon name="search" size="sm" class="command-palette-icon" />
+      <input
+        type="text"
+        class="command-palette-input"
+        placeholder="Type a command..."
+        aria-label="Search commands"
+        autocomplete="off"
+      />
+    </div>
+    {
+      commands.length > 0 ? (
+        <ul class="command-palette-list" role="listbox" aria-label="Commands">
+          {commands.map((cmd, index) => (
+            <li
+              class="command-palette-item"
+              role="option"
+              tabindex={index === 0 ? 0 : -1}
+              data-index={index}
+            >
+              <span class="command-palette-item-label">{cmd.label}</span>
+              {cmd.shortcut && <kbd class="command-palette-item-shortcut">{cmd.shortcut}</kbd>}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <div class="command-palette-empty">
+          <span class="command-palette-empty-text">No commands found</span>
+        </div>
+      )
+    }
+  </Surface>
+</div>
+
+<style>
+  .command-palette {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 20vh;
+    visibility: hidden;
+    opacity: 0;
+    transition:
+      visibility 0s linear var(--duration-normal),
+      opacity var(--duration-normal) var(--ease-default);
+  }
+
+  .command-palette--open {
+    visibility: visible;
+    opacity: 1;
+    transition:
+      visibility 0s linear 0s,
+      opacity var(--duration-normal) var(--ease-default);
+  }
+
+  .command-palette-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgb(0 0 0 / 0.5);
+  }
+
+  .command-palette-container {
+    position: relative;
+    z-index: 1;
+    width: min(560px, 90vw);
+    max-height: 60vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .command-palette-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .command-palette-icon {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+  }
+
+  .command-palette-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    outline: none;
+    min-width: 0;
+  }
+
+  .command-palette-input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .command-palette-input:focus-visible {
+    outline: none;
+  }
+
+  .command-palette-list {
+    list-style: none;
+    margin: 0;
+    padding: var(--space-2) 0;
+    overflow-y: auto;
+    max-height: calc(60vh - 60px);
+  }
+
+  .command-palette-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-default);
+    outline: none;
+  }
+
+  .command-palette-item:hover,
+  .command-palette-item--active {
+    background: var(--bg-tertiary);
+  }
+
+  .command-palette-item:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+  }
+
+  .command-palette-item-label {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+  }
+
+  .command-palette-item-shortcut {
+    display: inline-block;
+    padding: var(--space-1) var(--space-2);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .command-palette-empty {
+    padding: var(--space-6) var(--space-4);
+    text-align: center;
+  }
+
+  .command-palette-empty-text {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .command-palette {
+      transition: none;
+    }
+
+    .command-palette-item {
+      transition: none;
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const palette = document.currentScript?.parentElement;
+    if (!palette) return;
+
+    const input = palette.querySelector('.command-palette-input');
+    const list = palette.querySelector('.command-palette-list');
+    const items = palette.querySelectorAll('.command-palette-item');
+    const backdrop = palette.querySelector('.command-palette-backdrop');
+    let activeIndex = 0;
+
+    function setActive(index: number) {
+      items.forEach((item) => item.classList.remove('command-palette-item--active'));
+      activeIndex = Math.max(0, Math.min(index, items.length - 1));
+      const active = items[activeIndex];
+      if (active) {
+        active.classList.add('command-palette-item--active');
+        active.scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    function execute(index: number) {
+      const item = items[index];
+      if (!item) return;
+      const shortcut = item.querySelector('.command-palette-item-shortcut');
+      if (shortcut) {
+        const event = new CustomEvent('command-select', {
+          detail: {
+            label: item.querySelector('.command-palette-item-label')?.textContent,
+            shortcut: shortcut.textContent,
+          },
+          bubbles: true,
+        });
+        palette.dispatchEvent(event);
+      }
+    }
+
+    function close() {
+      palette.classList.remove('command-palette--open');
+      input?.blur();
+    }
+
+    input?.addEventListener('input', () => {
+      setActive(0);
+    });
+
+    input?.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActive(activeIndex + 1);
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActive(activeIndex - 1);
+          break;
+        case 'Enter':
+          e.preventDefault();
+          execute(activeIndex);
+          break;
+        case 'Escape':
+          e.preventDefault();
+          close();
+          break;
+      }
+    });
+
+    items.forEach((item, index) => {
+      item.addEventListener('click', () => {
+        execute(index);
+        close();
+      });
+    });
+
+    backdrop?.addEventListener('click', close);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && palette.classList.contains('command-palette--open')) {
+        close();
+      }
+    });
+  })();
+</script>

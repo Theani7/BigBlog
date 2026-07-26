@@ -1,0 +1,49 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface SpacerProps {
+  size?: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
+  axis?: 'x' | 'y' | 'both';
+}
+
+const { size = 4, axis = 'both', children } = Astro.props as SpacerProps;
+---
+
+<div
+  class={`spacer spacer--axis-${axis}`}
+  style={`--spacer-size: var(--space-${size});`}
+  aria-hidden="true"
+>
+  <slot />
+</div>
+
+<style>
+  .spacer--axis-x {
+    width: var(--spacer-size);
+    height: 0;
+    flex-shrink: 0;
+  }
+
+  .spacer--axis-y {
+    width: 0;
+    height: var(--spacer-size);
+    flex-shrink: 0;
+  }
+
+  .spacer--axis-both {
+    width: var(--spacer-size);
+    height: var(--spacer-size);
+    flex-shrink: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .spacer {
+      transition: none;
+    }
+  }
+
+  .spacer:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

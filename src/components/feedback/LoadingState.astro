@@ -1,0 +1,98 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Skeleton from './Skeleton.astro';
+
+interface LoadingStateProps {
+  message?: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { message, size = 'md' } = Astro.props as LoadingStateProps;
+
+const spinnerSizes = {
+  sm: '1rem',
+  md: '1.5rem',
+  lg: '2rem',
+};
+
+const skeletonHeights = {
+  sm: '0.5rem',
+  md: '0.75rem',
+  lg: '1rem',
+};
+---
+
+<div
+  class="loading-state"
+  role="status"
+  aria-busy="true"
+  aria-label={message || 'Loading'}
+  data-loading
+>
+  <div
+    class="loading-spinner"
+    aria-hidden="true"
+    style="width: {spinnerSizes[size]}; height: {spinnerSizes[size]};"
+  >
+    <span class="loading-spinner-ring"></span>
+  </div>
+  {message && <div class="loading-message">{message}</div>}
+  <div class="loading-skeleton">
+    <Skeleton width="100%" height={skeletonHeights[size]} rounded={false} />
+  </div>
+</div>
+
+<style>
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+  }
+
+  .loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loading-spinner-ring {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  .loading-message {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+  }
+
+  .loading-skeleton {
+    width: 100%;
+    max-width: 20rem;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .loading-spinner-ring {
+      animation: none;
+      border-top-color: var(--color-primary);
+    }
+  }
+
+  .loading-state:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

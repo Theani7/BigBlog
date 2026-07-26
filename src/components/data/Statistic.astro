@@ -1,0 +1,106 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+import Surface from '../layout/Surface.astro';
+
+interface StatisticProps {
+  label: string;
+  value: string | number;
+  change?: number;
+  changeType?: 'up' | 'down';
+  icon?: string;
+}
+
+const { label, value, change, changeType, icon } = Astro.props as StatisticProps;
+const changeColor = changeType === 'up' ? 'var(--color-success)' : 'var(--color-danger)';
+---
+
+<Surface elevation={0} rounded="lg" bg="primary" padding="md">
+  <div class="statistic">
+    <div class="statistic__header">
+      {
+        icon && (
+          <span class="statistic__icon" aria-hidden="true">
+            <Icon name={icon} size="sm" />
+          </span>
+        )
+      }
+      <span class="statistic__label">{label}</span>
+    </div>
+    <div class="statistic__value">{value}</div>
+    {
+      change !== undefined && changeType && (
+        <div
+          class="statistic__change"
+          aria-label={`${changeType === 'up' ? 'Increased' : 'Decreased'} by ${Math.abs(change)}`}
+        >
+          <Icon
+            name={changeType === 'up' ? 'ArrowUp' : 'ArrowDown'}
+            size="xs"
+            color={changeType === 'up' ? 'var(--color-success)' : 'var(--color-danger)'}
+          />
+          <span class="statistic__change-value" style="color: {changeColor};">
+            {change > 0 ? '+' : ''}
+            {change}
+          </span>
+        </div>
+      )
+    }
+  </div>
+</Surface>
+
+<style>
+  .statistic {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .statistic__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .statistic__icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+  }
+
+  .statistic__label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-weight: var(--weight-medium);
+  }
+
+  .statistic__value {
+    font-size: var(--text-display-xl);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-display);
+    color: var(--text-primary);
+  }
+
+  .statistic__change {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .statistic__change-value {
+    font-weight: var(--weight-semibold);
+  }
+
+  .statistic:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .statistic {
+      transition: none;
+    }
+  }
+</style>

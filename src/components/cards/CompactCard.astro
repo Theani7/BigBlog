@@ -1,0 +1,101 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Badge from '../ui/Badge.astro';
+import Button from '../ui/Button.astro';
+
+interface CompactCardProps {
+  title: string;
+  slug: string;
+  date: string;
+  category: string;
+}
+
+const { title, slug, date, category } = Astro.props as CompactCardProps;
+---
+
+<article class="compact-card" aria-labelledby={`compact-card-title-${slug}`}>
+  <Surface elevation={0} rounded="md" bg="primary" padding="sm">
+    <div class="compact-card__body">
+      <div class="compact-card__meta">
+        <Badge variant="primary">{category}</Badge>
+        <time class="compact-card__date" datetime={date}>{date}</time>
+      </div>
+      <h3 class="compact-card__title" id={`compact-card-title-${slug}`}>
+        <a href={`/blog/${slug}`}>{title}</a>
+      </h3>
+      <div class="compact-card__action">
+        <Button variant="link" href={`/blog/${slug}`}>Read more</Button>
+      </div>
+    </div>
+  </Surface>
+</article>
+
+<style>
+  .compact-card {
+    border-radius: var(--radius-md);
+    box-shadow: var(--elevation-0);
+    transition:
+      box-shadow var(--transition-normal) var(--ease-default),
+      transform var(--transition-normal) var(--ease-default);
+  }
+
+  .compact-card:hover {
+    box-shadow: var(--elevation-2);
+    transform: translateY(-1px);
+  }
+
+  .compact-card:focus-within {
+    box-shadow: var(--focus-ring);
+  }
+
+  .compact-card__body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .compact-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .compact-card__date {
+    font-weight: var(--weight-medium);
+  }
+
+  .compact-card__title {
+    margin: 0;
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    line-height: var(--leading-body);
+  }
+
+  .compact-card__title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .compact-card__title a:hover {
+    color: var(--color-primary);
+  }
+
+  .compact-card__action {
+    padding-top: var(--space-1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .compact-card {
+      transition: none;
+    }
+  }
+
+  .compact-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

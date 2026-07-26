@@ -1,0 +1,103 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Button from '../ui/Button.astro';
+import Icon from '../ui/Icon.astro';
+
+interface ShareButtonsProps {
+  title: string;
+  url: string;
+  description?: string;
+}
+
+const { title, url, description } = Astro.props as ShareButtonsProps;
+
+const encodedUrl = encodeURIComponent(url);
+const encodedTitle = encodeURIComponent(title);
+const encodedDescription = description ? encodeURIComponent(description) : '';
+
+const shareLinks = {
+  twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
+  linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+  reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+};
+---
+
+<div class="share-buttons" role="region" aria-label="Share this article">
+  <span class="share-buttons__label">Share</span>
+  <div class="share-buttons__buttons">
+    <Button variant="ghost" href={shareLinks.twitter} aria-label={`Share on Twitter`}>
+      <Icon name="brand-twitter" size="sm" aria-hidden="true" />
+      Twitter
+    </Button>
+    <Button variant="ghost" href={shareLinks.linkedin} aria-label={`Share on LinkedIn`}>
+      <Icon name="brand-linkedin" size="sm" aria-hidden="true" />
+      LinkedIn
+    </Button>
+    <Button variant="ghost" href={shareLinks.reddit} aria-label={`Share on Reddit`}>
+      <Icon name="brand-reddit" size="sm" aria-hidden="true" />
+      Reddit
+    </Button>
+    <Button variant="ghost" type="button" aria-label="Copy link to clipboard" data-copy-url={url}>
+      <Icon name="copy" size="sm" aria-hidden="true" />
+      Copy Link
+    </Button>
+  </div>
+</div>
+
+<style>
+  .share-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    margin: var(--space-6) 0;
+  }
+
+  .share-buttons__label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .share-buttons__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .share-buttons {
+      transition: none;
+    }
+  }
+
+  .share-buttons:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('click', (e) => {
+    const button = e.target.closest('[data-copy-url]');
+    if (!button) return;
+
+    const url = button.getAttribute('data-copy-url');
+    if (!url) return;
+
+    navigator.clipboard.writeText(url).then(() => {
+      const original = button.innerHTML;
+      button.innerHTML = 'Copied!';
+      button.setAttribute('aria-label', 'Link copied to clipboard');
+      setTimeout(() => {
+        button.innerHTML = original;
+        button.setAttribute('aria-label', 'Copy link to clipboard');
+      }, 2000);
+    });
+  });
+</script>

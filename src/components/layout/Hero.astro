@@ -1,0 +1,103 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Container from './Container.astro';
+
+interface HeroProps {
+  title?: string;
+  description?: string;
+  cover?: boolean;
+  align?: 'left' | 'center';
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { title, description, cover = false, align = 'left', size = 'md' } = Astro.props as HeroProps;
+
+const sizeMap = {
+  sm: { title: 'typography-h3', description: 'typography-body' },
+  md: { title: 'typography-h2', description: 'typography-body-lg' },
+  lg: { title: 'typography-display', description: 'typography-lead' },
+};
+
+const alignClass = align === 'center' ? 'hero--align-center' : '';
+const typography = sizeMap[size];
+---
+
+<section class={`hero ${alignClass}`} aria-label="Hero section">
+  {
+    cover && (
+      <div class="hero-cover">
+        <slot name="cover" />
+      </div>
+    )
+  }
+  <Container size={size === 'lg' ? 'lg' : 'md'}>
+    <div class="hero-content">
+      {title && <h1 class={`hero-title ${typography.title}`}>{title}</h1>}
+      {description && <p class={`hero-description ${typography.description}`}>{description}</p>}
+      <div class="hero-actions">
+        <slot name="actions" />
+      </div>
+    </div>
+  </Container>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+
+  .hero--align-center .hero-content {
+    text-align: center;
+  }
+
+  .hero-cover {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  .hero-cover :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .hero-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-title {
+    margin: 0 0 var(--space-4) 0;
+    color: var(--text-primary);
+  }
+
+  .hero-description {
+    margin: 0 0 var(--space-6) 0;
+    color: var(--text-secondary);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+  }
+
+  .hero--align-center .hero-actions {
+    justify-content: center;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero {
+      transition: none;
+    }
+  }
+
+  .hero:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

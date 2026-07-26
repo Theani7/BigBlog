@@ -1,0 +1,165 @@
+---
+import Input from './Input.astro';
+import Button from '../ui/Button.astro';
+
+interface NewsletterFormProps {
+  title?: string;
+  description?: string;
+  placeholder?: string;
+  buttonText?: string;
+  successMessage?: string;
+}
+
+const {
+  title = 'Subscribe to our newsletter',
+  description = 'Get the latest posts delivered straight to your inbox.',
+  placeholder = 'your@email.com',
+  buttonText = 'Subscribe',
+  successMessage = 'Thanks for subscribing! Check your inbox for a confirmation.',
+} = Astro.props as NewsletterFormProps;
+---
+
+<div class="newsletter-form" data-newsletter-form>
+  {title && <h3 class="newsletter-title">{title}</h3>}
+  {description && <p class="newsletter-description">{description}</p>}
+  <div class="newsletter-success" data-success hidden>
+    <span class="newsletter-success-icon" aria-hidden="true">✓</span>
+    {successMessage}
+  </div>
+  <form class="newsletter-form-inner" data-form novalidate>
+    <Input
+      label="Email address"
+      name="email"
+      type="email"
+      placeholder={placeholder}
+      required={true}
+      error={undefined}
+      helperText={undefined}
+    />
+    <Button type="submit" variant="primary" size="md">
+      {buttonText}
+    </Button>
+  </form>
+  <div class="newsletter-error" data-error hidden role="alert"></div>
+</div>
+
+<style>
+  .newsletter-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: 480px;
+  }
+
+  .newsletter-title {
+    font-size: var(--text-h4);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .newsletter-description {
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    line-height: var(--leading-normal);
+    margin: 0;
+  }
+
+  .newsletter-form-inner {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  .newsletter-form-inner :global(.input):focus-visible,
+  .newsletter-form-inner :global(.btn):focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .newsletter-success {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-success-light);
+    border: 1px solid var(--color-success);
+    border-radius: var(--radius-lg);
+    color: var(--color-success);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .newsletter-success-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-5);
+    height: var(--space-5);
+    border-radius: 50%;
+    background: var(--color-success);
+    color: var(--text-inverse);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+  }
+
+  .newsletter-error {
+    padding: var(--space-3) var(--space-4);
+    background: var(--color-danger-light);
+    border: 1px solid var(--color-danger);
+    border-radius: var(--radius-lg);
+    color: var(--color-danger);
+    font-size: var(--text-sm);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .newsletter-form {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const form = document.currentScript?.parentElement;
+  if (!form) return;
+
+  const innerForm = form.querySelector('[data-form]');
+  const successEl = form.querySelector('[data-success]');
+  const errorEl = form.querySelector('[data-error]');
+  const emailInput = innerForm?.querySelector('input[type="email"]');
+
+  function showSuccess() {
+    innerForm?.setAttribute('hidden', '');
+    successEl?.removeAttribute('hidden');
+    errorEl?.setAttribute('hidden', '');
+  }
+
+  function showError(message: string) {
+    innerForm?.removeAttribute('hidden');
+    successEl?.setAttribute('hidden', '');
+    errorEl?.removeAttribute('hidden');
+    errorEl!.textContent = message;
+  }
+
+  function validateEmail(email: string): boolean {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  innerForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const email = (emailInput as HTMLInputElement)?.value.trim() || '';
+
+    if (!email) {
+      showError('Please enter your email address.');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      showError('Please enter a valid email address.');
+      return;
+    }
+
+    showSuccess();
+  });
+</script>

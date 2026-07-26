@@ -1,0 +1,164 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Badge from '../ui/Badge.astro';
+import Button from '../ui/Button.astro';
+
+interface FeaturedCardProps {
+  title: string;
+  description: string;
+  slug: string;
+  date: string;
+  category: string;
+  cover: string;
+  author: string;
+}
+
+const { title, description, slug, date, category, cover, author } =
+  Astro.props as FeaturedCardProps;
+---
+
+<article class="featured-card" aria-labelledby={`featured-card-title-${slug}`}>
+  <Surface elevation={0} rounded="lg" bg="primary" padding="none">
+    <div class="featured-card__cover">
+      <img src={cover} alt={title} loading="lazy" />
+      <div class="featured-card__badge">
+        <Badge variant="primary">Featured</Badge>
+      </div>
+    </div>
+    <div class="featured-card__body">
+      <div class="featured-card__meta">
+        <Badge variant="primary">{category}</Badge>
+        <time class="featured-card__date" datetime={date}>{date}</time>
+      </div>
+      <h2 class="featured-card__title" id={`featured-card-title-${slug}`}>
+        <a href={`/blog/${slug}`}>{title}</a>
+      </h2>
+      <p class="featured-card__description">{description}</p>
+      <div class="featured-card__footer">
+        <span class="featured-card__author">{author}</span>
+        <Button variant="link" href={`/blog/${slug}`}>Read more</Button>
+      </div>
+    </div>
+  </Surface>
+</article>
+
+<style>
+  .featured-card {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elevation-1);
+    transition:
+      box-shadow var(--transition-normal) var(--ease-default),
+      transform var(--transition-normal) var(--ease-default);
+    overflow: hidden;
+  }
+
+  .featured-card:hover {
+    box-shadow: var(--elevation-5);
+    transform: translateY(-2px);
+  }
+
+  .featured-card:focus-within {
+    box-shadow: var(--focus-ring);
+  }
+
+  .featured-card__cover {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+  }
+
+  .featured-card__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--duration-slow) var(--ease-default);
+  }
+
+  .featured-card:hover .featured-card__cover img {
+    transform: scale(1.05);
+  }
+
+  .featured-card__badge {
+    position: absolute;
+    top: var(--space-3);
+    left: var(--space-3);
+  }
+
+  .featured-card__body {
+    padding: var(--space-6);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .featured-card__meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  .featured-card__date {
+    font-weight: var(--weight-medium);
+  }
+
+  .featured-card__title {
+    margin: 0;
+    font-size: var(--text-h2);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-h2);
+  }
+
+  .featured-card__title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .featured-card__title a:hover {
+    color: var(--color-primary);
+  }
+
+  .featured-card__description {
+    font-size: var(--text-body-lg);
+    color: var(--text-secondary);
+    line-height: var(--leading-body-lg);
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .featured-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .featured-card__author {
+    font-weight: var(--weight-medium);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .featured-card {
+      transition: none;
+    }
+
+    .featured-card__cover img {
+      transition: none;
+    }
+  }
+
+  .featured-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

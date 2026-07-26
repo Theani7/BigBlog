@@ -1,0 +1,169 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+
+interface RadioProps {
+  label: string;
+  name: string;
+  value: string;
+  checked?: boolean;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  groupName: string;
+}
+
+const {
+  label,
+  name,
+  value,
+  checked = false,
+  required = false,
+  disabled = false,
+  error,
+  groupName,
+} = Astro.props as RadioProps;
+
+const errorId = error ? `${name}-error` : undefined;
+const describedBy = errorId || undefined;
+---
+
+<div class="radio-wrapper">
+  <label class="radio-label" for={name}>
+    <span class="radio-input-wrapper">
+      <input
+        class="radio-input"
+        id={name}
+        name={groupName}
+        type="radio"
+        value={value}
+        checked={checked}
+        required={required}
+        disabled={disabled}
+        aria-invalid={error ? 'true' : undefined}
+        aria-describedby={describedBy}
+        aria-required={required ? 'true' : undefined}
+      />
+      <span class="radio-visual" aria-hidden="true">
+        {checked && <Icon name="circle" size="xs" color="var(--color-primary)" strokeWidth={1} />}
+      </span>
+    </span>
+    <span class="radio-text">
+      {label}
+      {
+        required && (
+          <span class="input-required" aria-hidden="true">
+            *
+          </span>
+        )
+      }
+    </span>
+  </label>
+  {
+    error && (
+      <span class="input-error" id={errorId} role="alert">
+        {error}
+      </span>
+    )
+  }
+</div>
+
+<style>
+  .radio-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .radio-label {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    line-height: var(--leading-normal);
+  }
+
+  .radio-input-wrapper {
+    position: relative;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-5);
+    height: var(--space-5);
+    margin-top: var(--space-0.5);
+  }
+
+  .radio-input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .radio-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-5);
+    height: var(--space-5);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    background: var(--bg-primary);
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+  }
+
+  .radio-input:hover:not(:disabled) + .radio-visual {
+    border-color: var(--text-tertiary);
+  }
+
+  .radio-input:focus-visible + .radio-visual {
+    border-color: var(--border-color-focus);
+    box-shadow: var(--focus-ring);
+  }
+
+  .radio-input:checked + .radio-visual {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .radio-input:disabled + .radio-visual {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+  }
+
+  .radio-text {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    user-select: none;
+  }
+
+  .input-required {
+    color: var(--color-danger);
+    font-weight: var(--weight-bold);
+  }
+
+  .input-error {
+    font-size: var(--text-small);
+    color: var(--color-danger);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding-left: calc(var(--space-5) + var(--space-3));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .radio-visual {
+      transition: none;
+    }
+  }
+</style>

@@ -1,0 +1,111 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface ContainerProps {
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'max';
+  center?: boolean;
+  padding?: 'sm' | 'md' | 'lg' | 'none';
+}
+
+const { size = 'lg', center = true, padding = 'md', children } = Astro.props as ContainerProps;
+---
+
+<div
+  class={`container container--${size} ${center ? 'container--center' : ''} container--padding-${padding}`}
+>
+  <slot />
+</div>
+
+<style>
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .container--sm {
+    max-width: var(--container-sm);
+  }
+
+  .container--md {
+    max-width: var(--container-md);
+  }
+
+  .container--lg {
+    max-width: var(--container-lg);
+  }
+
+  .container--xl {
+    max-width: var(--container-xl);
+  }
+
+  .container--2xl {
+    max-width: var(--container-2xl);
+  }
+
+  .container--max {
+    max-width: var(--container-max);
+  }
+
+  .container--center {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .container--padding-none {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .container--padding-sm {
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
+  }
+
+  .container--padding-md {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .container--padding-lg {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+
+  @media (min-width: 640px) {
+    .container--padding-sm {
+      padding-left: var(--space-4);
+      padding-right: var(--space-4);
+    }
+
+    .container--padding-md {
+      padding-left: var(--space-6);
+      padding-right: var(--space-6);
+    }
+
+    .container--padding-lg {
+      padding-left: var(--space-10);
+      padding-right: var(--space-10);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .container--padding-md {
+      padding-left: var(--space-8);
+      padding-right: var(--space-8);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .container {
+      transition: none;
+    }
+  }
+
+  .container:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

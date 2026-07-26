@@ -1,0 +1,113 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '@components/ui/Icon.astro';
+
+interface SearchProps {
+  placeholder?: string;
+  value?: string;
+  onInput?: (value: string) => void;
+  debounceMs?: number;
+}
+
+const {
+  placeholder = 'Search...',
+  value = '',
+  onInput,
+  debounceMs = 300,
+} = Astro.props as SearchProps;
+---
+
+<div class="search" role="search">
+  <Icon name="search" size="sm" class="search-icon" />
+  <input
+    type="search"
+    class="search-input"
+    placeholder={placeholder}
+    value={value}
+    aria-label={placeholder}
+    data-debounce={debounceMs}
+  />
+</div>
+
+<style>
+  .search {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: var(--space-3);
+    pointer-events: none;
+    color: var(--text-tertiary);
+  }
+
+  .search-input {
+    width: var(--space-40);
+    padding: var(--space-2) var(--space-4) var(--space-2) var(--space-10);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    transition:
+      width var(--duration-normal) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .search-input:focus {
+    width: var(--space-64);
+    outline: none;
+    border-color: var(--border-color-focus);
+    box-shadow: var(--focus-ring);
+  }
+
+  .search-input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-input {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .search-input {
+      width: var(--space-32);
+    }
+
+    .search-input:focus {
+      width: var(--space-48);
+    }
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const input = document.currentScript?.parentElement?.querySelector('.search-input');
+    if (!input) return;
+
+    const debounceMs = parseInt(input.dataset.debounce || '300', 10);
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    input.addEventListener('input', () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const event = new CustomEvent('search-input', {
+          detail: { value: input.value },
+          bubbles: true,
+        });
+        input.dispatchEvent(event);
+      }, debounceMs);
+    });
+  })();
+</script>

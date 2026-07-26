@@ -1,0 +1,111 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from './Surface.astro';
+
+interface PanelProps {
+  title?: string;
+  description?: string;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+}
+
+const {
+  title,
+  description,
+  collapsible = false,
+  defaultOpen = true,
+  children,
+} = Astro.props as PanelProps;
+---
+
+<Surface elevation={0} rounded="md" bg="primary" padding="none">
+  {
+    collapsible ? (
+      <details class="panel" open={defaultOpen}>
+        <summary class="panel-header">
+          {title && <h3 class="panel-title">{title}</h3>}
+          {description && <p class="panel-description">{description}</p>}
+        </summary>
+        <div class="panel-body">
+          <slot />
+        </div>
+        <div class="panel-footer">
+          <slot name="footer" />
+        </div>
+      </details>
+    ) : (
+      <>
+        <header class="panel-header">
+          {title && <h3 class="panel-title">{title}</h3>}
+          {description && <p class="panel-description">{description}</p>}
+        </header>
+        <div class="panel-body">
+          <slot />
+        </div>
+        <div class="panel-footer">
+          <slot name="footer" />
+        </div>
+      </>
+    )
+  }
+</Surface>
+
+<style>
+  .panel {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: var(--space-4) var(--space-6);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .panel-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-1) 0;
+  }
+
+  .panel-description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .panel-body {
+    padding: var(--space-4) var(--space-6);
+  }
+
+  .panel-footer {
+    padding: var(--space-4) var(--space-6);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .panel > :global(summary) {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel > :global(summary)::-webkit-details-marker {
+    display: none;
+  }
+
+  .panel > :global(summary)::before {
+    content: '';
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel {
+      transition: none;
+    }
+  }
+
+  .panel:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

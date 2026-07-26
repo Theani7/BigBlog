@@ -1,0 +1,164 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Button from '../ui/Button.astro';
+
+interface AuthorBadgeProps {
+  name: string;
+  avatar?: string;
+  bio?: string;
+  twitter?: string;
+  github?: string;
+  linkedin?: string;
+  website?: string;
+  slug?: string;
+}
+
+const { name, avatar, bio, twitter, github, linkedin, website, slug } =
+  Astro.props as AuthorBadgeProps;
+
+const initials = name
+  .split(' ')
+  .map((n) => n[0])
+  .join('')
+  .slice(0, 2);
+---
+
+<div class="author-badge" aria-label={`Author: ${name}`}>
+  <div class="author-badge__avatar" aria-hidden="true">
+    {
+      avatar ? (
+        <img src={avatar} alt={name} loading="lazy" />
+      ) : (
+        <span class="author-badge__avatar-placeholder">{initials}</span>
+      )
+    }
+  </div>
+  <div class="author-badge__info">
+    <span class="author-badge__name">
+      {slug ? <a href={`/author/${slug}`}>{name}</a> : name}
+    </span>
+    {bio && <p class="author-badge__bio">{bio}</p>}
+    {
+      (twitter || github || linkedin || website) && (
+        <div class="author-badge__links">
+          {twitter && (
+            <Button variant="ghost" href={twitter} aria-label={`${name} on Twitter`}>
+              Twitter
+            </Button>
+          )}
+          {github && (
+            <Button variant="ghost" href={github} aria-label={`${name} on GitHub`}>
+              GitHub
+            </Button>
+          )}
+          {linkedin && (
+            <Button variant="ghost" href={linkedin} aria-label={`${name} on LinkedIn`}>
+              LinkedIn
+            </Button>
+          )}
+          {website && (
+            <Button variant="ghost" href={website} aria-label={`${name}'s website`}>
+              Website
+            </Button>
+          )}
+        </div>
+      )
+    }
+  </div>
+</div>
+
+<style>
+  .author-badge {
+    display: flex;
+    gap: var(--space-4);
+    align-items: flex-start;
+    padding: var(--space-4);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-color);
+  }
+
+  .author-badge__avatar {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .author-badge__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .author-badge__avatar-placeholder {
+    font-size: var(--text-base);
+    font-weight: var(--weight-bold);
+    color: var(--text-secondary);
+  }
+
+  .author-badge__info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
+  }
+
+  .author-badge__name {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-base);
+    color: var(--text-primary);
+  }
+
+  .author-badge__name a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .author-badge__name a:hover {
+    color: var(--color-primary);
+  }
+
+  .author-badge__bio {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: var(--leading-body);
+    margin: 0;
+  }
+
+  .author-badge__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .author-badge__name a {
+      transition: none;
+    }
+  }
+
+  .author-badge:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    .author-badge {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .author-badge__links {
+      justify-content: center;
+    }
+  }
+</style>

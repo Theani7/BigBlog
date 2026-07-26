@@ -1,0 +1,90 @@
+---
+import Input from './Input.astro';
+import Icon from '../ui/Icon.astro';
+
+interface SearchInputProps {
+  placeholder?: string;
+  value?: string;
+  debounceMs?: number;
+}
+
+const { placeholder = 'Search...', value, debounceMs = 300 } = Astro.props as SearchInputProps;
+---
+
+<div class="search-input" data-search-input data-debounce-ms={debounceMs}>
+  <span class="search-icon" aria-hidden="true">
+    <Icon name="search" size="md" color="var(--text-tertiary)" />
+  </span>
+  <Input
+    label="Search"
+    name="search"
+    type="text"
+    placeholder={placeholder}
+    value={value}
+    required={false}
+    disabled={false}
+  />
+</div>
+
+<style>
+  .search-input {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 400px;
+    transition: max-width var(--duration-normal) var(--ease-default);
+  }
+
+  .search-input:focus-within {
+    max-width: 600px;
+  }
+
+  .search-icon {
+    position: absolute;
+    left: var(--space-3);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    z-index: 1;
+  }
+
+  .search-input :global(.input) {
+    padding-left: calc(var(--space-3) * 3 + var(--space-5));
+  }
+
+  .search-input:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+  }
+
+  .search-input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-lg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .search-input {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const searchInput = document.currentScript?.parentElement;
+  if (!searchInput) return;
+
+  const input = searchInput.querySelector('input');
+  const debounceMs = parseInt(searchInput.dataset.debounceMs || '300', 10);
+  let timeoutId: number | null = null;
+
+  input?.addEventListener('input', () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+    }
+    timeoutId = window.setTimeout(() => {
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    }, debounceMs);
+  });
+</script>

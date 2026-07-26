@@ -1,0 +1,156 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface InputProps {
+  label: string;
+  name: string;
+  type?: 'text' | 'email' | 'password' | 'url' | 'number';
+  placeholder?: string;
+  value?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  helperText?: string;
+}
+
+const {
+  label,
+  name,
+  type = 'text',
+  placeholder,
+  value,
+  required = false,
+  disabled = false,
+  error,
+  helperText,
+} = Astro.props as InputProps;
+
+const errorId = error ? `${name}-error` : undefined;
+const helperId = helperText ? `${name}-helper` : undefined;
+const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
+---
+
+<div class="input-wrapper">
+  <label class="input-label" for={name}>
+    {label}
+    {
+      required && (
+        <span class="input-required" aria-hidden="true">
+          *
+        </span>
+      )
+    }
+  </label>
+  <input
+    class={`input ${error ? 'input--error' : ''}`}
+    id={name}
+    name={name}
+    type={type}
+    placeholder={placeholder}
+    value={value}
+    required={required}
+    disabled={disabled}
+    aria-invalid={error ? 'true' : undefined}
+    aria-describedby={describedBy}
+    aria-required={required ? 'true' : undefined}
+  />
+  {
+    error && (
+      <span class="input-error" id={errorId} role="alert">
+        {error}
+      </span>
+    )
+  }
+  {
+    helperText && !error && (
+      <span class="input-helper" id={helperId}>
+        {helperText}
+      </span>
+    )
+  }
+</div>
+
+<style>
+  .input-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .input-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .input-required {
+    color: var(--color-danger);
+    font-weight: var(--weight-bold);
+  }
+
+  .input {
+    width: 100%;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition:
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
+    outline: none;
+    line-height: var(--leading-normal);
+  }
+
+  .input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .input:hover:not(:disabled):not(:focus) {
+    border-color: var(--text-tertiary);
+  }
+
+  .input:focus-visible {
+    border-color: var(--border-color-focus);
+    box-shadow: var(--focus-ring);
+  }
+
+  .input:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+  }
+
+  .input--error {
+    border-color: var(--color-danger);
+  }
+
+  .input--error:focus-visible {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 0.3);
+  }
+
+  .input-error {
+    font-size: var(--text-small);
+    color: var(--color-danger);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .input-helper {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .input {
+      transition: none;
+    }
+  }
+</style>

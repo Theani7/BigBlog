@@ -1,0 +1,44 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Badge from '../ui/Badge.astro';
+
+interface CategoryPillProps {
+  title: string;
+  slug: string;
+  color?: string;
+}
+
+const { title, slug, color } = Astro.props as CategoryPillProps;
+---
+
+<a href={`/blog/category/${slug}`} class="category-pill" aria-label={`View all posts in ${title}`}>
+  <Badge
+    variant="primary"
+    style={color ? `background: ${color}; color: var(--text-inverse);` : undefined}
+  >
+    {title}
+  </Badge>
+</a>
+
+<style>
+  .category-pill {
+    text-decoration: none;
+    transition: opacity var(--duration-fast) var(--ease-default);
+  }
+
+  .category-pill:hover {
+    opacity: 0.8;
+  }
+
+  .category-pill:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-full);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .category-pill {
+      transition: none;
+    }
+  }
+</style>

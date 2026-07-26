@@ -1,0 +1,108 @@
+---
+import type { ComponentProps } from 'astro/types';
+import CategoryPill from './CategoryPill.astro';
+import TagChip from './TagChip.astro';
+
+interface MetadataRowProps {
+  publishedAt: Date;
+  updatedAt?: Date;
+  readingTime?: string;
+  category?: { title: string; slug: string };
+  tags?: string[];
+}
+
+const { publishedAt, updatedAt, readingTime, category, tags } = Astro.props as MetadataRowProps;
+---
+
+<nav class="metadata-row" aria-label="Article metadata">
+  <div class="metadata-row__items">
+    <time class="metadata-row__date" datetime={publishedAt.toISOString()}>
+      {
+        publishedAt.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      }
+    </time>
+    {readingTime && <span class="metadata-row__reading-time">{readingTime}</span>}
+    {category && <CategoryPill title={category.title} slug={category.slug} />}
+    {
+      tags && tags.length > 0 && (
+        <div class="metadata-row__tags">
+          {tags.map((tag) => (
+            <TagChip name={tag} slug={tag.toLowerCase().replace(/\s+/g, '-')} />
+          ))}
+        </div>
+      )
+    }
+  </div>
+  {
+    updatedAt && (
+      <span class="metadata-row__updated">
+        Updated{' '}
+        {updatedAt.toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })}
+      </span>
+    )
+  }
+</nav>
+
+<style>
+  .metadata-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--space-6);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .metadata-row__items {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .metadata-row__date {
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
+  }
+
+  .metadata-row__reading-time {
+    color: var(--text-tertiary);
+  }
+
+  .metadata-row__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+
+  .metadata-row__updated {
+    display: block;
+    width: 100%;
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-style: italic;
+    margin-top: var(--space-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .metadata-row {
+      transition: none;
+    }
+  }
+
+  .metadata-row:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

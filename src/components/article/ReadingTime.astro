@@ -1,0 +1,44 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+
+interface ReadingTimeProps {
+  minutes: number;
+  words?: number;
+}
+
+const { minutes, words } = Astro.props as ReadingTimeProps;
+---
+
+<span class="reading-time" aria-label={`${minutes} minute read`}>
+  <Icon name="clock" size="sm" aria-hidden="true" />
+  <span class="reading-time__text">
+    {minutes} min{minutes !== 1 ? 's' : ''}
+    {words !== undefined && ` (${words} words)`}
+  </span>
+</span>
+
+<style>
+  .reading-time {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+  }
+
+  .reading-time__text {
+    line-height: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .reading-time {
+      transition: none;
+    }
+  }
+
+  .reading-time:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

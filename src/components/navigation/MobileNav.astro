@@ -1,0 +1,191 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Button from '@components/ui/Button.astro';
+import Stack from '@components/layout/Stack.astro';
+import Icon from '@components/ui/Icon.astro';
+
+interface NavLink {
+  label: string;
+  href: string;
+}
+
+interface MobileNavProps {
+  links: NavLink[];
+  open: boolean;
+  onClose: () => void;
+}
+
+const { links, open, onClose } = Astro.props as MobileNavProps;
+---
+
+<div
+  class="mobile-nav-overlay"
+  class:list={[{ 'mobile-nav-overlay--open': open }]}
+  aria-hidden={!open ? 'true' : undefined}
+>
+  <div
+    class="mobile-nav-drawer"
+    class:list={[{ 'mobile-nav-drawer--open': open }]}
+    role="dialog"
+    aria-modal="true"
+    aria-label="Navigation menu"
+  >
+    <div class="mobile-nav-header">
+      <Button variant="ghost" size="sm" class="mobile-nav-close" aria-label="Close menu">
+        <Icon name="x" size="lg" />
+      </Button>
+    </div>
+    <nav class="mobile-nav-links" aria-label="Mobile navigation">
+      <Stack direction="col" gap="sm">
+        {
+          links.map((link) => (
+            <a href={link.href} class="mobile-nav-link">
+              {link.label}
+            </a>
+          ))
+        }
+      </Stack>
+    </nav>
+  </div>
+</div>
+
+<style>
+  .mobile-nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-backdrop);
+    background: transparent;
+    visibility: hidden;
+    transition:
+      visibility 0s linear var(--duration-normal),
+      background var(--duration-normal) var(--ease-default);
+  }
+
+  .mobile-nav-overlay--open {
+    visibility: visible;
+    background: rgb(0 0 0 / 0.5);
+    transition:
+      visibility 0s linear 0s,
+      background var(--duration-normal) var(--ease-default);
+  }
+
+  .mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-modal);
+    width: min(320px, 85vw);
+    background: var(--bg-primary);
+    border-left: 1px solid var(--border-color);
+    transform: translateX(100%);
+    transition: transform var(--duration-normal) var(--ease-default);
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+
+  .mobile-nav-drawer--open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-4);
+  }
+
+  .mobile-nav-close {
+    display: inline-flex;
+  }
+
+  .mobile-nav-link {
+    display: block;
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-md);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default);
+  }
+
+  .mobile-nav-link:hover {
+    color: var(--color-primary);
+    background: var(--bg-tertiary);
+    text-decoration: none;
+  }
+
+  .mobile-nav-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .mobile-nav-overlay {
+      transition: none;
+    }
+
+    .mobile-nav-drawer {
+      transition: none;
+    }
+
+    .mobile-nav-link {
+      transition: none;
+    }
+  }
+
+  .mobile-nav-overlay:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
+
+<script is:inline>
+  (() => {
+    const drawer = document.currentScript?.parentElement?.querySelector('.mobile-nav-drawer');
+    const overlay = document.currentScript?.parentElement?.querySelector('.mobile-nav-overlay');
+    const closeBtn = document.currentScript?.parentElement?.querySelector('.mobile-nav-close');
+    const links = document.currentScript?.parentElement?.querySelectorAll('.mobile-nav-link');
+
+    if (!drawer || !overlay) return;
+
+    function close() {
+      drawer.classList.remove('mobile-nav-drawer--open');
+      overlay.classList.remove('mobile-nav-overlay--open');
+      overlay.setAttribute('aria-hidden', 'true');
+      const toggle = document.querySelector('.navigation-mobile-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    function open() {
+      drawer.classList.add('mobile-nav-drawer--open');
+      overlay.classList.add('mobile-nav-overlay--open');
+      overlay.setAttribute('aria-hidden', 'false');
+      const toggle = document.querySelector('.navigation-mobile-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      const firstLink = drawer.querySelector('.mobile-nav-link');
+      if (firstLink) firstLink.focus();
+    }
+
+    closeBtn?.addEventListener('click', close);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('mobile-nav-drawer--open')) {
+        close();
+      }
+    });
+
+    if (links) {
+      links.forEach((link) => {
+        link.addEventListener('click', close);
+      });
+    }
+  })();
+</script>

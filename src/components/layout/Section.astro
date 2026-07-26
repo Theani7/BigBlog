@@ -1,0 +1,64 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Container from './Container.astro';
+
+interface SectionProps {
+  id?: string;
+  ariaLabel?: string;
+  padding?: 'sm' | 'md' | 'lg' | 'xl';
+  divider?: boolean;
+}
+
+const { id, ariaLabel, padding = 'md', divider = false, children } = Astro.props as SectionProps;
+---
+
+<section
+  id={id}
+  aria-label={ariaLabel}
+  class={`section section--padding-${padding} ${divider ? 'section--divider' : ''}`}
+>
+  <Container>
+    <slot />
+  </Container>
+</section>
+
+<style>
+  .section {
+    width: 100%;
+  }
+
+  .section--padding-sm {
+    padding-top: var(--space-4);
+    padding-bottom: var(--space-4);
+  }
+
+  .section--padding-md {
+    padding-top: var(--space-8);
+    padding-bottom: var(--space-8);
+  }
+
+  .section--padding-lg {
+    padding-top: var(--space-12);
+    padding-bottom: var(--space-12);
+  }
+
+  .section--padding-xl {
+    padding-top: var(--space-16);
+    padding-bottom: var(--space-16);
+  }
+
+  .section--divider {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .section {
+      transition: none;
+    }
+  }
+
+  .section:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

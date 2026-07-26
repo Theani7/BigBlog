@@ -1,0 +1,30 @@
+---
+import { Lucide } from 'lucide-astro';
+import type { ComponentProps } from 'astro/types';
+
+interface IconProps {
+  name: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  color?: string;
+  strokeWidth?: number;
+}
+
+const {
+  name,
+  size = 'md',
+  color = 'var(--text-primary)',
+  strokeWidth = 1.5,
+} = Astro.props as IconProps;
+
+const sizeMap = {
+  xs: 12,
+  sm: 16,
+  md: 20,
+  lg: 24,
+  xl: 32,
+};
+---
+
+<span aria-hidden="true">
+  <Lucide name={name} size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
+</span>

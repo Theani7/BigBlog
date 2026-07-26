@@ -1,0 +1,101 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Badge from '../ui/Badge.astro';
+
+interface SeriesBadgeProps {
+  title: string;
+  slug: string;
+  currentPart: number;
+  totalParts: number;
+}
+
+const { title, slug, currentPart, totalParts } = Astro.props as SeriesBadgeProps;
+
+const percentage = Math.round((currentPart / Math.max(totalParts, 1)) * 100);
+---
+
+<a
+  href={`/blog/series/${slug}`}
+  class="series-badge"
+  aria-label={`${title}, part ${currentPart} of ${totalParts}`}
+>
+  <div class="series-badge__header">
+    <Badge variant="secondary">{title}</Badge>
+    <span class="series-badge__progress-text">
+      {currentPart} / {totalParts}
+    </span>
+  </div>
+  <div
+    class="series-badge__progress-bar"
+    role="progressbar"
+    aria-valuenow={percentage}
+    aria-valuemin={0}
+    aria-valuemax={100}
+    aria-label={`${title} progress: ${currentPart} of ${totalParts}`}
+  >
+    <div class="series-badge__progress-fill" style={`width: ${percentage}%;`}></div>
+  </div>
+</a>
+
+<style>
+  .series-badge {
+    display: block;
+    text-decoration: none;
+    padding: var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    transition:
+      box-shadow var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+  }
+
+  .series-badge:hover {
+    border-color: var(--color-primary);
+    box-shadow: var(--elevation-2);
+  }
+
+  .series-badge__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+  }
+
+  .series-badge__progress-text {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--weight-medium);
+    white-space: nowrap;
+  }
+
+  .series-badge__progress-bar {
+    height: 4px;
+    background: var(--border-color);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+  }
+
+  .series-badge__progress-fill {
+    height: 100%;
+    background: var(--color-secondary);
+    border-radius: var(--radius-full);
+    transition: width var(--duration-normal) var(--ease-default);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .series-badge {
+      transition: none;
+    }
+
+    .series-badge__progress-fill {
+      transition: none;
+    }
+  }
+
+  .series-badge:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

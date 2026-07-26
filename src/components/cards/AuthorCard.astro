@@ -1,0 +1,156 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Button from '../ui/Button.astro';
+
+interface AuthorCardProps {
+  name: string;
+  slug: string;
+  bio?: string;
+  avatar?: string;
+  twitter?: string;
+  github?: string;
+  linkedin?: string;
+  website?: string;
+}
+
+const { name, slug, bio, avatar, twitter, github, linkedin, website } =
+  Astro.props as AuthorCardProps;
+
+const initials = name
+  .split(' ')
+  .map((n) => n[0])
+  .join('')
+  .slice(0, 2);
+---
+
+<article class="author-card" aria-labelledby={`author-card-name-${slug}`}>
+  <Surface elevation={0} rounded="lg" bg="primary" padding="md">
+    <div class="author-card__avatar" aria-hidden="true">
+      {
+        avatar ? (
+          <img src={avatar} alt={name} loading="lazy" />
+        ) : (
+          <span class="author-card__avatar-placeholder">{initials}</span>
+        )
+      }
+    </div>
+    <h3 class="author-card__name" id={`author-card-name-${slug}`}>
+      <a href={`/author/${slug}`}>{name}</a>
+    </h3>
+    {bio && <p class="author-card__bio">{bio}</p>}
+    <div class="author-card__social">
+      {
+        twitter && (
+          <Button variant="ghost" href={twitter} aria-label={`${name} on Twitter`}>
+            Twitter
+          </Button>
+        )
+      }
+      {
+        github && (
+          <Button variant="ghost" href={github} aria-label={`${name} on GitHub`}>
+            GitHub
+          </Button>
+        )
+      }
+      {
+        linkedin && (
+          <Button variant="ghost" href={linkedin} aria-label={`${name} on LinkedIn`}>
+            LinkedIn
+          </Button>
+        )
+      }
+      {
+        website && (
+          <Button variant="ghost" href={website} aria-label={`${name}'s website`}>
+            Website
+          </Button>
+        )
+      }
+    </div>
+  </Surface>
+</article>
+
+<style>
+  .author-card {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elevation-1);
+    transition:
+      box-shadow var(--transition-normal) var(--ease-default),
+      transform var(--transition-normal) var(--ease-default);
+  }
+
+  .author-card:hover {
+    box-shadow: var(--elevation-3);
+    transform: translateY(-1px);
+  }
+
+  .author-card:focus-within {
+    box-shadow: var(--focus-ring);
+  }
+
+  .author-card__avatar {
+    width: 4rem;
+    height: 4rem;
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-3);
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .author-card__avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .author-card__avatar-placeholder {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    color: var(--text-secondary);
+  }
+
+  .author-card__name {
+    margin: 0 0 var(--space-2) 0;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .author-card__name a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .author-card__name a:hover {
+    color: var(--color-primary);
+  }
+
+  .author-card__bio {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: var(--leading-body);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .author-card__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .author-card {
+      transition: none;
+    }
+  }
+
+  .author-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

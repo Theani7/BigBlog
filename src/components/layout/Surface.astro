@@ -1,0 +1,81 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface SurfaceProps {
+  elevation?: 0 | 1 | 2 | 3 | 4 | 5;
+  rounded?: 'sm' | 'md' | 'lg' | 'xl' | 'none';
+  bg?: 'primary' | 'secondary' | 'tertiary' | 'inverse';
+  padding?: 'sm' | 'md' | 'lg' | 'none';
+}
+
+const {
+  elevation = 0,
+  rounded = 'md',
+  bg = 'primary',
+  padding = 'md',
+  children,
+} = Astro.props as SurfaceProps;
+
+const elevationMap = {
+  0: 'var(--elevation-0)',
+  1: 'var(--elevation-1)',
+  2: 'var(--elevation-2)',
+  3: 'var(--elevation-3)',
+  4: 'var(--elevation-4)',
+  5: 'var(--elevation-5)',
+};
+
+const roundedMap = {
+  none: 'var(--radius-none)',
+  sm: 'var(--radius-sm)',
+  md: 'var(--radius-md)',
+  lg: 'var(--radius-lg)',
+  xl: 'var(--radius-xl)',
+};
+
+const bgMap = {
+  primary: 'var(--bg-primary)',
+  secondary: 'var(--bg-secondary)',
+  tertiary: 'var(--bg-tertiary)',
+  inverse: 'var(--bg-inverse)',
+};
+
+const paddingMap = {
+  none: '0',
+  sm: 'var(--space-3)',
+  md: 'var(--space-6)',
+  lg: 'var(--space-8)',
+};
+---
+
+<div
+  class="surface"
+  style={`
+    --surface-elevation: ${elevationMap[elevation]};
+    --surface-rounded: ${roundedMap[rounded]};
+    --surface-bg: ${bgMap[bg]};
+    --surface-padding: ${paddingMap[padding]};
+  `}
+>
+  <slot />
+</div>
+
+<style>
+  .surface {
+    background: var(--surface-bg);
+    border-radius: var(--surface-rounded);
+    box-shadow: var(--surface-elevation);
+    padding: var(--surface-padding);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .surface {
+      transition: none;
+    }
+  }
+
+  .surface:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

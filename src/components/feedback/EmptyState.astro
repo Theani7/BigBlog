@@ -1,0 +1,95 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Icon from '../ui/Icon.astro';
+import Button from '../ui/Button.astro';
+
+interface EmptyStateProps {
+  title?: string;
+  description?: string;
+  actionLabel?: string;
+  onAction?: string;
+}
+
+const { title, description, actionLabel, onAction } = Astro.props as EmptyStateProps;
+---
+
+<div class="empty-state" role="status" aria-label={title || 'Empty state'} data-empty-state>
+  <Surface elevation={0} rounded="lg" padding="lg" bg="secondary">
+    <div class="empty-state-icon" aria-hidden="true">
+      <Icon name="inbox" size="xl" color="var(--text-tertiary)" />
+    </div>
+    {title && <div class="empty-state-title">{title}</div>}
+    {description && <div class="empty-state-description">{description}</div>}
+    {
+      actionLabel && (
+        <Button variant="primary" size="sm" data-action={onAction || ''} type="button">
+          {actionLabel}
+        </Button>
+      )
+    }
+    <slot />
+  </Surface>
+</div>
+
+<style>
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+  }
+
+  .empty-state-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    background: var(--bg-tertiary);
+  }
+
+  .empty-state-title {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+  }
+
+  .empty-state-description {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 20rem;
+  }
+
+  .empty-state:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .empty-state {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const emptyState = document.currentScript?.parentElement;
+  if (!emptyState) return;
+
+  const actionBtn = emptyState.querySelector('[data-action]');
+
+  actionBtn?.addEventListener('click', () => {
+    const action = actionBtn.dataset.action;
+    emptyState.dispatchEvent(
+      new CustomEvent('action', {
+        detail: { action },
+        bubbles: true,
+      })
+    );
+  });
+</script>

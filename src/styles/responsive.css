@@ -1,0 +1,267 @@
+@import 'tokens.css';
+
+/* ── Breakpoint Variables ── */
+
+:root {
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1536px;
+}
+
+/* ── Responsive Hidden/Show ── */
+
+.hidden {
+  display: none;
+}
+
+.visible {
+  display: block;
+}
+
+@media (min-width: 640px) {
+  .sm\:hidden {
+    display: none;
+  }
+
+  .sm\:visible {
+    display: block;
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:hidden {
+    display: none;
+  }
+
+  .md\:visible {
+    display: block;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:hidden {
+    display: none;
+  }
+
+  .lg\:visible {
+    display: block;
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:hidden {
+    display: none;
+  }
+
+  .xl\:visible {
+    display: block;
+  }
+}
+
+@media (min-width: 1536px) {
+  .xxl\:hidden {
+    display: none;
+  }
+
+  .xxl\:visible {
+    display: block;
+  }
+}
+
+/* ── Responsive Container Padding ── */
+
+.container-padding-sm {
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.container-padding-md {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+
+.container-padding-lg {
+  padding-left: var(--space-8);
+  padding-right: var(--space-8);
+}
+
+@media (min-width: 640px) {
+  .sm\:container-padding-sm {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .sm\:container-padding-md {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  .sm\:container-padding-lg {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:container-padding-sm {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .md\:container-padding-md {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  .md\:container-padding-lg {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:container-padding-sm {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .lg\:container-padding-md {
+    padding-left: var(--space-6);
+    padding-right: var(--space-6);
+  }
+
+  .lg\:container-padding-lg {
+    padding-left: var(--space-8);
+    padding-right: var(--space-8);
+  }
+}
+
+/* ── Responsive Grid Helpers ── */
+
+.grid-responsive {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 640px) {
+  .sm\:grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .md\:grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .md\:grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .lg\:grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .lg\:grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .xl\:grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .xl\:grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .xl\:grid-5 {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.grid-auto-responsive {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+  gap: var(--space-4);
+}
+
+/* ── Mobile-First Responsive Patterns ── */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .md\:stack-horizontal {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+.flex-wrap-responsive {
+  flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+  .sm\:flex-nowrap {
+    flex-wrap: nowrap;
+  }
+}
+
+.text-responsive {
+  font-size: var(--text-sm);
+}
+
+@media (min-width: 768px) {
+  .md\:text-responsive {
+    font-size: var(--text-base);
+  }
+}
+
+.gap-responsive {
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .md\:gap-responsive {
+    gap: var(--space-6);
+  }
+}
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-responsive,
+  .grid-auto-responsive {
+    transition: none;
+  }
+}
+
+/* ── Dark Theme ── */
+
+[data-theme='dark'] .grid-responsive,
+[data-theme='dark'] .grid-auto-responsive {
+  gap: var(--space-4);
+}
+
+/* ── System Theme ── */
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='system'] .grid-responsive,
+  [data-theme='system'] .grid-auto-responsive {
+    gap: var(--space-4);
+  }
+}

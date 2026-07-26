@@ -1,0 +1,113 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+
+interface AvatarProps {
+  src?: string;
+  alt?: string;
+  name?: string;
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  fallback?: string;
+}
+
+const { src, alt = '', name = '', size = 'md', fallback = '' } = Astro.props as AvatarProps;
+
+const sizeMap = {
+  xs: 24,
+  sm: 32,
+  md: 40,
+  lg: 48,
+  xl: 64,
+};
+
+const pixelSize = sizeMap[size];
+const initials =
+  fallback ||
+  name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+const hasImage = src !== undefined && src !== '';
+---
+
+<div
+  class="avatar"
+  style={`--avatar-size: ${pixelSize}px;`}
+  role="img"
+  aria-label={alt || name || 'Avatar'}
+  tabindex="0"
+>
+  {
+    hasImage ? (
+      <img
+        class="avatar__image"
+        src={src}
+        alt={alt || name}
+        width={pixelSize}
+        height={pixelSize}
+        loading="lazy"
+      />
+    ) : (
+      <span class="avatar__fallback" aria-hidden="true">
+        <Icon name="User" size="xs" color="var(--text-inverse)" />
+      </span>
+    )
+  }
+  {fallback && !hasImage && <span class="avatar__initials">{initials}</span>}
+</div>
+
+<style>
+  .avatar {
+    position: relative;
+    width: var(--avatar-size);
+    height: var(--avatar-size);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .avatar__image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar__fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .avatar__initials {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 0.375rem;
+    font-weight: var(--weight-bold);
+    color: var(--text-inverse);
+    background: var(--color-primary);
+    border-radius: 0 0 var(--radius-full) var(--radius-full);
+    line-height: 1;
+  }
+
+  .avatar:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .avatar {
+      transition: none;
+    }
+  }
+</style>

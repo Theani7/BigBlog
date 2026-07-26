@@ -1,0 +1,187 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+
+interface SelectOption {
+  value: string;
+  label: string;
+}
+
+interface SelectProps {
+  label: string;
+  name: string;
+  options: SelectOption[];
+  value?: string;
+  placeholder?: string;
+  required?: boolean;
+  disabled?: boolean;
+  error?: string;
+  helperText?: string;
+}
+
+const {
+  label,
+  name,
+  options,
+  value,
+  placeholder,
+  required = false,
+  disabled = false,
+  error,
+  helperText,
+} = Astro.props as SelectProps;
+
+const errorId = error ? `${name}-error` : undefined;
+const helperId = helperText ? `${name}-helper` : undefined;
+const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
+---
+
+<div class="select-wrapper">
+  <label class="select-label" for={name}>
+    {label}
+    {
+      required && (
+        <span class="input-required" aria-hidden="true">
+          *
+        </span>
+      )
+    }
+  </label>
+  <div class="select-container">
+    <select
+      class={`select ${error ? 'select--error' : ''}`}
+      id={name}
+      name={name}
+      required={required}
+      disabled={disabled}
+      aria-invalid={error ? 'true' : undefined}
+      aria-describedby={describedBy}
+      aria-required={required ? 'true' : undefined}
+    >
+      <option value="" disabled selected={!value}>
+        {placeholder || ''}
+      </option>
+      {
+        options.map((option) => (
+          <option value={option.value} selected={value === option.value}>
+            {option.label}
+          </option>
+        ))
+      }
+    </select>
+    <span class="select-icon" aria-hidden="true">
+      <Icon name="chevron-down" size="sm" color="var(--text-secondary)" />
+    </span>
+  </div>
+  {
+    error && (
+      <span class="input-error" id={errorId} role="alert">
+        {error}
+      </span>
+    )
+  }
+  {
+    helperText && !error && (
+      <span class="input-helper" id={helperId}>
+        {helperText}
+      </span>
+    )
+  }
+</div>
+
+<style>
+  .select-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .select-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .select-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .select {
+    width: 100%;
+    padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    appearance: none;
+    cursor: pointer;
+    transition:
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
+    outline: none;
+    line-height: var(--leading-normal);
+  }
+
+  .select:hover:not(:disabled):not(:focus) {
+    border-color: var(--text-tertiary);
+  }
+
+  .select:focus-visible {
+    border-color: var(--border-color-focus);
+    box-shadow: var(--focus-ring);
+  }
+
+  .select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--bg-tertiary);
+  }
+
+  .select--error {
+    border-color: var(--color-danger);
+  }
+
+  .select--error:focus-visible {
+    border-color: var(--color-danger);
+    box-shadow: 0 0 0 3px rgb(220 38 38 / 0.3);
+  }
+
+  .select-icon {
+    position: absolute;
+    right: var(--space-3);
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-error {
+    font-size: var(--text-small);
+    color: var(--color-danger);
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+
+  .input-helper {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+  }
+
+  .input-required {
+    color: var(--color-danger);
+    font-weight: var(--weight-bold);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .select {
+      transition: none;
+    }
+  }
+</style>

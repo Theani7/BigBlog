@@ -1,0 +1,74 @@
+---
+import Alert from '../feedback/Alert.astro';
+import Badge from '../ui/Badge.astro';
+
+interface ValidationError {
+  field: string;
+  message: string;
+}
+
+interface ValidationProps {
+  errors?: ValidationError[];
+  summary?: string;
+}
+
+const { errors = [], summary } = Astro.props as ValidationProps;
+
+const errorCount = errors.length;
+const hasErrors = errorCount > 0;
+---
+
+{
+  hasErrors && (
+    <div class="validation" role="alert" aria-live="assertive">
+      <Alert type="error" title={summary || 'Please fix the following errors'}>
+        <ul class="validation-list">
+          {errors.map((error) => (
+            <li class="validation-item">
+              <Badge variant="danger">{error.field}</Badge>
+              <span class="validation-message">{error.message}</span>
+            </li>
+          ))}
+        </ul>
+      </Alert>
+    </div>
+  )
+}
+
+<style>
+  .validation {
+    margin: var(--space-4) 0;
+  }
+
+  .validation:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .validation-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .validation-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+  }
+
+  .validation-message {
+    color: var(--text-secondary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .validation {
+      transition: none;
+    }
+  }
+</style>

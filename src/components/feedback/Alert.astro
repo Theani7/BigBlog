@@ -1,0 +1,178 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '../ui/Icon.astro';
+
+interface AlertProps {
+  type?: 'info' | 'success' | 'warning' | 'error';
+  title?: string;
+  description?: string;
+  dismissible?: boolean;
+}
+
+const { type = 'info', title, description, dismissible = false } = Astro.props as AlertProps;
+
+const typeStyles = {
+  info: { bg: 'var(--color-info-light)', border: 'var(--color-info)', icon: 'info' },
+  warning: {
+    bg: 'var(--color-warning-light)',
+    border: 'var(--color-warning)',
+    icon: 'alert-triangle',
+  },
+  danger: { bg: 'var(--color-danger-light)', border: 'var(--color-danger)', icon: 'alert-circle' },
+  success: {
+    bg: 'var(--color-success-light)',
+    border: 'var(--color-success)',
+    icon: 'check-circle',
+  },
+};
+
+const style = typeStyles[type];
+---
+
+<div
+  class="alert"
+  role="alert"
+  aria-live="assertive"
+  style="background: {style.bg}; border-left: 4px solid {style.border};"
+  data-alert
+>
+  <div class="alert-content">
+    <div class="alert-icon" aria-hidden="true">
+      <Icon name={style.icon} size="lg" color="var(--text-primary)" />
+    </div>
+    <div class="alert-body">
+      {title && <div class="alert-title">{title}</div>}
+      {description && <div class="alert-description">{description}</div>}
+      <slot />
+    </div>
+  </div>
+  {
+    dismissible && (
+      <button class="alert-dismiss" aria-label="Dismiss alert" type="button" data-dismiss>
+        <Icon name="x" size="sm" color="var(--text-tertiary)" />
+      </button>
+    )
+  }
+</div>
+
+<style>
+  .alert {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-6);
+    margin: var(--space-6) 0;
+    border-radius: var(--radius-md);
+  }
+
+  .alert-content {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    flex: 1;
+    min-width: 0;
+  }
+
+  .alert-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    margin-top: var(--space-0.5);
+  }
+
+  .alert-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .alert-title {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    margin-bottom: var(--space-1);
+  }
+
+  .alert-description {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+  }
+
+  .alert-dismiss {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--space-6);
+    height: var(--space-6);
+    border: none;
+    background: transparent;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    border-radius: var(--radius-full);
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default);
+  }
+
+  .alert-dismiss:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+  }
+
+  .alert-dismiss:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @keyframes alert-exit {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100%);
+    }
+  }
+
+  .alert--exit {
+    animation: alert-exit var(--duration-fast) var(--ease-in) forwards;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .alert--exit {
+      animation: none;
+    }
+
+    .alert-dismiss {
+      transition: none;
+    }
+  }
+
+  .alert:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
+
+<script>
+  const alert = document.currentScript?.parentElement;
+  if (!alert) return;
+
+  const dismissBtn = alert.querySelector('[data-dismiss]');
+
+  function dismiss() {
+    if (alert.classList.contains('alert--exit')) return;
+    alert.classList.add('alert--exit');
+    alert.addEventListener(
+      'animationend',
+      () => {
+        alert.remove();
+      },
+      { once: true }
+    );
+  }
+
+  dismissBtn?.addEventListener('click', dismiss);
+</script>

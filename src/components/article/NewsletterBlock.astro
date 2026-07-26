@@ -1,0 +1,141 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Button from '../ui/Button.astro';
+
+interface NewsletterBlockProps {
+  title?: string;
+  description?: string;
+  placeholder?: string;
+  buttonText?: string;
+}
+
+const {
+  title = 'Subscribe to our newsletter',
+  description = 'Get the latest articles delivered straight to your inbox.',
+  placeholder = 'Enter your email',
+  buttonText = 'Subscribe',
+} = Astro.props as NewsletterBlockProps;
+---
+
+<div class="newsletter-block" role="region" aria-label="Newsletter subscription">
+  <div class="newsletter-block__content">
+    {title && <h3 class="newsletter-block__title">{title}</h3>}
+    {description && <p class="newsletter-block__description">{description}</p>}
+    <form class="newsletter-block__form" action="#" method="post">
+      <label for="newsletter-email" class="sr-only">Email address</label>
+      <input
+        type="email"
+        id="newsletter-email"
+        name="email"
+        class="newsletter-block__input"
+        placeholder={placeholder}
+        required
+        autocomplete="email"
+        aria-label={placeholder}
+      />
+      <Button type="submit" variant="primary">
+        {buttonText}
+      </Button>
+    </form>
+  </div>
+</div>
+
+<style>
+  .newsletter-block {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-8);
+    margin: var(--space-8) 0;
+  }
+
+  .newsletter-block__content {
+    max-width: var(--container-sm);
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .newsletter-block__title {
+    font-size: var(--text-h3);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-3) 0;
+  }
+
+  .newsletter-block__description {
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    line-height: var(--leading-body);
+    margin: 0 0 var(--space-6) 0;
+  }
+
+  .newsletter-block__form {
+    display: flex;
+    gap: var(--space-3);
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .newsletter-block__input {
+    flex: 1;
+    padding: var(--space-3) var(--space-4);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    color: var(--text-primary);
+    transition:
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
+    min-width: 0;
+  }
+
+  .newsletter-block__input::placeholder {
+    color: var(--text-tertiary);
+  }
+
+  .newsletter-block__input:focus {
+    outline: none;
+    border-color: var(--border-color-focus);
+    box-shadow: var(--focus-ring);
+  }
+
+  .newsletter-block__input:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .newsletter-block__input {
+      transition: none;
+    }
+  }
+
+  .newsletter-block:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    .newsletter-block__form {
+      flex-direction: column;
+    }
+
+    .newsletter-block {
+      padding: var(--space-6) var(--space-4);
+    }
+  }
+</style>

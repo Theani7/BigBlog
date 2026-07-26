@@ -1,0 +1,104 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Icon from '@components/ui/Icon.astro';
+
+interface BreadcrumbItem {
+  label: string;
+  href?: string;
+}
+
+interface BreadcrumbProps {
+  items: BreadcrumbItem[];
+}
+
+const { items } = Astro.props as BreadcrumbProps;
+---
+
+<nav class="breadcrumb" aria-label="Breadcrumb">
+  <ol class="breadcrumb-list">
+    {
+      items.map((item, index) => {
+        const isLast = index === items.length - 1;
+        return (
+          <>
+            {index > 0 && (
+              <li class="breadcrumb-separator" aria-hidden="true">
+                <Icon name="chevron-right" size="xs" />
+              </li>
+            )}
+            <li class="breadcrumb-item">
+              {isLast ? (
+                <span class="breadcrumb-current" aria-current="page">
+                  {item.label}
+                </span>
+              ) : (
+                <a href={item.href} class="breadcrumb-link">
+                  {item.label}
+                </a>
+              )}
+            </li>
+          </>
+        );
+      })
+    }
+  </ol>
+</nav>
+
+<style>
+  .breadcrumb {
+    padding: var(--space-3) 0;
+  }
+
+  .breadcrumb-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .breadcrumb-item {
+    display: flex;
+    align-items: center;
+  }
+
+  .breadcrumb-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-md);
+    padding: var(--space-1) var(--space-2);
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .breadcrumb-link:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .breadcrumb-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .breadcrumb-current {
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+  }
+
+  .breadcrumb-separator {
+    display: flex;
+    align-items: center;
+    color: var(--text-tertiary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .breadcrumb-link {
+      transition: none;
+    }
+  }
+</style>

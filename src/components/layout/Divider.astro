@@ -1,0 +1,75 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface DividerProps {
+  orientation?: 'horizontal' | 'vertical';
+  thin?: boolean;
+  color?: 'default' | 'primary' | 'secondary' | 'muted';
+}
+
+const {
+  orientation = 'horizontal',
+  thin = false,
+  color = 'default',
+  children,
+} = Astro.props as DividerProps;
+
+const colorMap = {
+  default: 'var(--border-color)',
+  primary: 'var(--color-primary)',
+  secondary: 'var(--color-secondary)',
+  muted: 'var(--text-tertiary)',
+};
+
+const thickness = thin ? '1px' : '2px';
+const style = colorMap[color];
+---
+
+{
+  orientation === 'horizontal' ? (
+    <hr
+      class="divider divider--horizontal"
+      style={`border-top-color: ${style}; border-top-width: ${thickness};`}
+      aria-hidden="true"
+    />
+  ) : (
+    <div
+      class="divider divider--vertical"
+      style={`border-left-color: ${style}; border-left-width: ${thickness};`}
+      aria-hidden="true"
+    />
+  )
+}
+
+<style>
+  .divider {
+    border: none;
+    background: none;
+  }
+
+  .divider--horizontal {
+    border-top: 1px solid var(--border-color);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .divider--vertical {
+    border-left: 1px solid var(--border-color);
+    height: 100%;
+    min-height: 1rem;
+    margin: 0;
+    padding: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .divider {
+      transition: none;
+    }
+  }
+
+  .divider:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

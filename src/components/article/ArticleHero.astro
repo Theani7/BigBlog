@@ -1,0 +1,154 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+
+interface ArticleHeroProps {
+  title: string;
+  description: string;
+  cover?: string;
+  coverAlt?: string;
+  publishedAt: Date;
+  author?: string;
+  category?: string;
+}
+
+const { title, description, cover, coverAlt, publishedAt, author, category } =
+  Astro.props as ArticleHeroProps;
+---
+
+<header class="article-hero" aria-label="Article header">
+  {
+    cover && (
+      <div class="article-hero__cover">
+        <img src={cover} alt={coverAlt || title} />
+        <div class="article-hero__overlay" aria-hidden="true" />
+      </div>
+    )
+  }
+  <div class="article-hero__content">
+    {category && <span class="article-hero__category">{category}</span>}
+    <h1 class="article-hero__title">{title}</h1>
+    {description && <p class="article-hero__description">{description}</p>}
+    <div class="article-hero__meta">
+      {author && <span class="article-hero__author">{author}</span>}
+      <time class="article-hero__date" datetime={publishedAt.toISOString()}>
+        {
+          publishedAt.toLocaleDateString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        }
+      </time>
+    </div>
+  </div>
+</header>
+
+<style>
+  .article-hero {
+    position: relative;
+    margin-bottom: var(--space-8);
+  }
+
+  .article-hero__cover {
+    position: relative;
+    aspect-ratio: 21 / 9;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .article-hero__cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .article-hero__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, transparent 40%, var(--bg-primary));
+  }
+
+  .article-hero__content {
+    position: relative;
+    z-index: 1;
+    margin-top: calc(var(--space-8) * -1);
+    padding: var(--space-8) var(--space-4);
+    max-width: var(--container-lg);
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .article-hero__category {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+  }
+
+  .article-hero__title {
+    font-size: var(--text-display);
+    font-weight: var(--weight-bold);
+    line-height: var(--leading-display);
+    letter-spacing: var(--tracking-tight);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .article-hero__description {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+    line-height: var(--leading-lead);
+    margin: 0 0 var(--space-6) 0;
+    max-width: 65ch;
+  }
+
+  .article-hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    align-items: center;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .article-hero__author {
+    font-weight: var(--weight-medium);
+    color: var(--text-primary);
+  }
+
+  .article-hero__date {
+    color: var(--text-tertiary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .article-hero__cover img {
+      transition: none;
+    }
+  }
+
+  .article-hero:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 767px) {
+    .article-hero__cover {
+      aspect-ratio: 16 / 9;
+    }
+
+    .article-hero__title {
+      font-size: var(--text-h1);
+    }
+
+    .article-hero__content {
+      padding: var(--space-6) var(--space-4);
+    }
+  }
+</style>

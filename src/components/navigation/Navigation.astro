@@ -1,0 +1,189 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Container from '@components/layout/Container.astro';
+import Stack from '@components/layout/Stack.astro';
+import Button from '@components/ui/Button.astro';
+import Icon from '@components/ui/Icon.astro';
+import MobileNav from './MobileNav.astro';
+import ThemeSwitch from './ThemeSwitch.astro';
+
+interface NavLink {
+  label: string;
+  href: string;
+}
+
+interface NavigationProps {
+  links: NavLink[];
+  logoText: string;
+}
+
+const { links, logoText } = Astro.props as NavigationProps;
+---
+
+<header class="navigation" role="banner">
+  <Container size="lg">
+    <Stack direction="row" align="center" justify="between" wrap>
+      <a href="/" class="navigation-logo" aria-label={logoText}>
+        <span class="navigation-logo-text">{logoText}</span>
+      </a>
+      <nav class="navigation-desktop" aria-label="Main navigation">
+        <Stack direction="row" align="center" gap="md">
+          {
+            links.map((link) => (
+              <a href={link.href} class="navigation-link">
+                {link.label}
+              </a>
+            ))
+          }
+        </Stack>
+      </nav>
+      <Stack direction="row" align="center" gap="sm">
+        <Button variant="ghost" size="sm" aria-label="Search">
+          <Icon name="search" size="sm" />
+        </Button>
+        <ThemeSwitch />
+        <Button
+          variant="ghost"
+          size="sm"
+          class="navigation-mobile-toggle"
+          aria-label="Open menu"
+          aria-expanded="false"
+        >
+          <Icon name="menu" size="md" />
+        </Button>
+      </Stack>
+    </Stack>
+  </Container>
+  <MobileNav {links} open={false} onClose={() => {}} />
+</header>
+
+<script is:inline>
+  (() => {
+    const root = document.currentScript?.parentElement;
+    if (!root) return;
+
+    const toggle = root.querySelector('.navigation-mobile-toggle');
+    const overlay = root.querySelector('.mobile-nav-overlay');
+    const drawer = root.querySelector('.mobile-nav-drawer');
+    if (!toggle || !overlay || !drawer) return;
+
+    function open() {
+      overlay.classList.add('mobile-nav-overlay--open');
+      drawer.classList.add('mobile-nav-drawer--open');
+      overlay.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+      const firstLink = drawer.querySelector('.mobile-nav-link');
+      if (firstLink) firstLink.focus();
+    }
+
+    function close() {
+      overlay.classList.remove('mobile-nav-overlay--open');
+      drawer.classList.remove('mobile-nav-drawer--open');
+      overlay.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', () => {
+      if (drawer.classList.contains('mobile-nav-drawer--open')) {
+        close();
+      } else {
+        open();
+      }
+    });
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('mobile-nav-drawer--open')) {
+        close();
+      }
+    });
+  })();
+</script>
+
+<style>
+  .navigation {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: var(--bg-primary);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .navigation-logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-weight: var(--weight-bold);
+    font-size: var(--text-lg);
+    min-height: var(--header-height);
+  }
+
+  .navigation-logo:hover {
+    text-decoration: none;
+    color: var(--color-primary);
+  }
+
+  .navigation-logo:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-md);
+  }
+
+  .navigation-logo-text {
+    line-height: 1;
+  }
+
+  .navigation-desktop {
+    display: none;
+  }
+
+  .navigation-link {
+    display: inline-block;
+    padding: var(--space-2) var(--space-3);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-md);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default);
+  }
+
+  .navigation-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    text-decoration: none;
+  }
+
+  .navigation-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .navigation-mobile-toggle {
+    display: inline-flex;
+  }
+
+  @media (min-width: 768px) {
+    .navigation-desktop {
+      display: block;
+    }
+
+    .navigation-mobile-toggle {
+      display: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .navigation-link {
+      transition: none;
+    }
+  }
+</style>

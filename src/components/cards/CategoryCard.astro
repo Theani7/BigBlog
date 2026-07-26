@@ -1,0 +1,95 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Badge from '../ui/Badge.astro';
+import Button from '../ui/Button.astro';
+
+interface CategoryCardProps {
+  title: string;
+  slug: string;
+  description: string;
+  count: number;
+}
+
+const { title, slug, description, count } = Astro.props as CategoryCardProps;
+---
+
+<article class="category-card" aria-labelledby={`category-card-title-${slug}`}>
+  <Surface elevation={0} rounded="lg" bg="primary" padding="md">
+    <div class="category-card__header">
+      <h3 class="category-card__title" id={`category-card-title-${slug}`}>
+        <a href={`/blog/category/${slug}`}>{title}</a>
+      </h3>
+      <Badge variant="default">{count} posts</Badge>
+    </div>
+    <p class="category-card__description">{description}</p>
+    <div class="category-card__action">
+      <Button variant="outline" href={`/blog/category/${slug}`}>View category</Button>
+    </div>
+  </Surface>
+</article>
+
+<style>
+  .category-card {
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elevation-1);
+    transition:
+      box-shadow var(--transition-normal) var(--ease-default),
+      transform var(--transition-normal) var(--ease-default);
+  }
+
+  .category-card:hover {
+    box-shadow: var(--elevation-3);
+    transform: translateY(-1px);
+  }
+
+  .category-card:focus-within {
+    box-shadow: var(--focus-ring);
+  }
+
+  .category-card__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+  }
+
+  .category-card__title {
+    margin: 0;
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+  }
+
+  .category-card__title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .category-card__title a:hover {
+    color: var(--color-primary);
+  }
+
+  .category-card__description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: var(--leading-body);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .category-card__action {
+    padding-top: var(--space-2);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .category-card {
+      transition: none;
+    }
+  }
+
+  .category-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

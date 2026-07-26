@@ -1,0 +1,38 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Badge from '../ui/Badge.astro';
+
+interface TagChipProps {
+  name: string;
+  slug: string;
+}
+
+const { name, slug } = Astro.props as TagChipProps;
+---
+
+<a href={`/blog/tag/${slug}`} class="tag-chip" aria-label={`View all posts tagged ${name}`}>
+  <Badge variant="default">{name}</Badge>
+</a>
+
+<style>
+  .tag-chip {
+    text-decoration: none;
+    transition: opacity var(--duration-fast) var(--ease-default);
+  }
+
+  .tag-chip:hover {
+    opacity: 0.8;
+  }
+
+  .tag-chip:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-full);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tag-chip {
+      transition: none;
+    }
+  }
+</style>

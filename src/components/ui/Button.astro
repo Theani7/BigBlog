@@ -1,0 +1,223 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface ButtonProps {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'link' | 'danger';
+  size?: 'sm' | 'md' | 'lg';
+  loading?: boolean;
+  disabled?: boolean;
+  type?: 'button' | 'submit' | 'reset';
+  href?: string;
+}
+
+const {
+  variant = 'primary',
+  size = 'md',
+  loading = false,
+  disabled = false,
+  type = 'button',
+  href,
+  children,
+} = Astro.props as ButtonProps;
+
+const isLink = variant === 'link' || href !== undefined;
+const isDisabled = disabled || loading;
+---
+
+{
+  isLink ? (
+    <a
+      class={`btn btn--${variant} btn--${size}`}
+      href={href || '#'}
+      role="button"
+      aria-disabled={isDisabled ? 'true' : undefined}
+      aria-busy={loading ? 'true' : undefined}
+    >
+      {loading && <span class="btn-spinner" aria-hidden="true" />}
+      <span class="btn-label">{children}</span>
+    </a>
+  ) : (
+    <button
+      class={`btn btn--${variant} btn--${size}`}
+      type={type}
+      disabled={isDisabled}
+      aria-busy={loading ? 'true' : undefined}
+    >
+      {loading && <span class="btn-spinner" aria-hidden="true" />}
+      <span class="btn-label">{children}</span>
+    </button>
+  )
+}
+
+<style>
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    border-radius: var(--radius-lg);
+    font-weight: var(--weight-semibold);
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      color var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default);
+    box-shadow: var(--shadow-sm);
+    white-space: nowrap;
+    line-height: 1.5;
+  }
+
+  .btn--sm {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .btn--md {
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-base);
+  }
+
+  .btn--lg {
+    padding: var(--space-4) var(--space-6);
+    font-size: var(--text-base);
+  }
+
+  .btn--primary {
+    background: var(--color-primary);
+    color: var(--text-inverse);
+    border-color: var(--color-primary);
+  }
+
+  .btn--primary:hover {
+    background: var(--color-primary-hover);
+    border-color: var(--color-primary-hover);
+  }
+
+  .btn--primary:active {
+    background: var(--color-primary-active);
+    border-color: var(--color-primary-active);
+  }
+
+  .btn--secondary {
+    background: var(--color-secondary);
+    color: var(--text-inverse);
+    border-color: var(--color-secondary);
+  }
+
+  .btn--secondary:hover {
+    background: var(--color-secondary-hover);
+    border-color: var(--color-secondary-hover);
+  }
+
+  .btn--secondary:active {
+    background: var(--color-secondary-active);
+    border-color: var(--color-secondary-active);
+  }
+
+  .btn--outline {
+    background: transparent;
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .btn--outline:hover {
+    background: var(--color-primary-light);
+  }
+
+  .btn--outline:active {
+    background: var(--color-primary);
+    color: var(--text-inverse);
+  }
+
+  .btn--ghost {
+    background: transparent;
+    color: var(--text-primary);
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  .btn--ghost:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .btn--ghost:active {
+    background: var(--bg-secondary);
+  }
+
+  .btn--link {
+    background: transparent;
+    color: var(--color-primary);
+    border-color: transparent;
+    box-shadow: none;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .btn--link:hover {
+    background: transparent;
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+  }
+
+  .btn--link:active {
+    color: var(--color-primary-active);
+  }
+
+  .btn--danger {
+    background: var(--color-danger);
+    color: var(--text-inverse);
+    border-color: var(--color-danger);
+  }
+
+  .btn--danger:hover {
+    background: var(--color-danger-hover);
+    border-color: var(--color-danger-hover);
+  }
+
+  .btn--danger:active {
+    background: var(--color-danger-active);
+    border-color: var(--color-danger-active);
+  }
+
+  .btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    box-shadow: var(--focus-ring);
+  }
+
+  .btn:disabled,
+  .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .btn-spinner {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: btn-spin 0.6s linear infinite;
+  }
+
+  @keyframes btn-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-spinner {
+      animation: none;
+    }
+
+    .btn {
+      transition: none;
+    }
+  }
+</style>

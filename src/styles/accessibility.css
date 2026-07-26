@@ -1,0 +1,182 @@
+@import 'tokens.css';
+
+/* ── Screen Reader Only ── */
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ── Focus Visible Utilities ── */
+
+.focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.focus-visible-offset {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-visible-offset:focus-visible {
+  outline-color: var(--color-primary);
+}
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(37 99 235 / 0.2);
+}
+
+.focus-ring-inset:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* ── Skip Link ── */
+
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-4);
+  z-index: var(--z-tooltip);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-primary);
+  color: var(--text-inverse);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  transition: top var(--duration-fast) var(--ease-default);
+}
+
+.skip-link:focus {
+  top: var(--space-4);
+}
+
+/* ── High Contrast Mode ── */
+
+@media (forced-colors: active) {
+  .focus-visible,
+  .focus-ring:focus-visible {
+    outline: 3px solid Highlight;
+  }
+
+  .skip-link {
+    border: 2px solid ButtonText;
+  }
+
+  .elevate-1:hover,
+  .elevate-2:hover,
+  .elevate-3:hover,
+  .elevate-4:hover,
+  .elevate-5:hover {
+    border: 1px solid ButtonText;
+  }
+}
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .sr-only-focusable:focus,
+  .sr-only-focusable:active {
+    transition: none;
+  }
+
+  .skip-link {
+    transition: none;
+  }
+}
+
+/* ── Forced Colors Mode ── */
+
+@media (forced-colors: active) {
+  a {
+    color: LinkText;
+  }
+
+  a:hover {
+    color: LinkText;
+    text-decoration: underline;
+  }
+
+  ::selection {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  :focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+
+/* ── ARIA Utility Classes ── */
+
+[aria-hidden='true'] {
+  visibility: hidden;
+}
+
+[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+[aria-current='page'] {
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary);
+}
+
+[aria-selected='true'] {
+  font-weight: var(--weight-semibold);
+  color: var(--color-primary);
+}
+
+[aria-pressed='true'] {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+[aria-checked='true'] {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+/* ── Dark Theme ── */
+
+[data-theme='dark'] .skip-link {
+  background: var(--color-primary);
+  color: var(--text-inverse);
+}
+
+/* ── System Theme ── */
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='system'] .skip-link {
+    background: var(--color-primary);
+    color: var(--text-inverse);
+  }
+}

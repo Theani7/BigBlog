@@ -1,0 +1,67 @@
+---
+import type { ComponentProps } from 'astro/types';
+
+interface SkeletonProps {
+  width?: string;
+  height?: string;
+  rounded?: boolean;
+  lines?: number;
+}
+
+const { width = '100%', height = '1rem', rounded = false, lines } = Astro.props as SkeletonProps;
+
+const lineWidths = lines
+  ? Array.from({ length: lines }, (_, i) => (i % 2 === 0 ? '100%' : '80%'))
+  : [width];
+---
+
+{
+  lines ? (
+    lineWidths.map((w) => (
+      <div
+        class={`skeleton${rounded ? ' skeleton--rounded' : ''}`}
+        style="width: {w}; height: {height};"
+        aria-hidden="true"
+      />
+    ))
+  ) : (
+    <div
+      class={`skeleton${rounded ? ' skeleton--rounded' : ''}`}
+      style="width: {width}; height: {height};"
+      aria-hidden="true"
+    />
+  )
+}
+
+<style>
+  .skeleton {
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-md);
+    animation: skeleton-pulse 1.5s ease-in-out infinite;
+  }
+
+  .skeleton--rounded {
+    border-radius: var(--radius-full);
+  }
+
+  @keyframes skeleton-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton {
+      animation: none;
+    }
+  }
+
+  .skeleton:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>

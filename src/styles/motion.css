@@ -1,0 +1,249 @@
+@import 'tokens.css';
+
+/* ── Transition Utilities ── */
+
+.transition-colors {
+  transition:
+    color var(--duration-fast) var(--ease-default),
+    background-color var(--duration-fast) var(--ease-default),
+    border-color var(--duration-fast) var(--ease-default);
+}
+
+.transition-all {
+  transition: all var(--duration-normal) var(--ease-default);
+}
+
+.transition-transform {
+  transition: transform var(--duration-normal) var(--ease-default);
+}
+
+.transition-opacity {
+  transition: opacity var(--duration-normal) var(--ease-default);
+}
+
+.transition-shadow {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+/* ── Hover Elevation ── */
+
+.elevate-1 {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.elevate-1:hover {
+  box-shadow: var(--shadow-sm);
+}
+
+.elevate-2 {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.elevate-2:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.elevate-3 {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.elevate-3:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.elevate-4 {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.elevate-4:hover {
+  box-shadow: var(--shadow-xl);
+}
+
+.elevate-5 {
+  transition: box-shadow var(--duration-normal) var(--ease-default);
+}
+
+.elevate-5:hover {
+  box-shadow: var(--shadow-xl);
+  transform: translateY(-2px);
+}
+
+/* ── Focus Animations ── */
+
+.focus-glow {
+  transition: box-shadow var(--duration-fast) var(--ease-default);
+}
+
+.focus-glow:focus-visible {
+  box-shadow: 0 0 0 3px rgb(37 99 235 / 0.3);
+}
+
+.focus-scale {
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+
+.focus-scale:focus-visible {
+  transform: scale(1.02);
+}
+
+/* ── Page Transitions ── */
+
+.fade-in {
+  animation: fade-in var(--duration-normal) var(--ease-default);
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.slide-in {
+  animation: slide-in var(--duration-normal) var(--ease-default);
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-in-left {
+  animation: slide-in-left var(--duration-normal) var(--ease-default);
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.slide-in-right {
+  animation: slide-in-right var(--duration-normal) var(--ease-default);
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ── Skeleton Pulse ── */
+
+.skeleton {
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  animation: skeleton-pulse var(--duration-slow) var(--ease-default) infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+/* ── Toast Slide-In ── */
+
+.toast-enter {
+  animation: toast-slide-in var(--duration-normal) var(--ease-out);
+}
+
+@keyframes toast-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.toast-exit {
+  animation: toast-slide-out var(--duration-fast) var(--ease-in) forwards;
+}
+
+@keyframes toast-slide-out {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+/* ── Modal Fade-In ── */
+
+.modal-enter {
+  animation: modal-fade-in var(--duration-normal) var(--ease-default);
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-backdrop-enter {
+  animation: backdrop-fade-in var(--duration-normal) var(--ease-default);
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ── Reduced Motion ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .slide-in,
+  .slide-in-left,
+  .slide-in-right,
+  .skeleton,
+  .toast-enter,
+  .toast-exit,
+  .modal-enter,
+  .modal-backdrop-enter,
+  .elevate-1,
+  .elevate-2,
+  .elevate-3,
+  .elevate-4,
+  .elevate-5,
+  .focus-glow,
+  .focus-scale {
+    animation: none !important;
+    transition: none !important;
+  }
+}
