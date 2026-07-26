@@ -1,5 +1,5 @@
 ---
-const { title } = Astro.props;
+const { title, breadcrumbs } = Astro.props;
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -23,6 +23,20 @@ const { title } = Astro.props;
       </nav>
     </header>
     <main class="container">
+      {breadcrumbs && (
+        <nav class="breadcrumbs" aria-label="Breadcrumb">
+          {breadcrumbs.map((crumb, i) => (
+            <>
+              {i > 0 && <span class="breadcrumb-sep">/</span>}
+              {crumb.href ? (
+                <a href={crumb.href}>{crumb.label}</a>
+              ) : (
+                <span class="breadcrumb-current">{crumb.label}</span>
+              )}
+            </>
+          ))}
+        </nav>
+      )}
       <slot />
     </main>
     <footer class="site-footer">
@@ -84,6 +98,33 @@ const { title } = Astro.props;
     opacity: 1;
   }
 
+  .breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.5rem 0 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+  }
+
+  .breadcrumbs a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+
+  .breadcrumbs a:hover {
+    color: var(--accent);
+  }
+
+  .breadcrumb-sep {
+    color: var(--border);
+  }
+
+  .breadcrumb-current {
+    color: var(--text);
+    font-weight: 500;
+  }
+
   .site-footer {
     border-top: 1px solid var(--border);
     padding: 2rem 0;
@@ -94,11 +135,5 @@ const { title } = Astro.props;
   .site-footer p {
     color: var(--text-muted);
     font-size: 0.8125rem;
-  }
-
-  .container {
-    max-width: var(--max-width);
-    margin: 0 auto;
-    padding: 0 1.5rem;
   }
 </style>

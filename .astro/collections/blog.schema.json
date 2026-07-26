@@ -16,6 +16,12 @@
       "type": "string",
       "format": "date-time"
     },
+    "category": {
+      "type": "string"
+    },
+    "author": {
+      "type": "string"
+    },
     "tags": {
       "type": "array",
       "items": {

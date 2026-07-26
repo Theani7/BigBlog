@@ -6,6 +6,7 @@ const posts = await getCollection('blog');
 const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 const allTags = [...new Set(sorted.flatMap((post) => post.data.tags || []))].sort();
+const allCategories = [...new Set(sorted.map((post) => post.data.category).filter(Boolean))].sort();
 ---
 
 <Layout title="Blog — All Posts">
@@ -16,6 +17,14 @@ const allTags = [...new Set(sorted.flatMap((post) => post.data.tags || []))].sor
         <h1 class="page-title">Writing</h1>
         <p class="page-subtitle">Thoughts, experiments, and reflections on design and technology.</p>
       </div>
+
+      {allCategories.length > 0 && (
+        <div class="category-list">
+          {allCategories.map((category) => (
+            <a href={`/categories/${category.toLowerCase()}`} class="category-chip">{category}</a>
+          ))}
+        </div>
+      )}
 
       <div class="search-bar">
         <input type="search" id="blog-search" placeholder="Search posts..." autocomplete="off" />
@@ -42,6 +51,9 @@ const allTags = [...new Set(sorted.flatMap((post) => post.data.tags || []))].sor
                 <time datetime={post.data.pubDate.toISOString()}>
                   {post.data.pubDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
                 </time>
+                {post.data.category && (
+                  <span class="post-category">{post.data.category}</span>
+                )}
               </div>
               <h2 class="post-title">{post.data.title}</h2>
               {post.data.description && (
@@ -99,6 +111,40 @@ const allTags = [...new Set(sorted.flatMap((post) => post.data.tags || []))].sor
     font-size: 1.0625rem;
     line-height: 1.7;
     max-width: 32rem;
+  }
+
+  .category-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .category-chip {
+    padding: 0.375rem 0.875rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .category-chip:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .post-category {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 0.75rem;
   }
 
   .search-bar {
