@@ -1,6 +1,7 @@
 ---
 import type { ComponentProps } from 'astro/types';
 import Surface from '../layout/Surface.astro';
+import Picture from '../ui/Picture.astro';
 
 interface ArticleHeroProps {
   title: string;
@@ -20,7 +21,14 @@ const { title, description, cover, coverAlt, publishedAt, author, category } =
   {
     cover && (
       <div class="article-hero__cover">
-        <img src={cover} alt={coverAlt || title} />
+        <Picture
+          src={cover}
+          alt={coverAlt || title}
+          context="hero"
+          loading="eager"
+          fetchpriority="high"
+          aspectRatio="21/9"
+        />
         <div class="article-hero__overlay" aria-hidden="true" />
       </div>
     )

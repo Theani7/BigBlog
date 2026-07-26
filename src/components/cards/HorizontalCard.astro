@@ -3,6 +3,7 @@ import type { ComponentProps } from 'astro/types';
 import Surface from '../layout/Surface.astro';
 import Badge from '../ui/Badge.astro';
 import Button from '../ui/Button.astro';
+import Picture from '../ui/Picture.astro';
 
 interface HorizontalCardProps {
   title: string;
@@ -22,7 +23,7 @@ const { title, description, slug, date, category, cover, author } =
   <Surface elevation={0} rounded="lg" bg="primary" padding="none">
     <div class="horizontal-card__layout">
       <div class="horizontal-card__image">
-        <img src={cover} alt={title} loading="lazy" />
+        <Picture src={cover} alt={title} context="card" />
       </div>
       <div class="horizontal-card__body">
         <div class="horizontal-card__meta">

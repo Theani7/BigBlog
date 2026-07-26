@@ -1,0 +1,214 @@
+---
+/**
+ * VideoEmbed component — lazy-loaded YouTube/Vimeo embeds.
+ *
+ * Renders a poster image with play button overlay. The actual iframe
+ * loads only when the user clicks play, saving 200-500KB per embed.
+ */
+import Picture from './Picture.astro';
+
+interface VideoEmbedProps {
+  platform: 'youtube' | 'vimeo';
+  videoId: string;
+  title: string;
+  poster?: string;
+  startTime?: number;
+  class?: string;
+}
+
+const {
+  platform,
+  videoId,
+  title,
+  poster,
+  startTime,
+  class: className = '',
+} = Astro.props as VideoEmbedProps;
+
+const embedUrls: Record<string, (id: string, start?: number) => string> = {
+  youtube: (id, start) => {
+    const base = `https://www.youtube-nocookie.com/embed/${id}`;
+    const params = new URLSearchParams({ rel: '0', modestbranding: '1' });
+    if (start) params.set('start', String(start));
+    return `${base}?${params.toString()}`;
+  },
+  vimeo: (id) => `https://player.vimeo.com/video/${id}?dnt=1`,
+};
+
+const embedUrl = embedUrls[platform](videoId, startTime);
+const thumbnailUrl =
+  poster ||
+  (platform === 'youtube' ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : '');
+
+const dataAttrs: Record<string, string> = {
+  'data-video-embed': '',
+  'data-video-platform': platform,
+  'data-video-id': videoId,
+  'data-video-url': embedUrl,
+};
+---
+
+<div class:list={['video-embed', className]} {...dataAttrs}>
+  <div class="video-embed__wrapper">
+    {
+      thumbnailUrl ? (
+        <Picture
+          src={thumbnailUrl}
+          alt={title}
+          context="hero"
+          aspectRatio="16/9"
+          class="video-embed__poster"
+        />
+      ) : (
+        <div class="video-embed__placeholder" style="aspect-ratio: 16/9;">
+          <span class="video-embed__placeholder-text">{title}</span>
+        </div>
+      )
+    }
+    <button
+      type="button"
+      class="video-embed__play"
+      aria-label={`Play video: ${title}`}
+      data-video-play
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+      >
+        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+      </svg>
+    </button>
+  </div>
+  <p class="video-embed__title">{title}</p>
+</div>
+
+<style>
+  .video-embed {
+    margin: var(--space-8) 0;
+  }
+
+  .video-embed__wrapper {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+  }
+
+  .video-embed__poster,
+  .video-embed__placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .video-embed__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+  }
+
+  .video-embed__placeholder-text {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+  }
+
+  .video-embed__play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 5rem;
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: var(--radius-full);
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    transition:
+      background var(--duration-fast) var(--ease-default),
+      transform var(--duration-fast) var(--ease-default);
+    backdrop-filter: blur(4px);
+  }
+
+  .video-embed__play:hover {
+    background: rgba(0, 0, 0, 0.85);
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  .video-embed__play:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 4px;
+    transform: translate(-50%, -50%);
+  }
+
+  .video-embed__play svg {
+    margin-left: 4px;
+  }
+
+  .video-embed__title {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-3);
+    text-align: center;
+    line-height: var(--leading-normal);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .video-embed__play {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .video-embed__play {
+      width: 4rem;
+      height: 4rem;
+    }
+
+    .video-embed__play svg {
+      width: 32px;
+      height: 32px;
+    }
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('click', (e) => {
+    const playBtn = e.target.closest('[data-video-play]');
+    if (!playBtn) return;
+
+    const container = playBtn.closest('[data-video-embed]');
+    if (!container) return;
+
+    const url = container.dataset.videoUrl;
+    if (!url) return;
+
+    const wrapper = container.querySelector('.video-embed__wrapper');
+    if (!wrapper) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.title = container.querySelector('.video-embed__title')?.textContent || 'Video';
+    iframe.setAttribute(
+      'allow',
+      'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
+    );
+    iframe.setAttribute('allowfullscreen', '');
+    iframe.className = 'video-embed__iframe';
+    iframe.style.cssText = 'width: 100%; height: 100%; position: absolute; inset: 0; border: none;';
+
+    wrapper.innerHTML = '';
+    wrapper.appendChild(iframe);
+    iframe.focus();
+  });
+</script>

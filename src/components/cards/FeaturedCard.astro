@@ -3,6 +3,7 @@ import type { ComponentProps } from 'astro/types';
 import Surface from '../layout/Surface.astro';
 import Badge from '../ui/Badge.astro';
 import Button from '../ui/Button.astro';
+import Picture from '../ui/Picture.astro';
 
 interface FeaturedCardProps {
   title: string;
@@ -21,7 +22,7 @@ const { title, description, slug, date, category, cover, author } =
 <article class="featured-card" aria-labelledby={`featured-card-title-${slug}`}>
   <Surface elevation={0} rounded="lg" bg="primary" padding="none">
     <div class="featured-card__cover">
-      <img src={cover} alt={title} loading="lazy" />
+      <Picture src={cover} alt={title} context="featured" aspectRatio="16/9" />
       <div class="featured-card__badge">
         <Badge variant="primary">Featured</Badge>
       </div>

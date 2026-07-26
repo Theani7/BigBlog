@@ -3,6 +3,7 @@ import type { ComponentProps } from 'astro/types';
 import Surface from '../layout/Surface.astro';
 import Badge from '../ui/Badge.astro';
 import Button from '../ui/Button.astro';
+import Picture from '../ui/Picture.astro';
 
 interface SeriesCardProps {
   title: string;
@@ -21,7 +22,7 @@ const { title, slug, description, cover, author, postCount } = Astro.props as Se
     {
       cover && (
         <div class="series-card__cover">
-          <img src={cover} alt={title} loading="lazy" />
+          <Picture src={cover} alt={title} context="card" aspectRatio="16/9" />
         </div>
       )
     }

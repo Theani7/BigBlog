@@ -1,30 +1,75 @@
 ---
+/**
+ * Image component — responsive images with lightbox, blur placeholder,
+ * and modern format support via Cloudinary.
+ *
+ * Built on top of Picture.astro for format negotiation and srcset.
+ * Includes lightbox, captions, credits, and accessibility features.
+ */
+import Picture from './Picture.astro';
+import { type ImageContext } from '@lib/media';
+
 interface ImageProps {
   src: string;
   alt: string;
   width?: number;
   height?: number;
   caption?: string;
+  credit?: string;
   blur?: boolean;
+  context?: ImageContext;
+  aspectRatio?: string;
+  rounded?: 'none' | 'sm' | 'md' | 'lg' | 'full';
+  border?: boolean;
+  shadow?: 'none' | 'sm' | 'md' | 'lg';
+  loading?: 'lazy' | 'eager';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  class?: string;
 }
 
-const { src, alt, width, height, caption, blur = false } = Astro.props as ImageProps;
+const {
+  src,
+  alt,
+  width,
+  height,
+  caption,
+  credit,
+  blur = false,
+  context = 'article',
+  aspectRatio,
+  rounded = 'lg',
+  border = false,
+  shadow = 'none',
+  loading,
+  fetchpriority,
+  class: className = '',
+} = Astro.props as ImageProps;
+
+const resolvedLoading = loading || (context === 'hero' || context === 'banner' ? 'eager' : 'lazy');
+const resolvedFetchPriority =
+  fetchpriority || (context === 'hero' || context === 'banner' ? 'high' : 'auto');
+
+const roundedClass = rounded !== 'none' ? `image-figure--rounded-${rounded}` : '';
+const borderClass = border ? 'image-figure--border' : '';
+const shadowClass = shadow !== 'none' ? `image-figure--shadow-${shadow}` : '';
 ---
 
-<figure class="image-figure" data-image-figure>
+<figure
+  class:list={['image-figure', roundedClass, borderClass, shadowClass, className]}
+  data-image-figure
+>
   <div class="image-wrapper" data-image-wrapper>
     {blur && <div class="image-blur" aria-hidden="true" style={`background-image: url(${src})`} />}
-    <img
+    <Picture
       src={src}
       alt={alt}
       width={width}
       height={height}
-      loading="lazy"
-      decoding="async"
-      fetchpriority="low"
-      class="image-figure__img"
-      data-image
-      style={width && height ? `aspect-ratio: ${width}/${height}` : undefined}
+      context={context}
+      loading={resolvedLoading}
+      fetchpriority={resolvedFetchPriority}
+      aspectRatio={aspectRatio}
+      class="image-figure__picture"
     />
     <button type="button" class="image-zoom" aria-label={`Zoom in on ${alt}`} data-image-zoom>
       <span class="image-zoom__icon" aria-hidden="true">
@@ -47,7 +92,21 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
       </span>
     </button>
   </div>
-  {caption && <figcaption class="image-caption">{caption}</figcaption>}
+  {
+    (caption || credit) && (
+      <figcaption class="image-caption">
+        {caption && <span class="image-caption__text">{caption}</span>}
+        {credit && (
+          <span class="image-caption__credit">
+            <span class="image-caption__credit-sep" aria-hidden="true">
+              ·
+            </span>
+            {credit}
+          </span>
+        )}
+      </figcaption>
+    )
+  }
 </figure>
 
 <div
@@ -91,11 +150,37 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
     text-align: center;
   }
 
+  .image-figure--rounded-sm .image-wrapper {
+    border-radius: var(--radius-sm);
+  }
+  .image-figure--rounded-md .image-wrapper {
+    border-radius: var(--radius-md);
+  }
+  .image-figure--rounded-lg .image-wrapper {
+    border-radius: var(--radius-lg);
+  }
+  .image-figure--rounded-full .image-wrapper {
+    border-radius: var(--radius-full);
+  }
+
+  .image-figure--border .image-wrapper {
+    border: 1px solid var(--border-color);
+  }
+
+  .image-figure--shadow-sm .image-wrapper {
+    box-shadow: var(--shadow-sm);
+  }
+  .image-figure--shadow-md .image-wrapper {
+    box-shadow: var(--shadow-md);
+  }
+  .image-figure--shadow-lg .image-wrapper {
+    box-shadow: var(--shadow-lg);
+  }
+
   .image-wrapper {
     position: relative;
     display: inline-block;
     max-width: 100%;
-    border-radius: var(--radius-lg);
     overflow: hidden;
   }
 
@@ -110,24 +195,9 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
     transition: opacity var(--duration-normal) var(--ease-default);
   }
 
-  .image-figure__img {
-    max-width: 100%;
-    height: auto;
-    display: block;
-    transition: opacity var(--duration-normal) var(--ease-default);
-  }
-
-  .image-blur ~ .image-figure__img {
+  .image-blur ~ :global(.picture) {
     position: relative;
     z-index: 1;
-  }
-
-  .image-figure__img[data-loaded] {
-    opacity: 1;
-  }
-
-  .image-figure__img:not([data-loaded]) {
-    opacity: 0;
   }
 
   .image-zoom {
@@ -169,6 +239,15 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
     max-width: 65ch;
     margin-left: auto;
     margin-right: auto;
+  }
+
+  .image-caption__credit {
+    color: var(--text-tertiary);
+    font-style: italic;
+  }
+
+  .image-caption__credit-sep {
+    margin: 0 var(--space-1);
   }
 
   .image-lightbox {
@@ -246,9 +325,6 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
     .image-blur {
       transition: none;
     }
-    .image-figure__img {
-      transition: none;
-    }
     .image-zoom {
       transition: none;
     }
@@ -273,17 +349,19 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
     const zoomBtn = e.target.closest('[data-image-zoom]');
     if (zoomBtn) {
       const figure = zoomBtn.closest('[data-image-figure]');
-      const img = figure?.querySelector('[data-image]');
+      const img =
+        figure?.querySelector('[data-picture-img]') || figure?.querySelector('[data-image]');
       const lightbox = document.querySelector('[data-lightbox]');
       const lightboxImg = document.querySelector('[data-lightbox-img]');
       const lightboxCaption = document.querySelector('[data-lightbox-caption]');
       if (!img || !lightbox || !lightboxImg) return;
 
-      lightboxImg.src = img.src;
+      lightboxImg.src = img.currentSrc || img.src;
       lightboxImg.alt = img.alt;
       if (lightboxCaption) {
-        lightboxCaption.textContent = img.alt || '';
-        lightboxCaption.style.display = img.alt ? 'block' : 'none';
+        const figcaption = figure?.querySelector('.image-caption__text');
+        lightboxCaption.textContent = figcaption?.textContent || img.alt || '';
+        lightboxCaption.style.display = figcaption || img.alt ? 'block' : 'none';
       }
       lightbox.removeAttribute('hidden');
       lightbox.setAttribute('aria-hidden', 'false');
@@ -321,18 +399,5 @@ const { src, alt, width, height, caption, blur = false } = Astro.props as ImageP
       lightbox.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
     }
-  });
-
-  document.addEventListener('DOMContentLoaded', () => {
-    const images = document.querySelectorAll('[data-image]');
-    images.forEach((img) => {
-      if (img.complete) {
-        img.setAttribute('data-loaded', '');
-      } else {
-        img.addEventListener('load', () => {
-          img.setAttribute('data-loaded', '');
-        });
-      }
-    });
   });
 </script>

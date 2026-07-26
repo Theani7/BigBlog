@@ -1,0 +1,93 @@
+---
+/**
+ * Picture component — responsive images with modern format support.
+ *
+ * Generates <picture> with AVIF > WebP > JPEG fallback using Cloudinary
+ * format negotiation. Supports srcset/sizes for responsive loading.
+ */
+import { generateSrcSet, generateSizes, type ImageContext } from '@lib/media';
+
+interface PictureProps {
+  src: string;
+  alt: string;
+  width?: number;
+  height?: number;
+  context?: ImageContext;
+  loading?: 'lazy' | 'eager';
+  decoding?: 'async' | 'sync';
+  fetchpriority?: 'high' | 'low' | 'auto';
+  class?: string;
+  style?: string;
+  widths?: number[];
+  aspectRatio?: string;
+}
+
+const {
+  src,
+  alt,
+  width,
+  height,
+  context = 'article',
+  loading = 'lazy',
+  decoding = 'async',
+  fetchpriority = 'auto',
+  class: className = '',
+  style: inlineStyle = '',
+  widths,
+  aspectRatio,
+} = Astro.props as PictureProps;
+
+const avifSrcSet = generateSrcSet(src, context, 'avif');
+const webpSrcSet = generateSrcSet(src, context, 'webp');
+const jpegSrcSet = generateSrcSet(src, context, 'jpeg');
+const sizes = generateSizes(context);
+
+const fallbackSrc =
+  src.startsWith('/') || src.startsWith('http')
+    ? src
+    : `https://res.cloudinary.com/${import.meta.env.CLOUDINARY_CLOUD_NAME || ''}/image/upload/f_auto,q_auto,w_${width || 800}/${src}`;
+
+const resolvedWidth = width || 800;
+const resolvedHeight = height || 450;
+
+const computedStyle = [aspectRatio ? `aspect-ratio: ${aspectRatio}` : '', inlineStyle]
+  .filter(Boolean)
+  .join('; ');
+---
+
+<picture class:list={['picture', className]} style={computedStyle || undefined}>
+  {avifSrcSet && <source type="image/avif" srcset={avifSrcSet} sizes={sizes} />}
+  {webpSrcSet && <source type="image/webp" srcset={webpSrcSet} sizes={sizes} />}
+  <img
+    src={fallbackSrc}
+    alt={alt}
+    width={resolvedWidth}
+    height={resolvedHeight}
+    loading={loading}
+    decoding={decoding}
+    fetchpriority={fetchpriority}
+    class="picture__img"
+    data-picture-img
+    {...jpegSrcSet ? { srcset: jpegSrcSet, sizes } : {}}
+  />
+</picture>
+
+<style>
+  .picture {
+    display: block;
+    overflow: hidden;
+  }
+
+  .picture__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .picture__img {
+      transition: none;
+    }
+  }
+</style>

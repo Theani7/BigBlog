@@ -1,6 +1,7 @@
 ---
 import type { ComponentProps } from 'astro/types';
 import Icon from '../ui/Icon.astro';
+import Picture from '../ui/Picture.astro';
 
 interface AvatarProps {
   src?: string;
@@ -41,13 +42,14 @@ const hasImage = src !== undefined && src !== '';
 >
   {
     hasImage ? (
-      <img
-        class="avatar__image"
+      <Picture
         src={src}
         alt={alt || name}
+        context="avatar"
         width={pixelSize}
         height={pixelSize}
-        loading="lazy"
+        aspectRatio="1/1"
+        class="avatar__image"
       />
     ) : (
       <span class="avatar__fallback" aria-hidden="true">

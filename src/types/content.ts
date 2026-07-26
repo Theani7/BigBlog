@@ -39,6 +39,9 @@ export interface PostFrontmatter {
   featured: boolean;
   cover?: string;
   coverAlt?: string;
+  coverWidth?: number;
+  coverHeight?: number;
+  coverCredit?: string;
   author: string;
   category: string;
   tags: string[];
@@ -114,4 +117,40 @@ export interface RssItem {
   categories: string[];
   cover?: string;
   author: string;
+}
+
+export interface MediaAsset {
+  publicId: string;
+  url: string;
+  width: number;
+  height: number;
+  format: string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+}
+
+export interface ResponsiveImageResult {
+  src: string;
+  srcSet: string;
+  sizes: string;
+  width: number;
+  height: number;
+}
+
+export interface GalleryImage {
+  src: string;
+  alt: string;
+  caption?: string;
+  credit?: string;
+  width?: number;
+  height?: number;
+}
+
+export interface VideoEmbed {
+  platform: 'youtube' | 'vimeo';
+  videoId: string;
+  title: string;
+  poster?: string;
+  startTime?: number;
 }

@@ -1,0 +1,542 @@
+---
+/**
+ * Gallery component — responsive image gallery with multiple layouts.
+ *
+ * Supports grid, masonry, and carousel layouts with lightbox integration.
+ * Keyboard navigation and touch gestures for carousel mode.
+ */
+import Picture from './Picture.astro';
+import { type GalleryImage } from '@types/content';
+
+interface GalleryProps {
+  images: GalleryImage[];
+  layout?: 'grid' | 'masonry' | 'carousel';
+  columns?: 2 | 3 | 4;
+  gap?: 'sm' | 'md' | 'lg';
+  lightbox?: boolean;
+  caption?: boolean;
+  class?: string;
+}
+
+const {
+  images,
+  layout = 'grid',
+  columns = 3,
+  gap = 'md',
+  lightbox = true,
+  caption = true,
+  class: className = '',
+} = Astro.props as GalleryProps;
+
+const gapMap = { sm: 'var(--space-2)', md: 'var(--space-4)', lg: 'var(--space-6)' };
+const gridStyle =
+  layout === 'grid' ? `grid-template-columns: repeat(${columns}, 1fr); gap: ${gapMap[gap]};` : '';
+const masonryStyle = layout === 'masonry' ? `columns: ${columns}; column-gap: ${gapMap[gap]};` : '';
+---
+
+<div
+  class:list={['gallery', `gallery--${layout}`, className]}
+  style={gridStyle || masonryStyle || undefined}
+  role="region"
+  aria-label="Image gallery"
+  data-gallery
+>
+  {
+    images.map((image, index) => (
+      <div
+        class:list={['gallery__item', { 'gallery__item--carousel': layout === 'carousel' }]}
+        style={
+          layout === 'masonry' ? `break-inside: avoid; margin-bottom: ${gapMap[gap]};` : undefined
+        }
+        data-gallery-item={index}
+      >
+        <div class="gallery__image-wrapper">
+          <Picture
+            src={image.src}
+            alt={image.alt}
+            context="gallery"
+            aspectRatio={layout === 'carousel' ? '3/2' : undefined}
+          />
+          {lightbox && (
+            <button
+              type="button"
+              class="gallery__zoom"
+              aria-label={`View ${image.alt}`}
+              data-gallery-zoom={index}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                <line x1="11" y1="8" x2="11" y2="14" />
+                <line x1="8" y1="11" x2="14" y2="11" />
+              </svg>
+            </button>
+          )}
+        </div>
+        {caption && (image.caption || image.credit) && (
+          <figcaption class="gallery__caption">
+            {image.caption && <span class="gallery__caption-text">{image.caption}</span>}
+            {image.credit && (
+              <span class="gallery__credit">
+                <span aria-hidden="true">·</span> {image.credit}
+              </span>
+            )}
+          </figcaption>
+        )}
+      </div>
+    ))
+  }
+</div>
+
+{
+  lightbox && (
+    <div
+      class="gallery-lightbox"
+      data-gallery-lightbox
+      hidden
+      aria-hidden="true"
+      role="dialog"
+      aria-label="Gallery preview"
+      tabindex="-1"
+    >
+      <div class="gallery-lightbox__header">
+        <span class="gallery-lightbox__counter" data-gallery-counter>
+          1 / {images.length}
+        </span>
+        <button
+          type="button"
+          class="gallery-lightbox__close"
+          aria-label="Close gallery"
+          data-gallery-close
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+      <button
+        type="button"
+        class="gallery-lightbox__nav gallery-lightbox__nav--prev"
+        aria-label="Previous image"
+        data-gallery-prev
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="15 18 9 12 15 6" />
+        </svg>
+      </button>
+      <div class="gallery-lightbox__content">
+        <img src="" alt="" class="gallery-lightbox__img" data-gallery-img />
+        <p class="gallery-lightbox__caption" data-gallery-caption />
+      </div>
+      <button
+        type="button"
+        class="gallery-lightbox__nav gallery-lightbox__nav--next"
+        aria-label="Next image"
+        data-gallery-next
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <polyline points="9 18 15 12 9 6" />
+        </svg>
+      </button>
+    </div>
+  )
+}
+
+<style>
+  .gallery {
+    margin: var(--space-8) 0;
+  }
+
+  .gallery--grid {
+    display: grid;
+  }
+
+  .gallery--masonry {
+    display: block;
+  }
+
+  .gallery--carousel {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: var(--space-4);
+    padding-bottom: var(--space-4);
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+  }
+
+  .gallery__item {
+    position: relative;
+  }
+
+  .gallery__item--carousel {
+    flex: 0 0 80%;
+    scroll-snap-align: center;
+  }
+
+  @media (min-width: 768px) {
+    .gallery__item--carousel {
+      flex: 0 0 60%;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .gallery__item--carousel {
+      flex: 0 0 40%;
+    }
+  }
+
+  .gallery__image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .gallery__zoom {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--duration-fast) var(--ease-default);
+    color: var(--text-primary);
+    padding: 0;
+    backdrop-filter: blur(4px);
+  }
+
+  .gallery__image-wrapper:hover .gallery__zoom,
+  .gallery__zoom:focus-visible {
+    opacity: 1;
+  }
+
+  .gallery__zoom:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .gallery__caption {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    margin-top: var(--space-2);
+    text-align: center;
+    line-height: var(--leading-normal);
+  }
+
+  .gallery__credit {
+    font-style: italic;
+  }
+
+  .gallery-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal);
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--duration-normal) var(--ease-default);
+  }
+
+  .gallery-lightbox:not([hidden]) {
+    opacity: 1;
+  }
+
+  .gallery-lightbox__header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4);
+    z-index: 2;
+  }
+
+  .gallery-lightbox__counter {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .gallery-lightbox__close {
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .gallery-lightbox__close:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .gallery-lightbox__close:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+
+  .gallery-lightbox__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-full);
+    color: white;
+    cursor: pointer;
+    padding: 0;
+    z-index: 2;
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .gallery-lightbox__nav:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .gallery-lightbox__nav:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+  }
+
+  .gallery-lightbox__nav--prev {
+    left: var(--space-4);
+  }
+
+  .gallery-lightbox__nav--next {
+    right: var(--space-4);
+  }
+
+  .gallery-lightbox__content {
+    max-width: 90vw;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: default;
+  }
+
+  .gallery-lightbox__img {
+    max-width: 100%;
+    max-height: 75vh;
+    object-fit: contain;
+    border-radius: var(--radius-md);
+  }
+
+  .gallery-lightbox__caption {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: var(--text-sm);
+    margin-top: var(--space-4);
+    text-align: center;
+    max-width: 60ch;
+    line-height: var(--leading-normal);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gallery-lightbox {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .gallery__item--carousel {
+      flex: 0 0 90%;
+    }
+
+    .gallery-lightbox__nav {
+      width: 2.5rem;
+      height: 2.5rem;
+    }
+
+    .gallery-lightbox__nav--prev {
+      left: var(--space-2);
+    }
+
+    .gallery-lightbox__nav--next {
+      right: var(--space-2);
+    }
+  }
+</style>
+
+<script is:inline>
+  document.addEventListener('click', (e) => {
+    const zoomBtn = e.target.closest('[data-gallery-zoom]');
+    if (zoomBtn) {
+      const index = parseInt(zoomBtn.dataset.galleryZoom, 10);
+      const lightbox = document.querySelector('[data-gallery-lightbox]');
+      const img = document.querySelector('[data-gallery-img]');
+      const caption = document.querySelector('[data-gallery-caption]');
+      const counter = document.querySelector('[data-gallery-counter]');
+      const gallery = document.querySelector('[data-gallery]');
+      const items = gallery?.querySelectorAll('[data-gallery-item]');
+
+      if (!lightbox || !img || !items) return;
+
+      const item = items[index];
+      const sourceImg = item?.querySelector('img');
+      const captionEl = item?.querySelector('.gallery__caption-text');
+
+      if (sourceImg) {
+        img.src = sourceImg.currentSrc || sourceImg.src;
+        img.alt = sourceImg.alt;
+      }
+      if (caption && captionEl) {
+        caption.textContent = captionEl.textContent || '';
+        caption.style.display = captionEl.textContent ? 'block' : 'none';
+      }
+      if (counter) {
+        counter.textContent = `${index + 1} / ${items.length}`;
+      }
+
+      lightbox.removeAttribute('hidden');
+      lightbox.setAttribute('aria-hidden', 'false');
+      lightbox.dataset.galleryCurrentIndex = String(index);
+      document.body.style.overflow = 'hidden';
+      requestAnimationFrame(() => lightbox.focus());
+      return;
+    }
+
+    const closeBtn = e.target.closest('[data-gallery-close]');
+    if (closeBtn) {
+      const lightbox = closeBtn.closest('[data-gallery-lightbox]');
+      if (!lightbox) return;
+      lightbox.setAttribute('hidden', '');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      return;
+    }
+
+    const lightbox = e.target.closest('[data-gallery-lightbox]');
+    if (lightbox && e.target === lightbox) {
+      lightbox.setAttribute('hidden', '');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const prevBtn = e.target.closest('[data-gallery-prev]');
+    const nextBtn = e.target.closest('[data-gallery-next]');
+    if (!prevBtn && !nextBtn) return;
+
+    const lightbox = document.querySelector('[data-gallery-lightbox]');
+    const gallery = document.querySelector('[data-gallery]');
+    const items = gallery?.querySelectorAll('[data-gallery-item]');
+    const img = document.querySelector('[data-gallery-img]');
+    const caption = document.querySelector('[data-gallery-caption]');
+    const counter = document.querySelector('[data-gallery-counter]');
+
+    if (!lightbox || !items || !img) return;
+
+    let current = parseInt(lightbox.dataset.galleryCurrentIndex || '0', 10);
+    const total = items.length;
+
+    if (prevBtn) {
+      current = (current - 1 + total) % total;
+    } else {
+      current = (current + 1) % total;
+    }
+
+    const item = items[current];
+    const sourceImg = item?.querySelector('img');
+    const captionEl = item?.querySelector('.gallery__caption-text');
+
+    if (sourceImg) {
+      img.src = sourceImg.currentSrc || sourceImg.src;
+      img.alt = sourceImg.alt;
+    }
+    if (caption && captionEl) {
+      caption.textContent = captionEl.textContent || '';
+      caption.style.display = captionEl.textContent ? 'block' : 'none';
+    }
+    if (counter) {
+      counter.textContent = `${current + 1} / ${total}`;
+    }
+
+    lightbox.dataset.galleryCurrentIndex = String(current);
+  });
+
+  document.addEventListener('keydown', (e) => {
+    const lightbox = document.querySelector('[data-gallery-lightbox]');
+    if (!lightbox || lightbox.hasAttribute('hidden')) return;
+
+    if (e.key === 'Escape') {
+      lightbox.setAttribute('hidden', '');
+      lightbox.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+      return;
+    }
+
+    if (e.key === 'ArrowLeft') {
+      e.preventDefault();
+      document.querySelector('[data-gallery-prev]')?.click();
+    } else if (e.key === 'ArrowRight') {
+      e.preventDefault();
+      document.querySelector('[data-gallery-next]')?.click();
+    }
+  });
+</script>
