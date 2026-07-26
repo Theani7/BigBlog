@@ -16,8 +16,11 @@
       "type": "string",
       "format": "date-time"
     },
-    "heroImage": {
-      "type": "string"
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "$schema": {
       "type": "string"

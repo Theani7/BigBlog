@@ -4,6 +4,8 @@ import { getCollection } from 'astro:content';
 
 const posts = await getCollection('blog');
 const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+const allTags = [...new Set(sorted.flatMap((post) => post.data.tags || []))].sort();
 ---
 
 <Layout title="Blog — All Posts">
@@ -15,9 +17,26 @@ const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.va
         <p class="page-subtitle">Thoughts, experiments, and reflections on design and technology.</p>
       </div>
 
+      <div class="search-bar">
+        <input type="search" id="blog-search" placeholder="Search posts..." autocomplete="off" />
+        <span id="tag-count" class="result-count">{sorted.length} posts</span>
+      </div>
+
+      {allTags.length > 0 && (
+        <div class="tag-filters">
+          {allTags.map((tag) => (
+            <button class="tag-filter" data-tag={tag}>{tag}</button>
+          ))}
+        </div>
+      )}
+
+      <div id="blog-no-results" class="no-results" style="display: none;">
+        No posts match your search or filter.
+      </div>
+
       <div class="post-list">
         {sorted.map((post) => (
-          <article class="post-card">
+          <article class="post-card" data-tags={(post.data.tags || []).join(',')}>
             <a href={`/blog/${post.id}`}>
               <div class="post-meta">
                 <time datetime={post.data.pubDate.toISOString()}>
@@ -28,6 +47,13 @@ const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.va
               {post.data.description && (
                 <p class="post-description">{post.data.description}</p>
               )}
+              {post.data.tags && post.data.tags.length > 0 && (
+                <div class="post-tags">
+                  {post.data.tags.map((tag) => (
+                    <span class="tag">{tag}</span>
+                  ))}
+                </div>
+              )}
               <span class="post-read">Read more →</span>
             </a>
           </article>
@@ -36,6 +62,8 @@ const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.va
     </div>
   </section>
 </Layout>
+
+<script src="/js/search.js" is:inline></script>
 
 <style>
   .blog-page {
@@ -71,6 +99,79 @@ const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.va
     font-size: 1.0625rem;
     line-height: 1.7;
     max-width: 32rem;
+  }
+
+  .search-bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  #blog-search {
+    flex: 1;
+    max-width: 400px;
+    padding: 0.75rem 1rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+
+  #blog-search:focus {
+    border-color: var(--accent);
+  }
+
+  #blog-search::placeholder {
+    color: var(--text-muted);
+  }
+
+  .result-count {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .tag-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .tag-filter {
+    padding: 0.375rem 0.875rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-family: var(--font-body);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .tag-filter:hover {
+    border-color: var(--accent);
+    color: var(--text);
+  }
+
+  .tag-filter.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+
+  .no-results {
+    padding: 2rem 0;
+    color: var(--text-muted);
+    font-size: 0.9375rem;
+    text-align: center;
   }
 
   .post-list {
@@ -126,6 +227,25 @@ const sorted = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.va
     font-size: 0.9375rem;
     line-height: 1.6;
     margin-bottom: 0.75rem;
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .tag {
+    display: inline-block;
+    padding: 0.125rem 0.625rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: 999px;
   }
 
   .post-read {
