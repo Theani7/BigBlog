@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import ArticleCard from '../../components/cards/ArticleCard.astro';
 import { getSeries, filterDrafts } from '../../lib/content';
+import { seriesCanonical } from '../../lib/canonical';
+import { breadcrumbSchema } from '../../lib/schema';
 
 export async function getStaticPaths() {
   const series = await getCollection('series');
@@ -14,11 +16,12 @@ export async function getStaticPaths() {
       cover: s.data.cover,
       author: s.data.author,
       category: s.data.category,
+      slug: s.slug ?? s.data.title.toLowerCase().replace(/\s+/g, '-'),
     },
   }));
 }
 
-const { title, description, cover, author, category } = Astro.props;
+const { title, description, cover, author, category, slug } = Astro.props;
 const allPosts = await getCollection('blog');
 const publishedPosts = filterDrafts(allPosts);
 const seriesPosts = getSeries(allPosts, title);
@@ -40,12 +43,24 @@ const otherSeries = allSeries
 
 const pageTitle = `${title} — Series`;
 const pageDescription = description || `Articles in the ${title} series.`;
+const pageCanonical = seriesCanonical(slug);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Series', href: '/blog' },
+  { label: title },
+];
+
+const structuredData = breadcrumbSchema(breadcrumbs);
 ---
 
 <Layout
   title={pageTitle}
   description={pageDescription}
-  canonical={`https://bigblog.dev/series/${title.toLowerCase().replace(/\s+/g, '-')}`}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
+  ogImage={cover}
 >
   <section class="series-page">
     <div class="container">

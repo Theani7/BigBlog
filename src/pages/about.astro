@@ -2,15 +2,29 @@
 import Layout from '../layouts/Layout.astro';
 import AuthorCard from '../components/cards/AuthorCard.astro';
 import { getCollection } from 'astro:content';
+import { canonicalUrl } from '../lib/canonical';
+import { breadcrumbSchema, organizationSchema } from '../lib/schema';
 
 const pageTitle = 'About';
 const pageDescription =
   'About BigBlog and our mission to empower developers through great writing.';
 
 const authors = await getCollection('authors');
+
+const pageCanonical = canonicalUrl('/about');
+
+const breadcrumbs = [{ label: 'Home', href: '/' }, { label: 'About' }];
+
+const structuredData = [organizationSchema(), breadcrumbSchema(breadcrumbs)];
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/about">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
+>
   <section class="about-page">
     <div class="container">
       <p class="page-eyebrow">Our Story</p>

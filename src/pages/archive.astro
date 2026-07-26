@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import { filterDrafts, archive, groupByYear } from '../lib/content';
 import { formatDate } from '../utils/content';
+import { canonicalUrl } from '../lib/canonical';
 
 const allPosts = await getCollection('blog');
 const publishedPosts = filterDrafts(allPosts);
@@ -16,7 +17,7 @@ const pageTitle = 'Archive';
 const pageDescription = 'Browse all articles by date, category, and author.';
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/archive">
+<Layout title={pageTitle} description={pageDescription} canonical={canonicalUrl('/archive')}>
   <section class="archive-page">
     <div class="container">
       <div class="archive-header">

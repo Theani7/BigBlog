@@ -8,6 +8,7 @@ import TagChip from '../../components/article/TagChip.astro';
 import RecentlyViewed from '../../components/navigation/RecentlyViewed.astro';
 import { sortPosts, filterDrafts, getTrendingPosts } from '../../lib/content';
 import { formatDate } from '../../utils/content';
+import { canonicalUrl } from '../../lib/canonical';
 
 const allPosts = await getCollection('blog');
 const publishedPosts = filterDrafts(allPosts).sort(
@@ -24,7 +25,7 @@ const pageDescription =
   'Read the latest articles on software engineering, web development, and developer experience.';
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/blog">
+<Layout title={pageTitle} description={pageDescription} canonical={canonicalUrl('/blog')}>
   <section class="blog-hero">
     <div class="container">
       <p class="blog-eyebrow">The Blog</p>

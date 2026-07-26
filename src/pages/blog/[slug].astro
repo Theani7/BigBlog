@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import { getEntry, getCollection } from 'astro:content';
 import { getSeriesNavigation, getRelatedPosts, getAdjacentPosts } from '../../lib/content';
 import { formatDate, readingTime } from '../../utils/content';
+import { postCanonical } from '../../lib/canonical';
+import { blogPostSchemas } from '../../lib/schema';
 import ArticleHero from '../../components/article/ArticleHero.astro';
 import AuthorBadge from '../../components/article/AuthorBadge.astro';
 import MetadataRow from '../../components/article/MetadataRow.astro';
@@ -38,39 +40,45 @@ const adjacentPosts = getAdjacentPosts(allPosts, post);
 const rt = readingTime(post.body);
 const pageTitle = post.data.title;
 const pageDescription = post.data.description;
-const pageCanonical =
-  post.data.canonical ?? `https://bigblog.dev/blog/${post.data.slug ?? post.slug}`;
+const pageCanonical = postCanonical(post.data.slug ?? post.slug, post.data.canonical);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Blog', href: '/blog' },
+  { label: post.data.category, href: `/category/${post.data.category.toLowerCase()}` },
+  { label: post.data.title },
+];
+
+const structuredData = blogPostSchemas(
+  {
+    title: post.data.title,
+    description: post.data.description,
+    canonical: pageCanonical,
+    cover: post.data.cover,
+    coverAlt: post.data.coverAlt,
+    publishedAt: post.data.publishedAt,
+    updatedAt: post.data.updatedAt,
+    author: post.data.author,
+    tags: post.data.tags,
+    category: post.data.category,
+    readingTime: post.data.readingTime,
+  },
+  breadcrumbs
+);
 ---
 
 <Layout
   title={pageTitle}
   description={pageDescription}
   canonical={pageCanonical}
-  breadcrumbs={[
-    { label: 'Home', href: '/' },
-    { label: 'Blog', href: '/blog' },
-    { label: post.data.category, href: `/category/${post.data.category.toLowerCase()}` },
-    { label: post.data.title },
-  ]}
-  structuredData={{
-    '@context': 'https://schema.org',
-    '@type': 'BlogPosting',
-    headline: post.data.title,
-    description: post.data.description,
-    datePublished: post.data.publishedAt.toISOString(),
-    dateModified: post.data.updatedAt?.toISOString() ?? post.data.publishedAt.toISOString(),
-    author: {
-      '@type': 'Person',
-      name: post.data.author,
-    },
-    keywords: post.data.tags,
-    mainEntityOfPage: {
-      '@type': 'WebPage',
-      '@id': pageCanonical,
-    },
-  }}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
   ogImage={post.data.cover}
-  keywords={post.data.keywords}
+  ogType="article"
+  publishedTime={post.data.publishedAt.toISOString()}
+  modifiedTime={(post.data.updatedAt ?? post.data.publishedAt).toISOString()}
+  author={post.data.author}
+  keywords={post.data.keywords ?? post.data.tags}
 >
   <ArticleHero
     title={post.data.title}

@@ -34,6 +34,8 @@ export default [
         URLPattern: 'readonly',
         structuredClone: 'readonly',
         queueMicrotask: 'readonly',
+        // Node.js globals
+        process: 'readonly',
       },
     },
     plugins: {

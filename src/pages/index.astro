@@ -12,6 +12,8 @@ import NewsletterBlock from '../components/article/NewsletterBlock.astro';
 import CTABlock from '../components/article/CTABlock.astro';
 import { getFeaturedPosts, getLatestPosts, archive, groupByYear } from '../lib/content';
 import { formatDate } from '../utils/content';
+import { canonicalUrl } from '../lib/canonical';
+import { homepageSchemas } from '../lib/schema';
 
 const allPosts = await getCollection('blog');
 const publishedPosts = allPosts
@@ -48,9 +50,15 @@ const totalAuthors = authors.length;
 const pageTitle = 'Home';
 const pageDescription =
   'A premium developer publishing platform for building world-class documentation and blogs.';
+const structuredData = homepageSchemas();
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonicalUrl('/')}
+  structuredData={structuredData}
+>
   <section class="hero" aria-label="Hero">
     <div class="container">
       <p class="hero-eyebrow">Developer Publishing Platform</p>

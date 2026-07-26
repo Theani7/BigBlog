@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import ArticleCard from '../../components/cards/ArticleCard.astro';
 import { getPostsByAuthor, filterDrafts, getSeries } from '../../lib/content';
+import { authorCanonical } from '../../lib/canonical';
+import { authorPageSchemas } from '../../lib/schema';
 
 export async function getStaticPaths() {
   const authors = await getCollection('authors');
@@ -16,11 +18,12 @@ export async function getStaticPaths() {
       github: author.data.github,
       linkedin: author.data.linkedin,
       website: author.data.website,
+      slug: author.slug ?? author.data.name.toLowerCase().replace(/\s+/g, '-'),
     },
   }));
 }
 
-const { name, bio, avatar, twitter, github, linkedin, website } = Astro.props;
+const { name, bio, avatar, twitter, github, linkedin, website, slug } = Astro.props;
 const allPosts = await getCollection('blog');
 const publishedPosts = filterDrafts(allPosts);
 const authorPosts = getPostsByAuthor(allPosts, name);
@@ -43,12 +46,36 @@ const totalReadingTime = Math.max(1, Math.round(totalWords / 200));
 
 const pageTitle = `${name} — Author`;
 const pageDescription = bio || `Articles by ${name}.`;
+const pageCanonical = authorCanonical(slug);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Authors', href: '/blog' },
+  { label: name },
+];
+
+const sameAs = [twitter, github, linkedin, website].filter(Boolean) as string[];
+
+const structuredData = authorPageSchemas(
+  {
+    name,
+    url: pageCanonical,
+    image: avatar,
+    description: bio,
+    sameAs,
+  },
+  breadcrumbs
+);
 ---
 
 <Layout
   title={pageTitle}
   description={pageDescription}
-  canonical={`https://bigblog.dev/author/${name.toLowerCase().replace(/\s+/g, '-')}`}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
+  ogImage={avatar}
+  ogType="profile"
 >
   <section class="author-page">
     <div class="container">

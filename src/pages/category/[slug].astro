@@ -3,16 +3,22 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import ArticleCard from '../../components/cards/ArticleCard.astro';
 import { getPostsByCategory, filterDrafts } from '../../lib/content';
+import { categoryCanonical } from '../../lib/canonical';
+import { categoryPageSchemas } from '../../lib/schema';
 
 export async function getStaticPaths() {
   const categories = await getCollection('categories');
   return categories.map((cat) => ({
     params: { slug: cat.slug ?? cat.data.title.toLowerCase() },
-    props: { title: cat.data.title, description: cat.data.description },
+    props: {
+      title: cat.data.title,
+      description: cat.data.description,
+      slug: cat.slug ?? cat.data.title.toLowerCase(),
+    },
   }));
 }
 
-const { title, description } = Astro.props;
+const { title, description, slug } = Astro.props;
 const allPosts = await getCollection('blog');
 const publishedPosts = filterDrafts(allPosts);
 const categoryPosts = getPostsByCategory(allPosts, title);
@@ -41,12 +47,31 @@ const avgReadingTime = Math.max(1, Math.round(totalWords / (categoryPosts.length
 
 const pageTitle = `${title} — Category`;
 const pageDescription = description || `Articles in the ${title} category.`;
+const pageCanonical = categoryCanonical(slug);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Categories', href: '/blog' },
+  { label: title },
+];
+
+const structuredData = categoryPageSchemas(
+  {
+    title: `${title} — Category`,
+    description: pageDescription,
+    canonical: pageCanonical,
+    itemCount: categoryPosts.length,
+  },
+  breadcrumbs
+);
 ---
 
 <Layout
   title={pageTitle}
   description={pageDescription}
-  canonical={`https://bigblog.dev/category/${title.toLowerCase()}`}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
 >
   <section class="category-page">
     <div class="container">

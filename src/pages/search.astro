@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { generateSearchIndex } from '../lib/search';
+import { canonicalUrl } from '../lib/canonical';
 
 const searchIndex = await generateSearchIndex();
 
@@ -8,7 +9,12 @@ const pageTitle = 'Search';
 const pageDescription = 'Search articles on BigBlog.';
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/search">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonicalUrl('/search')}
+  noindex={true}
+>
   <section class="search-page">
     <div class="container">
       <div class="search-header">

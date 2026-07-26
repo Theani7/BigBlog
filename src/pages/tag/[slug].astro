@@ -3,6 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import { getCollection } from 'astro:content';
 import ArticleCard from '../../components/cards/ArticleCard.astro';
 import { getPostsByTag, filterDrafts } from '../../lib/content';
+import { tagCanonical } from '../../lib/canonical';
+import { breadcrumbSchema } from '../../lib/schema';
 
 export async function getStaticPaths() {
   const allPosts = await getCollection('blog');
@@ -35,12 +37,23 @@ const relatedTags = tagCounts
 
 const pageTitle = `${label} — Tag`;
 const pageDescription = `Articles tagged with ${label}.`;
+const pageCanonical = tagCanonical(label);
+
+const breadcrumbs = [
+  { label: 'Home', href: '/' },
+  { label: 'Tags', href: '/blog' },
+  { label: `#${label}` },
+];
+
+const structuredData = breadcrumbSchema(breadcrumbs);
 ---
 
 <Layout
   title={pageTitle}
   description={pageDescription}
-  canonical={`https://bigblog.dev/tag/${label.toLowerCase()}`}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
 >
   <section class="tag-page">
     <div class="container">

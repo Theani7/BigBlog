@@ -1,12 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import ProjectCard from '../components/cards/ProjectCard.astro';
+import { canonicalUrl } from '../lib/canonical';
+import { breadcrumbSchema } from '../lib/schema';
 
 const pageTitle = 'Projects';
 const pageDescription = 'Open source projects and tools we build and maintain.';
+const pageCanonical = canonicalUrl('/projects');
+
+const breadcrumbs = [{ label: 'Home', href: '/' }, { label: 'Projects' }];
+
+const structuredData = breadcrumbSchema(breadcrumbs);
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/projects">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
+>
   <section class="projects-page">
     <div class="container">
       <p class="page-eyebrow">Our Work</p>

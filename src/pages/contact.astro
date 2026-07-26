@@ -1,12 +1,25 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import NewsletterForm from '../components/forms/NewsletterForm.astro';
+import { canonicalUrl } from '../lib/canonical';
+import { breadcrumbSchema } from '../lib/schema';
 
 const pageTitle = 'Contact';
 const pageDescription = 'Get in touch with us.';
+const pageCanonical = canonicalUrl('/contact');
+
+const breadcrumbs = [{ label: 'Home', href: '/' }, { label: 'Contact' }];
+
+const structuredData = breadcrumbSchema(breadcrumbs);
 ---
 
-<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/contact">
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={pageCanonical}
+  breadcrumbs={breadcrumbs}
+  structuredData={structuredData}
+>
   <section class="contact-page">
     <div class="container">
       <p class="page-eyebrow">Get in Touch</p>
