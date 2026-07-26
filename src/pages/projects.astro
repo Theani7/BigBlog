@@ -1,14 +1,77 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import ProjectCard from '../components/cards/ProjectCard.astro';
+
+const pageTitle = 'Projects';
+const pageDescription = 'Open source projects and tools we build and maintain.';
 ---
 
-<Layout title="Projects" description="Open source projects and tools">
+<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev/projects">
   <section class="projects-page">
     <div class="container">
       <p class="page-eyebrow">Our Work</p>
       <h1 class="page-title">Projects</h1>
       <p class="page-subtitle">Open source tools and projects we build and maintain.</p>
-      <p class="page-placeholder">More content coming soon.</p>
+
+      <div class="projects-grid">
+        <article class="project-card">
+          <span class="project-category">Open Source</span>
+          <h3 class="project-title">BigBlog</h3>
+          <p class="project-desc">
+            A premium developer publishing platform built with Astro and Tailwind CSS. Features MDX
+            support, content collections, and static generation.
+          </p>
+          <div class="project-links">
+            <a href="https://github.com/BigBlog" class="project-link">GitHub</a>
+            <a href="https://bigblog.dev" class="project-link">Live Demo</a>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <span class="project-category">Tooling</span>
+          <h3 class="project-title">Content Engine</h3>
+          <p class="project-desc">
+            A content engine for Astro 7 with type-safe content collections, Zod validation, and MDX
+            rendering.
+          </p>
+          <div class="project-links">
+            <a href="#" class="project-link">Docs</a>
+            <a href="#" class="project-link">Source</a>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <span class="project-category">Design</span>
+          <h3 class="project-title">Design System</h3>
+          <p class="project-desc">
+            A reusable component library with design tokens, typography, accessibility, and dark
+            mode support.
+          </p>
+          <div class="project-links">
+            <a href="#" class="project-link">Storybook</a>
+            <a href="#" class="project-link">Source</a>
+          </div>
+        </article>
+
+        <article class="project-card">
+          <span class="project-category">Infrastructure</span>
+          <h3 class="project-title">Deploy Pipeline</h3>
+          <p class="project-desc">
+            CI/CD pipeline for static site generation with Vercel, automated testing, and
+            performance budgets.
+          </p>
+          <div class="project-links">
+            <a href="#" class="project-link">Docs</a>
+            <a href="#" class="project-link">Source</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="projects-cta">
+        <h2 class="section-title">More Projects Coming Soon</h2>
+        <p class="projects-cta-desc">We're always working on new tools and open source projects.</p>
+        <a href="/contact" class="btn btn-primary">Get in Touch</a>
+      </div>
     </div>
   </section>
 </Layout>
@@ -32,7 +95,7 @@ import Layout from '../layouts/Layout.astro';
     font-weight: var(--weight-bold);
     letter-spacing: -0.03em;
     line-height: var(--leading-tight);
-    margin-bottom: var(--space-4);
+    margin: 0 0 var(--space-4);
   }
 
   .page-subtitle {
@@ -40,11 +103,123 @@ import Layout from '../layouts/Layout.astro';
     font-size: var(--text-lg);
     line-height: var(--leading-relaxed);
     max-width: 32rem;
-    margin-bottom: var(--space-8);
+    margin: 0 0 var(--space-8);
   }
 
-  .page-placeholder {
-    color: var(--text-tertiary);
-    font-style: italic;
+  .projects-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .project-card {
+    padding: var(--space-6);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+  }
+
+  .project-category {
+    display: inline-block;
+    padding: var(--space-1) var(--space-3);
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-4);
+  }
+
+  .project-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    margin: 0 0 var(--space-2);
+  }
+
+  .project-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-4);
+  }
+
+  .project-links {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .project-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .project-link:hover {
+    text-decoration: underline;
+  }
+
+  .projects-cta {
+    margin-top: var(--space-12);
+    padding: var(--space-8);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    text-align: center;
+  }
+
+  .section-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    margin: 0 0 var(--space-4);
+  }
+
+  .projects-cta-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin: 0 0 var(--space-6);
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .btn-primary {
+    background: var(--color-primary);
+    color: var(--text-inverse);
+  }
+
+  .btn-primary:hover {
+    background: var(--color-primary-hover);
+  }
+
+  @media (min-width: 768px) {
+    .projects-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .projects-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>

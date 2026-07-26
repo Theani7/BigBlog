@@ -4,12 +4,14 @@ import type { ComponentProps } from 'astro/types';
 interface TableProps {
   headers: string[];
   rows: string[][];
+  caption?: string;
 }
 
-const { headers, rows } = Astro.props as TableProps;
+const { headers, rows, caption } = Astro.props as TableProps;
 ---
 
 <div class="table-wrapper" role="region" aria-label="Data table" tabindex="0">
+  {caption && <caption class="table-caption">{caption}</caption>}
   <table class="data-table">
     <thead>
       <tr>
@@ -38,6 +40,15 @@ const { headers, rows } = Astro.props as TableProps;
     border-radius: var(--radius-lg);
   }
 
+  .table-caption {
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-align: left;
+    caption-side: top;
+  }
+
   .data-table {
     width: 100%;
     border-collapse: collapse;
@@ -56,9 +67,19 @@ const { headers, rows } = Astro.props as TableProps;
     background: var(--bg-tertiary);
     position: sticky;
     top: 0;
+    z-index: 1;
   }
 
-  .data-table tr:hover {
+  .data-table tbody tr:nth-child(even) {
     background: var(--bg-secondary);
+  }
+
+  .data-table tbody tr:hover {
+    background: var(--bg-tertiary);
+  }
+
+  .data-table tbody tr:focus-within {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
   }
 </style>

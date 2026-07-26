@@ -1,5 +1,4 @@
 ---
-import { Lucide } from 'lucide-astro';
 import type { ComponentProps } from 'astro/types';
 
 interface IconProps {
@@ -23,8 +22,11 @@ const sizeMap = {
   lg: 24,
   xl: 32,
 };
+
+const iconComponent = await import(`lucide-astro/dist/${name}.astro`);
+const IconComponent = iconComponent.default ?? iconComponent;
 ---
 
 <span aria-hidden="true">
-  <Lucide name={name} size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
+  <IconComponent size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
 </span>

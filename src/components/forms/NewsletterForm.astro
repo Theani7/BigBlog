@@ -121,45 +121,47 @@ const {
 </style>
 
 <script>
-  const form = document.currentScript?.parentElement;
-  if (!form) return;
+  (() => {
+    const form = document.currentScript?.parentElement;
+    if (!form) return;
 
-  const innerForm = form.querySelector('[data-form]');
-  const successEl = form.querySelector('[data-success]');
-  const errorEl = form.querySelector('[data-error]');
-  const emailInput = innerForm?.querySelector('input[type="email"]');
+    const innerForm = form.querySelector('[data-form]');
+    const successEl = form.querySelector('[data-success]');
+    const errorEl = form.querySelector('[data-error]');
+    const emailInput = innerForm?.querySelector('input[type="email"]');
 
-  function showSuccess() {
-    innerForm?.setAttribute('hidden', '');
-    successEl?.removeAttribute('hidden');
-    errorEl?.setAttribute('hidden', '');
-  }
-
-  function showError(message: string) {
-    innerForm?.removeAttribute('hidden');
-    successEl?.setAttribute('hidden', '');
-    errorEl?.removeAttribute('hidden');
-    errorEl!.textContent = message;
-  }
-
-  function validateEmail(email: string): boolean {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  innerForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const email = (emailInput as HTMLInputElement)?.value.trim() || '';
-
-    if (!email) {
-      showError('Please enter your email address.');
-      return;
+    function showSuccess() {
+      innerForm?.setAttribute('hidden', '');
+      successEl?.removeAttribute('hidden');
+      errorEl?.setAttribute('hidden', '');
     }
 
-    if (!validateEmail(email)) {
-      showError('Please enter a valid email address.');
-      return;
+    function showError(message) {
+      innerForm?.removeAttribute('hidden');
+      successEl?.setAttribute('hidden', '');
+      errorEl?.removeAttribute('hidden');
+      errorEl.textContent = message;
     }
 
-    showSuccess();
-  });
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    }
+
+    innerForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const email = emailInput?.value.trim() || '';
+
+      if (!email) {
+        showError('Please enter your email address.');
+        return;
+      }
+
+      if (!validateEmail(email)) {
+        showError('Please enter a valid email address.');
+        return;
+      }
+
+      showSuccess();
+    });
+  })();
 </script>

@@ -142,6 +142,13 @@
 
   /* ── Theme ── */
   --theme-mode: light;
+
+  /* ── Reader Preferences ── */
+  --reader-font-size: 1rem;
+  --reader-line-height: 1.75;
+  --reader-font: var(--font-sans);
+  --reader-max-width: 68ch;
+  --reader-spacing-multiplier: 1;
 }
 
 [data-theme='dark'] {

@@ -1,9 +1,57 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import ArticleCard from '../components/cards/ArticleCard.astro';
+import FeaturedCard from '../components/cards/FeaturedCard.astro';
+import AuthorCard from '../components/cards/AuthorCard.astro';
+import SeriesCard from '../components/cards/SeriesCard.astro';
+import CategoryCard from '../components/cards/CategoryCard.astro';
+import CategoryPill from '../components/article/CategoryPill.astro';
+import TagChip from '../components/article/TagChip.astro';
+import NewsletterBlock from '../components/article/NewsletterBlock.astro';
+import CTABlock from '../components/article/CTABlock.astro';
+import { getFeaturedPosts, getLatestPosts, archive, groupByYear } from '../lib/content';
+import { formatDate } from '../utils/content';
+
+const allPosts = await getCollection('blog');
+const publishedPosts = allPosts
+  .filter((p) => !p.data.draft)
+  .sort((a, b) => b.data.publishedAt.valueOf() - a.data.publishedAt.valueOf());
+
+const featuredPosts = getFeaturedPosts(allPosts);
+const latestPosts = getLatestPosts(allPosts, 6);
+const allCategories = [...new Set(allPosts.map((p) => p.data.category as string))].sort();
+const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags as string[]))].sort();
+
+const authors = await getCollection('authors');
+const series = await getCollection('series');
+const categories = await getCollection('categories');
+const yearArchive = archive(allPosts);
+
+const authorsWithCounts = authors.map((author) => ({
+  ...author,
+  postCount: publishedPosts.filter((p) => p.data.author === author.data.name).length,
+}));
+
+const seriesWithCounts = series.map((s) => ({
+  ...s,
+  postCount: publishedPosts.filter((p) => p.data.series === s.data.title).length,
+}));
+
+const popularPosts = publishedPosts.slice(0, 6);
+
+const totalPosts = publishedPosts.length;
+const totalCategories = allCategories.length;
+const totalTags = allTags.length;
+const totalAuthors = authors.length;
+
+const pageTitle = 'Home';
+const pageDescription =
+  'A premium developer publishing platform for building world-class documentation and blogs.';
 ---
 
-<Layout title="Home" description="A premium developer publishing platform">
-  <section class="hero">
+<Layout title={pageTitle} description={pageDescription} canonical="https://bigblog.dev">
+  <section class="hero" aria-label="Hero">
     <div class="container">
       <p class="hero-eyebrow">Developer Publishing Platform</p>
       <h1 class="hero-title">Build something<br />worth reading.</h1>
@@ -17,22 +65,280 @@ import Layout from '../layouts/Layout.astro';
     </div>
   </section>
 
-  <section class="features">
+  {
+    featuredPosts.length > 0 && (
+      <section class="featured" aria-label="Featured articles">
+        <div class="container">
+          <h2 class="section-label">Featured</h2>
+          <div class="featured-grid">
+            {featuredPosts.slice(0, 2).map((post) => (
+              <FeaturedCard post={post} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="latest" aria-label="Latest articles">
     <div class="container">
-      <h2 class="section-title">What we offer</h2>
-      <div class="feature-grid">
-        <article class="feature-card">
-          <h3 class="feature-title">Clean Writing</h3>
-          <p class="feature-desc">Focus on your content. The platform handles the rest.</p>
-        </article>
-        <article class="feature-card">
-          <h3 class="feature-title">Fast Performance</h3>
-          <p class="feature-desc">Static generation with edge delivery for instant loads.</p>
-        </article>
-        <article class="feature-card">
-          <h3 class="feature-title">Developer First</h3>
-          <p class="feature-desc">Built with Astro, Tailwind, and TypeScript from the ground up.</p>
-        </article>
+      <h2 class="section-label">Latest Articles</h2>
+      {
+        latestPosts.length > 0 ? (
+          <div class="article-grid">
+            {latestPosts.map((post) => (
+              <ArticleCard post={post} />
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <p>No articles published yet.</p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  <section class="categories" aria-label="Categories">
+    <div class="container">
+      <h2 class="section-label">Topics</h2>
+      <div class="chip-grid">
+        {
+          allCategories.map((cat) => (
+            <CategoryPill label={cat} href={`/category/${cat.toLowerCase()}`} />
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="newsletter" aria-label="Newsletter">
+    <div class="container">
+      <div class="newsletter-inner">
+        <h2 class="section-label">Stay Updated</h2>
+        <h3 class="newsletter-title">Get the latest posts delivered to your inbox.</h3>
+        <p class="newsletter-desc">Join 1,000+ developers who read BigBlog every week.</p>
+        <form class="newsletter-form" onsubmit="event.preventDefault();">
+          <label for="newsletter-email" class="sr-only">Email address</label>
+          <input
+            id="newsletter-email"
+            type="email"
+            placeholder="your@email.com"
+            required
+            class="newsletter-input"
+            aria-label="Email address"
+          />
+          <button type="submit" class="btn btn-primary">Subscribe</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="about-preview" aria-label="About">
+    <div class="container">
+      <div class="about-grid">
+        <div class="about-text">
+          <p class="page-eyebrow">About</p>
+          <h2 class="section-title">Crafted for developers, by developers.</h2>
+          <p class="about-desc">
+            BigBlog is a publishing platform built for developers who care about craft, clarity, and
+            community. We believe in the power of well-crafted writing to share knowledge and
+            inspire others.
+          </p>
+          <a href="/about" class="btn btn-secondary">Learn More</a>
+        </div>
+        <div class="about-stats">
+          <div class="stat">
+            <span class="stat-number">{totalPosts}</span>
+            <span class="stat-label">Articles</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">{totalCategories}</span>
+            <span class="stat-label">Categories</span>
+          </div>
+          <div class="stat">
+            <span class="stat-number">{totalTags}</span>
+            <span class="stat-label">Topics</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {
+    authorsWithCounts.length > 0 && (
+      <section class="authors" aria-label="Authors">
+        <div class="container">
+          <h2 class="section-label">Authors</h2>
+          <div class="author-grid">
+            {authorsWithCounts.map((author) => (
+              <AuthorCard
+                name={author.data.name}
+                slug={author.slug}
+                bio={author.data.bio}
+                avatar={author.data.avatar}
+                twitter={author.data.twitter}
+                github={author.data.github}
+                linkedin={author.data.linkedin}
+                website={author.data.website}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    seriesWithCounts.length > 0 && (
+      <section class="series" aria-label="Series">
+        <div class="container">
+          <h2 class="section-label">Series</h2>
+          <div class="series-grid">
+            {seriesWithCounts.map((s) => (
+              <SeriesCard
+                title={s.data.title}
+                slug={s.slug}
+                description={s.data.description ?? ''}
+                author={s.data.author}
+                postCount={s.postCount}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="tags" aria-label="Tags">
+    <div class="container">
+      <h2 class="section-label">Tags</h2>
+      <div class="chip-grid">
+        {allTags.map((tag) => <TagChip label={tag} href={`/tag/${tag.toLowerCase()}`} />)}
+      </div>
+    </div>
+  </section>
+
+  {
+    Object.keys(yearArchive).length > 0 && (
+      <section class="archive" aria-label="Archive">
+        <div class="container">
+          <h2 class="section-label">Archive</h2>
+          <div class="archive-list">
+            {Object.entries(yearArchive).map(([year, months]) => (
+              <div class="archive-year">
+                <h3 class="archive-year-title">{year}</h3>
+                <ul class="archive-months">
+                  {Object.entries(months).map(([month, posts]) => (
+                    <li class="archive-month">
+                      <a href={`/blog?month=${month.toLowerCase()}`} class="archive-month-link">
+                        {month}
+                      </a>
+                      <span class="archive-month-count">{posts.length}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  {
+    popularPosts.length > 0 && (
+      <section class="popular" aria-label="Popular articles">
+        <div class="container">
+          <h2 class="section-label">Popular</h2>
+          <div class="article-grid">
+            {popularPosts.map((post) => (
+              <ArticleCard
+                title={post.data.title}
+                description={post.data.description}
+                slug={post.data.slug ?? post.slug}
+                date={formatDate(post.data.publishedAt)}
+                category={post.data.category}
+                tags={post.data.tags}
+                cover={post.data.cover}
+                author={post.data.author}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="testimonials" aria-label="Testimonials">
+    <div class="container">
+      <h2 class="section-label">From the Community</h2>
+      <div class="testimonial-grid">
+        <blockquote class="testimonial">
+          <p class="testimonial-text">
+            BigBlog has transformed how our team documents and shares knowledge. The MDX support and
+            content collections make it effortless.
+          </p>
+          <cite class="testimonial-author">— Sarah Chen, Senior Engineer</cite>
+        </blockquote>
+        <blockquote class="testimonial">
+          <p class="testimonial-text">
+            The static generation and Vercel deployment mean our blog loads instantly. Zero
+            compromises on performance.
+          </p>
+          <cite class="testimonial-author">— Marcus Rivera, CTO</cite>
+        </blockquote>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta" aria-label="Call to action">
+    <div class="container">
+      <div class="cta-inner">
+        <h2 class="section-title">Start writing today.</h2>
+        <p class="cta-desc">
+          Join our community of developers sharing knowledge and building better products.
+        </p>
+        <a href="/contact" class="btn btn-primary">Get Started</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="quick-links" aria-label="Quick links">
+    <div class="container">
+      <h2 class="section-label">Quick Links</h2>
+      <div class="quick-links-grid">
+        <a href="/blog" class="quick-link">Blog</a>
+        <a href="/about" class="quick-link">About</a>
+        <a href="/projects" class="quick-link">Projects</a>
+        <a href="/contact" class="quick-link">Contact</a>
+        <a href="/category/engineering" class="quick-link">Engineering</a>
+        <a href="/category/design" class="quick-link">Design</a>
+        <a href="/tag/astro" class="quick-link">Astro</a>
+        <a href="/tag/tailwind" class="quick-link">Tailwind CSS</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="site-stats" aria-label="Site statistics">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat">
+          <span class="stat-number">{totalPosts}</span>
+          <span class="stat-label">Articles</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{totalCategories}</span>
+          <span class="stat-label">Categories</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{totalTags}</span>
+          <span class="stat-label">Topics</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">{totalAuthors}</span>
+          <span class="stat-label">Authors</span>
+        </div>
       </div>
     </div>
   </section>
@@ -42,6 +348,7 @@ import Layout from '../layouts/Layout.astro';
   .hero {
     padding: 6rem 0 4rem;
     text-align: center;
+    border-bottom: 1px solid var(--border-color);
   }
 
   .hero-eyebrow {
@@ -108,41 +415,399 @@ import Layout from '../layouts/Layout.astro';
     color: var(--color-primary);
   }
 
-  .features {
-    padding: 4rem 0 6rem;
-    border-top: 1px solid var(--border-color);
+  .featured {
+    padding: var(--space-12) 0;
   }
 
-  .section-title {
-    font-size: var(--text-2xl);
-    font-weight: var(--weight-bold);
-    letter-spacing: -0.01em;
-    margin-bottom: var(--space-8);
-    text-align: center;
+  .section-label {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: var(--space-6);
   }
 
-  .feature-grid {
+  .featured-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    grid-template-columns: 1fr;
     gap: var(--space-6);
   }
 
-  .feature-card {
+  .latest {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .article-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .empty-state {
+    padding: var(--space-8) 0;
+    text-align: center;
+    color: var(--text-tertiary);
+  }
+
+  .categories {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .chip-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .newsletter {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .newsletter-inner {
+    max-width: 36rem;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .newsletter-title {
+    font-size: var(--text-xl);
+    font-weight: var(--weight-bold);
+    margin: var(--space-4) 0 var(--space-2);
+  }
+
+  .newsletter-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    margin: 0 0 var(--space-6);
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: var(--space-3);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .newsletter-input {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-width: 240px;
+    flex: 1;
+  }
+
+  .newsletter-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .about-preview {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    align-items: center;
+  }
+
+  .about-text {
+    max-width: 36rem;
+  }
+
+  .section-title {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.02em;
+    line-height: var(--leading-tight);
+    margin: 0 0 var(--space-4);
+  }
+
+  .about-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-6);
+  }
+
+  .about-stats {
+    display: flex;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .stat-number {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    color: var(--color-primary);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-2);
+  }
+
+  .authors {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .author-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .series {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .series-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .tags {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .archive {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .archive-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .archive-year-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-bold);
+    margin: 0 0 var(--space-3);
+    color: var(--text-primary);
+  }
+
+  .archive-months {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .archive-month {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .archive-month-link {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  .archive-month-link:hover {
+    text-decoration: underline;
+  }
+
+  .archive-month-count {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    font-weight: var(--weight-semibold);
+  }
+
+  .popular {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .testimonials {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .testimonial-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .testimonial {
     padding: var(--space-6);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     background: var(--bg-secondary);
+    margin: 0;
   }
 
-  .feature-title {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-semibold);
-    margin-bottom: var(--space-2);
-  }
-
-  .feature-desc {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
+  .testimonial-text {
+    font-size: var(--text-base);
     line-height: var(--leading-relaxed);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-4);
+  }
+
+  .testimonial-author {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-style: normal;
+    font-weight: var(--weight-semibold);
+  }
+
+  .cta {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .cta-inner {
+    max-width: 36rem;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .cta-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-base);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-6);
+  }
+
+  .quick-links {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .quick-links-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .quick-link {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    transition: border-color var(--duration-fast) var(--ease-default);
+  }
+
+  .quick-link:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .site-stats {
+    padding: var(--space-12) 0;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  @media (min-width: 768px) {
+    .featured-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .article-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .about-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .author-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .series-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .testimonial-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .quick-links-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .article-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .author-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
+    .series-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 </style>

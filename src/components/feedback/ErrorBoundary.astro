@@ -1,0 +1,98 @@
+---
+import type { ComponentProps } from 'astro/types';
+import Surface from '../layout/Surface.astro';
+import Icon from '../ui/Icon.astro';
+import Button from '../ui/Button.astro';
+
+interface ErrorBoundaryProps {
+  title?: string;
+  message?: string;
+  retryLabel?: string;
+}
+
+const {
+  title = 'Something went wrong',
+  message = 'An unexpected error occurred. Please try again later.',
+  retryLabel = 'Try Again',
+} = Astro.props as ErrorBoundaryProps;
+---
+
+<div class="error-boundary" role="alert" aria-label={title} data-error-boundary>
+  <Surface elevation={0} rounded="lg" padding="lg" bg="primary">
+    <div class="error-boundary-icon" aria-hidden="true">
+      <Icon name="alert-circle" size="xl" color="var(--color-danger)" />
+    </div>
+    <h2 class="error-boundary-title">{title}</h2>
+    <p class="error-boundary-message">{message}</p>
+    {
+      retryLabel && (
+        <Button variant="outline" size="sm" data-retry type="button">
+          {retryLabel}
+        </Button>
+      )
+    }
+    <slot />
+  </Surface>
+</div>
+
+<style>
+  .error-boundary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-8) var(--space-4);
+    text-align: center;
+  }
+
+  .error-boundary-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: var(--radius-full);
+    background: var(--color-danger-light);
+  }
+
+  .error-boundary-title {
+    font-weight: var(--weight-semibold);
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+    margin: 0;
+  }
+
+  .error-boundary-message {
+    font-size: var(--text-small);
+    color: var(--text-secondary);
+    line-height: var(--leading-relaxed);
+    max-width: 20rem;
+    margin: 0;
+  }
+
+  .error-boundary:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .error-boundary {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const boundary = document.currentScript?.parentElement;
+  if (!boundary) return;
+
+  const retryBtn = boundary.querySelector('[data-retry]');
+
+  retryBtn?.addEventListener('click', () => {
+    boundary.dispatchEvent(
+      new CustomEvent('retry', {
+        bubbles: true,
+      })
+    );
+  });
+</script>

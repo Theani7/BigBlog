@@ -1,31 +1,60 @@
 ---
 import type { ComponentProps } from 'astro/types';
+import Icon from './Icon.astro';
 
 interface CalloutProps {
   type?: 'info' | 'warning' | 'danger' | 'success';
   title?: string;
+  collapsible?: boolean;
+  defaultOpen?: boolean;
 }
 
-const { type = 'info', title, children } = Astro.props as CalloutProps;
+const {
+  type = 'info',
+  title,
+  collapsible = false,
+  defaultOpen = true,
+  children,
+} = Astro.props as CalloutProps;
 const typeStyles = {
-  info: { bg: 'var(--color-info-light)', border: 'var(--color-info)', icon: 'ℹ️' },
-  warning: { bg: 'var(--color-warning-light)', border: 'var(--color-warning)', icon: '⚠️' },
-  danger: { bg: 'var(--color-danger-light)', border: 'var(--color-danger)', icon: '🚫' },
-  success: { bg: 'var(--color-success-light)', border: 'var(--color-success)', icon: '✅' },
+  info: { bg: 'var(--color-info-light)', border: 'var(--color-info)', icon: 'info' },
+  warning: {
+    bg: 'var(--color-warning-light)',
+    border: 'var(--color-warning)',
+    icon: 'alert-triangle',
+  },
+  danger: { bg: 'var(--color-danger-light)', border: 'var(--color-danger)', icon: 'alert-circle' },
+  success: {
+    bg: 'var(--color-success-light)',
+    border: 'var(--color-success)',
+    icon: 'check-circle',
+  },
 };
 const style = typeStyles[type];
+const isOpen = defaultOpen ? '' : 'open';
 ---
 
 <div
   class="callout"
   style="background: {style.bg}; border-left: 4px solid {style.border};"
   role="note"
+  {...collapsible ? { open: isOpen } : {}}
 >
   {
     title && (
       <div class="callout-title">
-        <span aria-hidden="true">{style.icon}</span>
+        <Icon name={style.icon} size="sm" aria-hidden="true" />
         <strong>{title}</strong>
+        {collapsible && (
+          <button
+            type="button"
+            class="callout-toggle"
+            aria-label="Toggle callout content"
+            aria-expanded={defaultOpen ? 'true' : 'false'}
+          >
+            <Icon name="chevron-down" size="xs" aria-hidden="true" />
+          </button>
+        )}
       </div>
     )
   }
@@ -37,7 +66,7 @@ const style = typeStyles[type];
 <style>
   .callout {
     padding: var(--space-4) var(--space-6);
-    margin: var(--space-6) 0;
+    margin: var(--space-8) 0;
     border-radius: var(--radius-md);
   }
 
@@ -46,7 +75,31 @@ const style = typeStyles[type];
     align-items: center;
     gap: var(--space-2);
     font-weight: var(--weight-semibold);
-    margin-bottom: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+
+  .callout-toggle {
+    margin-left: auto;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-secondary);
+    padding: 0.125rem;
+    border-radius: var(--radius-sm);
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+
+  .callout-toggle:hover {
+    color: var(--text-primary);
+  }
+
+  .callout-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .callout[open] .callout-toggle {
+    transform: rotate(180deg);
   }
 
   .callout-content {
@@ -54,9 +107,74 @@ const style = typeStyles[type];
     line-height: var(--leading-relaxed);
   }
 
+  .callout:not([open]) .callout-content {
+    display: none;
+  }
+
+  .callout-content :global(pre) {
+    margin: var(--space-3) 0;
+    padding: var(--space-3) var(--space-4);
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    font-size: var(--text-xs);
+  }
+
+  .callout-content :global(code:not(pre code)) {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: rgba(0, 0, 0, 0.06);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+  }
+
+  .callout-content :global(ul),
+  .callout-content :global(ol) {
+    margin: var(--space-2) 0;
+    padding-left: var(--space-5);
+  }
+
+  .callout-content :global(li) {
+    margin-bottom: var(--space-1);
+  }
+
+  .callout-content :global(p) {
+    margin-bottom: var(--space-2);
+  }
+
+  .callout-content :global(p:last-child) {
+    margin-bottom: 0;
+  }
+
   @media (prefers-color-scheme: dark) {
-    .callout {
-      opacity: 0.9;
+    .callout-content :global(pre) {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .callout-content :global(code:not(pre code)) {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .callout-toggle {
+      transition: none;
     }
   }
 </style>
+
+<script is:inline>
+  document.addEventListener('click', (e) => {
+    const toggle = e.target.closest('.callout-toggle');
+    if (!toggle) return;
+    const callout = toggle.closest('.callout');
+    if (!callout) return;
+    const isOpen = callout.hasAttribute('open');
+    if (isOpen) {
+      callout.removeAttribute('open');
+      toggle.setAttribute('aria-expanded', 'false');
+    } else {
+      callout.setAttribute('open', '');
+      toggle.setAttribute('aria-expanded', 'true');
+    }
+  });
+</script>

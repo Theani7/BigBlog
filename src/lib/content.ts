@@ -237,6 +237,28 @@ export function getRelatedPosts(posts: Post[], currentPost: Post, limit = 3): Re
 }
 
 /**
+ * Get adjacent posts (previous and next by publication date).
+ *
+ * @param posts - All posts
+ * @param currentPost - The current post
+ * @returns Previous and next posts
+ */
+export function getAdjacentPosts(
+  posts: Post[],
+  currentPost: Post
+): { previous: Post | undefined; next: Post | undefined } {
+  const sorted = sortPosts(filterDrafts(posts));
+  const currentIndex = sorted.findIndex((p) => p.id === currentPost.id);
+
+  if (currentIndex === -1) return { previous: undefined, next: undefined };
+
+  return {
+    previous: currentIndex < sorted.length - 1 ? sorted[currentIndex + 1] : undefined,
+    next: currentIndex > 0 ? sorted[currentIndex - 1] : undefined,
+  };
+}
+
+/**
  * Group posts by publication year.
  *
  * @param posts - Array of posts

@@ -18,30 +18,72 @@ const encodedDescription = description ? encodeURIComponent(description) : '';
 const shareLinks = {
   twitter: `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`,
   linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+  facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
   reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+  email: `mailto:?subject=${encodedTitle}&body=${encodedUrl}`,
 };
 ---
 
 <div class="share-buttons" role="region" aria-label="Share this article">
   <span class="share-buttons__label">Share</span>
   <div class="share-buttons__buttons">
-    <Button variant="ghost" href={shareLinks.twitter} aria-label={`Share on Twitter`}>
+    <Button
+      variant="ghost"
+      href={shareLinks.twitter}
+      aria-label="Share on Twitter"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       <Icon name="brand-twitter" size="sm" aria-hidden="true" />
       Twitter
     </Button>
-    <Button variant="ghost" href={shareLinks.linkedin} aria-label={`Share on LinkedIn`}>
+    <Button
+      variant="ghost"
+      href={shareLinks.linkedin}
+      aria-label="Share on LinkedIn"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
       <Icon name="brand-linkedin" size="sm" aria-hidden="true" />
       LinkedIn
     </Button>
-    <Button variant="ghost" href={shareLinks.reddit} aria-label={`Share on Reddit`}>
-      <Icon name="brand-reddit" size="sm" aria-hidden="true" />
-      Reddit
+    <Button
+      variant="ghost"
+      href={shareLinks.facebook}
+      aria-label="Share on Facebook"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <Icon name="brand-facebook" size="sm" aria-hidden="true" />
+      Facebook
+    </Button>
+    <Button variant="ghost" href={shareLinks.email} aria-label="Share via email">
+      <Icon name="mail" size="sm" aria-hidden="true" />
+      Email
     </Button>
     <Button variant="ghost" type="button" aria-label="Copy link to clipboard" data-copy-url={url}>
       <Icon name="copy" size="sm" aria-hidden="true" />
       Copy Link
     </Button>
+    {
+      typeof navigator !== 'undefined' && 'share' in navigator && (
+        <Button
+          variant="ghost"
+          type="button"
+          aria-label="Share this article"
+          data-share-url={url}
+          data-share-title={title}
+        >
+          <Icon name="share-2" size="sm" aria-hidden="true" />
+          Share
+        </Button>
+      )
+    }
   </div>
+</div>
+
+<div class="toast" role="status" aria-live="polite" hidden data-toast>
+  <span class="toast__text">Link copied to clipboard</span>
 </div>
 
 <style>
@@ -70,34 +112,85 @@ const shareLinks = {
     gap: var(--space-2);
   }
 
+  .toast {
+    position: fixed;
+    bottom: var(--space-8);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: var(--space-3) var(--space-6);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    box-shadow: var(--shadow-lg);
+    z-index: var(--z-toast);
+    transition:
+      opacity var(--duration-normal) var(--ease-default),
+      transform var(--duration-normal) var(--ease-default);
+  }
+
+  .toast--visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast[hidden] {
+    display: block;
+    opacity: 0;
+    transform: translateX(-50%) translateY(1rem);
+    pointer-events: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .share-buttons {
       transition: none;
     }
-  }
-
-  .share-buttons:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
+    .toast {
+      transition: none;
+    }
   }
 </style>
 
 <script is:inline>
   document.addEventListener('click', (e) => {
-    const button = e.target.closest('[data-copy-url]');
-    if (!button) return;
+    const copyBtn = e.target.closest('[data-copy-url]');
+    if (copyBtn) {
+      const url = copyBtn.getAttribute('data-copy-url');
+      if (!url) return;
+      navigator.clipboard
+        .writeText(url)
+        .then(() => {
+          showToast('Link copied to clipboard');
+        })
+        .catch(() => {
+          showToast('Failed to copy link');
+        });
+      return;
+    }
 
-    const url = button.getAttribute('data-copy-url');
-    if (!url) return;
-
-    navigator.clipboard.writeText(url).then(() => {
-      const original = button.innerHTML;
-      button.innerHTML = 'Copied!';
-      button.setAttribute('aria-label', 'Link copied to clipboard');
-      setTimeout(() => {
-        button.innerHTML = original;
-        button.setAttribute('aria-label', 'Copy link to clipboard');
-      }, 2000);
-    });
+    const shareBtn = e.target.closest('[data-share-url]');
+    if (shareBtn) {
+      const url = shareBtn.getAttribute('data-share-url');
+      const title = shareBtn.getAttribute('data-share-title') || '';
+      if (!url || !('share' in navigator)) return;
+      navigator.share({ title, url }).catch(() => {});
+      return;
+    }
   });
+
+  function showToast(message) {
+    const existing = document.querySelector('[data-toast]');
+    if (!existing) return;
+    const text = existing.querySelector('.toast__text');
+    if (text) text.textContent = message;
+    existing.removeAttribute('hidden');
+    existing.classList.add('toast--visible');
+    clearTimeout(existing._timeout);
+    existing._timeout = setTimeout(() => {
+      existing.classList.remove('toast--visible');
+      setTimeout(() => existing.setAttribute('hidden', ''), 300);
+    }, 2500);
+  }
 </script>

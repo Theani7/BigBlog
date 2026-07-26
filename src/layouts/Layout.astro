@@ -7,11 +7,31 @@ interface LayoutProps {
   description?: string;
   canonical?: string;
   breadcrumbs?: Array<{ label: string; href?: string }>;
+  structuredData?: Record<string, unknown>;
+  ogImage?: string;
+  keywords?: string[];
 }
 
-const { title, description, canonical, breadcrumbs } = Astro.props;
+const { title, description, canonical, breadcrumbs, structuredData, ogImage, keywords } =
+  Astro.props;
 const siteTitle = 'BigBlog';
 const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
+const siteDescription = description ?? 'A premium developer publishing platform';
+const siteUrl = 'https://bigblog.dev';
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { label: 'Home', href: '/' },
+  { label: 'Blog', href: '/blog' },
+  { label: 'About', href: '/about' },
+  { label: 'Projects', href: '/projects' },
+  { label: 'Contact', href: '/contact' },
+];
+
+const activeLink = navLinks.find((link) => {
+  if (link.href === '/') return currentPath === '/';
+  return currentPath.startsWith(link.href);
+});
 ---
 
 <!doctype html>
@@ -19,7 +39,7 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content={description} />
+    <meta name="description" content={siteDescription} />
     <title>{fullTitle}</title>
 
     {canonical && <link rel="canonical" href={canonical} />}
@@ -32,17 +52,29 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     />
 
     <meta property="og:title" content={fullTitle} />
-    <meta property="og:description" content={description} />
+    <meta property="og:description" content={siteDescription} />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical ?? `${siteUrl}${currentPath}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
-    <meta name="twitter:description" content={description} />
+    <meta name="twitter:description" content={siteDescription} />
+
+    <meta property="og:image" content={ogImage ?? `${siteUrl}/og.png`} />
+    <meta property="og:site_name" content={siteTitle} />
+    {keywords && keywords.length > 0 && <meta name="keywords" content={keywords.join(', ')} />}
+    <meta name="robots" content="index, follow" />
 
     <meta name="theme-color" content="#ffffff" />
     <meta name="color-scheme" content="light dark" />
 
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="stylesheet" href="/styles/global.css" />
+
+    {
+      structuredData && (
+        <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+      )
+    }
   </head>
   <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
@@ -54,18 +86,66 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
         </a>
         <nav class="site-nav" aria-label="Main navigation">
           <ul class="nav-list">
-            <li><a href="/">Home</a></li>
-            <li><a href="/blog">Blog</a></li>
-            <li><a href="/about">About</a></li>
-            <li><a href="/projects">Projects</a></li>
-            <li><a href="/contact">Contact</a></li>
+            {
+              navLinks.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    aria-current={activeLink?.href === link.href ? 'page' : undefined}
+                    class:list={[
+                      'nav-link',
+                      { 'nav-link--active': activeLink?.href === link.href },
+                    ]}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
           </ul>
         </nav>
-        <button class="theme-toggle" aria-label="Toggle theme" type="button">
-          <span class="theme-icon" aria-hidden="true"></span>
-        </button>
+        <div class="header-actions">
+          <button class="theme-toggle" aria-label="Toggle theme" type="button">
+            <span class="theme-icon" aria-hidden="true"></span>
+          </button>
+          <button
+            class="mobile-nav-toggle"
+            aria-label="Open menu"
+            aria-expanded="false"
+            type="button"
+          >
+            <span class="mobile-nav-icon" aria-hidden="true"></span>
+          </button>
+        </div>
       </div>
     </header>
+
+    <div class="mobile-nav-overlay" aria-hidden="true">
+      <div class="mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
+        <div class="mobile-nav-header">
+          <button class="mobile-nav-close" aria-label="Close menu" type="button">
+            <span class="mobile-nav-close-icon" aria-hidden="true"></span>
+          </button>
+        </div>
+        <nav class="mobile-nav-links" aria-label="Mobile navigation">
+          <ul class="mobile-nav-list">
+            {
+              navLinks.map((link) => (
+                <li>
+                  <a
+                    href={link.href}
+                    class="mobile-nav-link"
+                    aria-current={activeLink?.href === link.href ? 'page' : undefined}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </div>
 
     <main id="main-content" class="container main-content">
       {
@@ -92,16 +172,268 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
           </nav>
         )
       }
+      <button
+        class="reader-settings-toggle"
+        aria-label="Reading settings"
+        type="button"
+        data-reader-settings-toggle
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="3"></circle>
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+          ></path>
+        </svg>
+      </button>
+      <div class="reader-settings" data-reader-settings hidden>
+        <div class="reader-settings__panel">
+          <h3 class="reader-settings__title">Reading Settings</h3>
+          <div class="reader-settings__group">
+            <label class="reader-settings__label" for="reader-font-size">Font Size</label>
+            <select
+              id="reader-font-size"
+              class="reader-settings__select"
+              data-reader-pref="fontSize"
+            >
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+            </select>
+          </div>
+          <div class="reader-settings__group">
+            <label class="reader-settings__label" for="reader-spacing">Spacing</label>
+            <select id="reader-spacing" class="reader-settings__select" data-reader-pref="spacing">
+              <option value="compact">Compact</option>
+              <option value="comfortable" selected>Comfortable</option>
+            </select>
+          </div>
+          <div class="reader-settings__group">
+            <label class="reader-settings__label" for="reader-font">Font</label>
+            <select id="reader-font" class="reader-settings__select" data-reader-pref="font">
+              <option value="sans" selected>Sans</option>
+              <option value="serif">Serif</option>
+            </select>
+          </div>
+          <div class="reader-settings__group">
+            <label class="reader-settings__label" for="reader-width">Content Width</label>
+            <select id="reader-width" class="reader-settings__select" data-reader-pref="width">
+              <option value="narrow">Narrow</option>
+              <option value="wide" selected>Wide</option>
+            </select>
+          </div>
+          <button type="button" class="reader-settings__reset" data-reader-reset
+            >Reset to defaults</button
+          >
+        </div>
+      </div>
       <slot />
     </main>
 
     <footer class="site-footer" role="contentinfo">
       <div class="container footer-inner">
-        <p>&copy; {new Date().getFullYear()} BigBlog. Built with Astro.</p>
+        <div class="footer-grid">
+          <div class="footer-section">
+            <h3 class="footer-heading">BigBlog</h3>
+            <p class="footer-desc">
+              A premium developer publishing platform for building world-class documentation and
+              blogs.
+            </p>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Quick Links</h3>
+            <ul class="footer-links">
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/about">About</a></li>
+              <li><a href="/projects">Projects</a></li>
+              <li><a href="/contact">Contact</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Categories</h3>
+            <ul class="footer-links">
+              <li><a href="/category/engineering">Engineering</a></li>
+              <li><a href="/category/design">Design</a></li>
+              <li><a href="/category/accessibility">Accessibility</a></li>
+              <li><a href="/category/performance">Performance</a></li>
+              <li><a href="/category/vercel">Vercel</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h3 class="footer-heading">Connect</h3>
+            <ul class="footer-links">
+              <li><a href="https://github.com/BigBlog">GitHub</a></li>
+              <li><a href="https://twitter.com/bigblog">Twitter</a></li>
+              <li><a href="https://linkedin.com/company/bigblog">LinkedIn</a></li>
+              <li><a href="/rss.xml">RSS</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p class="footer-copyright">
+            &copy; {new Date().getFullYear()} BigBlog. Built with Astro.
+          </p>
+        </div>
       </div>
     </footer>
   </body>
 </html>
+
+<script is:inline>
+  (() => {
+    const header = document.querySelector('.site-header');
+    const toggle = document.querySelector('.mobile-nav-toggle');
+    const overlay = document.querySelector('.mobile-nav-overlay');
+    const drawer = document.querySelector('.mobile-nav-drawer');
+    const closeBtn = document.querySelector('.mobile-nav-close');
+
+    if (!header || !toggle || !overlay || !drawer) return;
+
+    function open() {
+      overlay.classList.add('mobile-nav-overlay--open');
+      drawer.classList.add('mobile-nav-drawer--open');
+      overlay.setAttribute('aria-hidden', 'false');
+      toggle.setAttribute('aria-expanded', 'true');
+      const firstLink = drawer.querySelector('.mobile-nav-link');
+      if (firstLink) firstLink.focus();
+    }
+
+    function close() {
+      overlay.classList.remove('mobile-nav-overlay--open');
+      drawer.classList.remove('mobile-nav-drawer--open');
+      overlay.setAttribute('aria-hidden', 'true');
+      toggle.setAttribute('aria-expanded', 'false');
+    }
+
+    toggle.addEventListener('click', () => {
+      if (drawer.classList.contains('mobile-nav-drawer--open')) {
+        close();
+      } else {
+        open();
+      }
+    });
+
+    closeBtn?.addEventListener('click', close);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && drawer.classList.contains('mobile-nav-drawer--open')) {
+        close();
+      }
+    });
+
+    document.querySelectorAll('.mobile-nav-link').forEach((link) => {
+      link.addEventListener('click', close);
+    });
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          if (window.scrollY > 8) {
+            header.classList.add('site-header--scrolled');
+          } else {
+            header.classList.remove('site-header--scrolled');
+          }
+          ticking = false;
+        });
+        ticking = true;
+      }
+    });
+
+    const settingsToggle = document.querySelector('[data-reader-settings-toggle]');
+    const settingsPanel = document.querySelector('[data-reader-settings]');
+    if (settingsToggle && settingsPanel) {
+      settingsToggle.addEventListener('click', () => {
+        const isOpen = !settingsPanel.hasAttribute('hidden');
+        if (isOpen) {
+          settingsPanel.setAttribute('hidden', '');
+        } else {
+          settingsPanel.removeAttribute('hidden');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!settingsPanel.contains(e.target) && e.target !== settingsToggle) {
+          settingsPanel.setAttribute('hidden', '');
+        }
+      });
+    }
+
+    document.querySelectorAll('[data-reader-pref]').forEach((select) => {
+      select.addEventListener('change', () => {
+        const pref = select.dataset.readerPref;
+        const value = select.value;
+        localStorage.setItem(`reader-${pref}`, value);
+        applyReaderPrefs();
+      });
+    });
+
+    const resetBtn = document.querySelector('[data-reader-reset]');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        localStorage.removeItem('reader-fontSize');
+        localStorage.removeItem('reader-spacing');
+        localStorage.removeItem('reader-font');
+        localStorage.removeItem('reader-width');
+        document.querySelectorAll('[data-reader-pref]').forEach((select) => {
+          const pref = select.dataset.readerPref;
+          const defaults = {
+            fontSize: 'medium',
+            spacing: 'comfortable',
+            font: 'sans',
+            width: 'wide',
+          };
+          select.value = defaults[pref] || '';
+        });
+        applyReaderPrefs();
+      });
+    }
+
+    function applyReaderPrefs() {
+      const fontSize = localStorage.getItem('reader-fontSize') || 'medium';
+      const spacing = localStorage.getItem('reader-spacing') || 'comfortable';
+      const font = localStorage.getItem('reader-font') || 'sans';
+      const width = localStorage.getItem('reader-width') || 'wide';
+
+      const fontSizeMap = { small: '0.9375rem', medium: '1rem', large: '1.125rem' };
+      const lineHeightMap = { compact: '1.6', comfortable: '1.75' };
+      const maxWidthMap = { narrow: '56ch', wide: '68ch' };
+
+      document.documentElement.style.setProperty(
+        '--reader-font-size',
+        fontSizeMap[fontSize] || '1rem'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-line-height',
+        lineHeightMap[spacing] || '1.75'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-font',
+        font === 'serif' ? 'var(--font-serif)' : 'var(--font-sans)'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-max-width',
+        maxWidthMap[width] || '68ch'
+      );
+    }
+
+    applyReaderPrefs();
+  })();
+</script>
 
 <style>
   .skip-link {
@@ -123,6 +455,134 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     top: 0;
   }
 
+  .reader-settings-toggle {
+    position: fixed;
+    bottom: var(--space-8);
+    right: var(--space-4);
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    color: var(--text-secondary);
+    z-index: var(--z-fixed);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+    padding: 0;
+  }
+
+  .reader-settings-toggle:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .reader-settings-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .reader-settings {
+    position: fixed;
+    bottom: calc(var(--space-8) + 3.5rem);
+    right: var(--space-4);
+    z-index: var(--z-dropdown);
+  }
+
+  .reader-settings[hidden] {
+    display: block;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(0.5rem);
+  }
+
+  .reader-settings:not([hidden]) {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    transition:
+      opacity var(--duration-normal) var(--ease-default),
+      transform var(--duration-normal) var(--ease-default);
+  }
+
+  .reader-settings__panel {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    box-shadow: var(--shadow-lg);
+    min-width: 18rem;
+  }
+
+  .reader-settings__title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    margin-bottom: var(--space-4);
+    color: var(--text-primary);
+  }
+
+  .reader-settings__group {
+    margin-bottom: var(--space-3);
+  }
+
+  .reader-settings__label {
+    display: block;
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-1);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .reader-settings__select {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-sm);
+    font-family: var(--font-sans);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .reader-settings__select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .reader-settings__reset {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+    font-family: var(--font-sans);
+    margin-top: var(--space-2);
+  }
+
+  .reader-settings__reset:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .reader-settings__reset:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
   .container {
     max-width: var(--container-max);
     margin: 0 auto;
@@ -136,6 +596,11 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     top: 0;
     z-index: var(--z-sticky);
     height: var(--header-height);
+    transition: box-shadow var(--duration-fast) var(--ease-default);
+  }
+
+  .site-header--scrolled {
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
   }
 
   .header-inner {
@@ -157,25 +622,51 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
     letter-spacing: -0.02em;
   }
 
+  .site-nav {
+    display: none;
+  }
+
   .nav-list {
     display: flex;
     list-style: none;
-    gap: var(--space-8);
+    gap: var(--space-1);
     margin: 0;
     padding: 0;
   }
 
-  .nav-list a {
+  .nav-link {
+    display: inline-block;
+    padding: var(--space-2) var(--space-3);
     color: var(--text-secondary);
     text-decoration: none;
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
-    transition: color var(--duration-fast) var(--ease-default);
+    border-radius: var(--radius-md);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default);
   }
 
-  .nav-list a:hover,
-  .nav-list a:focus-visible {
+  .nav-link:hover {
     color: var(--text-primary);
+    background: var(--bg-tertiary);
+    text-decoration: none;
+  }
+
+  .nav-link--active {
+    color: var(--color-primary);
+    background: var(--bg-tertiary);
+  }
+
+  .nav-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
   }
 
   .theme-toggle {
@@ -198,6 +689,182 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
   }
 
   .theme-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav-toggle {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    width: 2.5rem;
+    height: 2.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .mobile-nav-toggle:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  .mobile-nav-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav-icon {
+    display: block;
+    width: 1.25rem;
+    height: 1.5px;
+    background: currentColor;
+    position: relative;
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .mobile-nav-icon::before,
+  .mobile-nav-icon::after {
+    content: '';
+    display: block;
+    width: 1.25rem;
+    height: 1.5px;
+    background: currentColor;
+    position: absolute;
+    left: 0;
+    transition: transform var(--duration-fast) var(--ease-default);
+  }
+
+  .mobile-nav-icon::before {
+    top: -5px;
+  }
+  .mobile-nav-icon::after {
+    top: 5px;
+  }
+
+  .mobile-nav-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-backdrop);
+    background: transparent;
+    visibility: hidden;
+    transition:
+      visibility 0s linear var(--duration-normal),
+      background var(--duration-normal) var(--ease-default);
+  }
+
+  .mobile-nav-overlay--open {
+    visibility: visible;
+    background: rgb(0 0 0 / 0.5);
+    transition:
+      visibility 0s linear 0s,
+      background var(--duration-normal) var(--ease-default);
+  }
+
+  .mobile-nav-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--z-modal);
+    width: min(320px, 85vw);
+    background: var(--bg-primary);
+    border-left: 1px solid var(--border-color);
+    transform: translateX(100%);
+    transition: transform var(--duration-normal) var(--ease-default);
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-4);
+  }
+
+  .mobile-nav-drawer--open {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-4);
+  }
+
+  .mobile-nav-close {
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    width: 2.5rem;
+    height: 2.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+  }
+
+  .mobile-nav-close:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .mobile-nav-close-icon {
+    display: block;
+    width: 1rem;
+    height: 1.5px;
+    background: currentColor;
+    position: relative;
+  }
+
+  .mobile-nav-close-icon::before,
+  .mobile-nav-close-icon::after {
+    content: '';
+    display: block;
+    width: 1rem;
+    height: 1.5px;
+    background: currentColor;
+    position: absolute;
+    left: 0;
+  }
+
+  .mobile-nav-close-icon::before {
+    top: -4px;
+    transform: rotate(45deg);
+  }
+  .mobile-nav-close-icon::after {
+    top: 4px;
+    transform: rotate(-45deg);
+  }
+
+  .mobile-nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .mobile-nav-link {
+    display: block;
+    padding: var(--space-3) var(--space-4);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: var(--text-base);
+    font-weight: var(--weight-medium);
+    border-radius: var(--radius-md);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default);
+  }
+
+  .mobile-nav-link:hover {
+    color: var(--color-primary);
+    background: var(--bg-tertiary);
+    text-decoration: none;
+  }
+
+  .mobile-nav-link:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
@@ -238,27 +905,116 @@ const fullTitle = title === siteTitle ? title : `${title} — ${siteTitle}`;
 
   .site-footer {
     border-top: 1px solid var(--border-color);
-    padding: var(--space-8) 0;
+    padding: var(--space-12) 0 var(--space-6);
     margin-top: var(--space-16);
-    text-align: center;
+    background: var(--bg-secondary);
   }
 
-  .site-footer p {
+  .footer-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    margin-bottom: var(--space-8);
+  }
+
+  .footer-heading {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-primary);
+    margin-bottom: var(--space-4);
+  }
+
+  .footer-desc {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    line-height: var(--leading-relaxed);
+  }
+
+  .footer-links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .footer-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .footer-links a:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .footer-placeholder {
     color: var(--text-tertiary);
     font-size: var(--text-sm);
+    font-style: italic;
   }
 
-  @media (max-width: 640px) {
-    .nav-list {
-      gap: var(--space-4);
+  .footer-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .footer-socials {
+    display: flex;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+  }
+
+  .footer-social-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    transition: color var(--duration-fast) var(--ease-default);
+  }
+
+  .footer-social-link:hover {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+
+  .footer-copyright {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+    margin: 0;
+  }
+
+  @media (min-width: 768px) {
+    .site-nav {
+      display: block;
     }
 
-    .nav-list a {
-      font-size: var(--text-xs);
+    .mobile-nav-toggle {
+      display: none;
     }
 
-    .main-content {
-      padding: var(--space-8) 0;
+    .footer-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .footer-bottom {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .footer-grid {
+      grid-template-columns: 2fr 1fr 1fr 1fr;
     }
   }
 

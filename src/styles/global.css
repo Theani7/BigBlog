@@ -19,6 +19,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + var(--space-4));
 }
 
 body {
@@ -42,8 +43,20 @@ img {
 }
 
 ::selection {
-  background: var(--color-primary);
-  color: var(--text-inverse);
+  background: rgba(37, 99, 235, 0.2);
+  color: inherit;
+}
+
+[data-theme='dark'] ::selection {
+  background: rgba(96, 165, 250, 0.3);
+  color: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  [data-theme='system'] ::selection {
+    background: rgba(96, 165, 250, 0.3);
+    color: inherit;
+  }
 }
 
 :focus-visible {
@@ -59,5 +72,80 @@ img {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 12pt;
+  }
+
+  .site-header,
+  .site-footer,
+  .reader-settings-toggle,
+  .reader-settings,
+  .article-page__toc,
+  .reading-progress,
+  .reading-progress__text,
+  .share-buttons,
+  .article-page__related,
+  .newsletter-block,
+  .article-page__nav,
+  .article-page__back,
+  .heading-anchor,
+  .image-zoom,
+  .mobile-nav-overlay,
+  .skip-link,
+  .breadcrumbs {
+    display: none !important;
+  }
+
+  .article-page__body {
+    max-width: 100% !important;
+    font-size: 11pt;
+    line-height: 1.5;
+  }
+
+  .article-page__body a {
+    color: black !important;
+    text-decoration: underline;
+  }
+
+  .article-page__body a::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  .article-page__body a[href^="#"]::after,
+  .article-page__body a[href^="/"]::after {
+    content: "";
+  }
+
+  .article-page__body pre {
+    border: 1px solid #ccc;
+    page-break-inside: avoid;
+  }
+
+  .article-page__body img {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  .article-page__body h2,
+  .article-page__body h3,
+  .article-page__body h4 {
+    page-break-after: avoid;
+  }
+
+  .article-page__series,
+  .article-page__back {
+    page-break-before: always;
+  }
+
+  @page {
+    margin: 2cm;
   }
 }

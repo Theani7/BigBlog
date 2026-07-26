@@ -1,0 +1,115 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { getCollection } from 'astro:content';
+import ArticleCard from '../../components/cards/ArticleCard.astro';
+import { getPostsByCategory } from '../../lib/content';
+import { formatDate } from '../../utils/content';
+
+export async function getStaticPaths() {
+  const categories = await getCollection('categories');
+  return categories.map((cat) => ({
+    params: { slug: cat.slug ?? cat.data.title.toLowerCase() },
+    props: { title: cat.data.title },
+  }));
+}
+
+const { title } = Astro.props;
+const allPosts = await getCollection('blog');
+const categoryPosts = getPostsByCategory(allPosts, title);
+const pageTitle = `${title} — Category`;
+const pageDescription = `Articles in the ${title} category.`;
+---
+
+<Layout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={`https://bigblog.dev/category/${title.toLowerCase()}`}
+>
+  <section class="category-page">
+    <div class="container">
+      <p class="page-eyebrow">Category</p>
+      <h1 class="page-title">{title}</h1>
+      <p class="page-subtitle">
+        {categoryPosts.length} article{categoryPosts.length !== 1 ? 's' : ''}
+      </p>
+
+      {
+        categoryPosts.length > 0 ? (
+          <div class="article-grid">
+            {categoryPosts.map((post) => (
+              <ArticleCard post={post} />
+            ))}
+          </div>
+        ) : (
+          <div class="empty-state">
+            <p>No articles in this category yet.</p>
+          </div>
+        )
+      }
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .category-page {
+    padding: 5rem 0 6rem;
+  }
+
+  .page-eyebrow {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: var(--space-3);
+  }
+
+  .page-title {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: var(--weight-bold);
+    letter-spacing: -0.03em;
+    line-height: var(--leading-tight);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .page-subtitle {
+    color: var(--text-secondary);
+    font-size: var(--text-lg);
+    line-height: var(--leading-relaxed);
+    margin: 0 0 var(--space-8) 0;
+  }
+
+  .article-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .empty-state {
+    padding: var(--space-8) 0;
+    text-align: center;
+    color: var(--text-tertiary);
+  }
+
+  @media (min-width: 768px) {
+    .article-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .article-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>

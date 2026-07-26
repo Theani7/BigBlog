@@ -1,18 +1,102 @@
 ---
-import type { ComponentProps } from 'astro/types';
+import Icon from './Icon.astro';
 
 interface CodeBlockProps {
   language?: string;
   title?: string;
   code: string;
+  filename?: string;
+  lineNumbers?: boolean;
+  highlightLines?: number[];
+  collapsible?: boolean;
+  maxLines?: number;
 }
 
-const { language = '', title, code } = Astro.props as CodeBlockProps;
+const {
+  language = '',
+  title,
+  code,
+  filename,
+  lineNumbers = false,
+  highlightLines = [],
+  collapsible = false,
+  maxLines = 50,
+} = Astro.props as CodeBlockProps;
+
+const lines = code.split('\n');
+const shouldCollapse = collapsible && lines.length > maxLines;
+const displayLines = shouldCollapse ? lines.slice(0, maxLines) : lines;
+const totalLines = lines.length;
+const isLong = totalLines > maxLines;
 ---
 
-<figure class="code-block">
+<figure
+  class="code-block"
+  data-language={language}
+  tabindex="0"
+  role="region"
+  aria-label={title || filename || `Code block${language ? ` in ${language}` : ''}`}
+>
   {title && <figcaption class="code-title">{title}</figcaption>}
-  <pre><code class={`language-${language}`} set:html={code} /></pre>
+  {filename && <div class="code-filename">{filename}</div>}
+  <div class="code-block__header">
+    {language && <span class="code-language">{language}</span>}
+    <div class="code-block__actions">
+      {
+        isLong && (
+          <button
+            type="button"
+            class="code-action code-action--collapse"
+            aria-label="Toggle code visibility"
+            data-collapsible
+          >
+            <Icon name="chevron-down" size="xs" aria-hidden="true" />
+            <span>{shouldCollapse ? 'Show more' : 'Show less'}</span>
+          </button>
+        )
+      }
+      <button
+        type="button"
+        class="code-action code-action--wrap"
+        aria-label="Toggle word wrap"
+        data-word-wrap
+      >
+        <Icon name="WrapText" size="xs" aria-hidden="true" />
+        <span>Wrap</span>
+      </button>
+      <button
+        type="button"
+        class="code-action code-action--copy"
+        aria-label="Copy code to clipboard"
+        data-copy-code
+      >
+        <Icon name="copy" size="xs" aria-hidden="true" />
+        <span>Copy</span>
+      </button>
+    </div>
+  </div>
+  <div class="code-block__wrapper" data-collapsed={shouldCollapse ? '' : undefined}>
+    <div class="code-block__scroll">
+      <pre
+        class:list={[
+          'code-block__pre',
+          { 'code-block__pre--numbered': lineNumbers },
+        ]}><code class={`language-${language}`}>
+{displayLines.map((line, i) => {
+  const lineNum = i + 1;
+  const isHighlighted = highlightLines.includes(lineNum);
+  return `<span class="code-line${isHighlighted ? ' code-line--highlighted' : ''}" data-line="${lineNum}">${line || ' '}</span>`;
+}).join('\n')}
+      </code></pre>
+    </div>
+  </div>
+  {
+    shouldCollapse && (
+      <div class="code-block__footer">
+        <span class="code-block__line-count">{totalLines} lines</span>
+      </div>
+    )
+  }
 </figure>
 
 <style>
@@ -24,6 +108,11 @@ const { language = '', title, code } = Astro.props as CodeBlockProps;
     background: var(--surface);
   }
 
+  .code-block:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
   .code-title {
     padding: var(--space-2) var(--space-4);
     font-size: var(--text-xs);
@@ -33,15 +122,250 @@ const { language = '', title, code } = Astro.props as CodeBlockProps;
     border-bottom: 1px solid var(--border-color);
   }
 
-  pre {
-    padding: var(--space-4);
-    overflow-x: auto;
-    margin: 0;
+  .code-filename {
+    padding: var(--space-1) var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--font-mono);
   }
 
-  code {
+  .code-block__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-2) var(--space-4);
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+    min-height: 2rem;
+  }
+
+  .code-language {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .code-block__actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+  }
+
+  .code-action {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.125rem 0.5rem;
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      background var(--duration-fast) var(--ease-default);
+    font-family: var(--font-sans);
+  }
+
+  .code-action:hover {
+    color: var(--color-primary);
+    background: var(--bg-secondary);
+  }
+
+  .code-action:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .code-action--wrap[data-wrapped] {
+    color: var(--color-primary);
+    background: var(--color-primary-light);
+  }
+
+  .code-block__wrapper {
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-block__wrapper[data-collapsed] {
+    max-height: 20rem;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .code-block__wrapper[data-collapsed]::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3rem;
+    background: linear-gradient(to bottom, transparent, var(--surface));
+    pointer-events: none;
+  }
+
+  .code-block__scroll {
+    padding: var(--space-4);
+    overflow-x: auto;
+  }
+
+  .code-block__pre {
+    margin: 0;
     font-family: var(--font-mono);
     font-size: var(--text-sm);
     line-height: var(--leading-relaxed);
+    white-space: pre;
+  }
+
+  .code-block__pre code {
+    font-family: inherit;
+    font-size: inherit;
+    display: block;
+    white-space: inherit;
+  }
+
+  .code-block__pre--numbered code {
+    counter-reset: line;
+    padding-left: 3.5em;
+    position: relative;
+  }
+
+  .code-line {
+    display: block;
+    position: relative;
+    padding-left: 0.5em;
+    min-height: 1.5em;
+  }
+
+  .code-block__pre--numbered .code-line {
+    counter-increment: line;
+    padding-left: 2.5em;
+  }
+
+  .code-block__pre--numbered .code-line::before {
+    content: counter(line);
+    position: absolute;
+    left: -0.5em;
+    width: 2em;
+    text-align: right;
+    color: var(--text-tertiary);
+    user-select: none;
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .code-line--highlighted {
+    background: rgba(37, 99, 235, 0.1);
+    margin: 0 calc(var(--space-4) * -1);
+    padding: 0 var(--space-4);
+    border-left: 3px solid var(--color-primary);
+  }
+
+  .code-block__pre[data-wrap] {
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .code-block__pre[data-wrap] .code-line--highlighted {
+    border-left-width: 3px;
+  }
+
+  .code-block__footer {
+    padding: var(--space-2) var(--space-4);
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-tertiary);
+  }
+
+  .code-block__line-count {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .code-action {
+      transition: none;
+    }
   }
 </style>
+
+<script is:inline>
+  document.addEventListener('click', (e) => {
+    const copyBtn = e.target.closest('[data-copy-code]');
+    if (copyBtn) {
+      const codeBlock = copyBtn.closest('.code-block');
+      const codeEl = codeBlock?.querySelector('code');
+      if (!codeEl) return;
+
+      const text = codeEl.textContent ?? '';
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          const span = copyBtn.querySelector('span');
+          const icon = copyBtn.querySelector('svg') || copyBtn.querySelector('[name]');
+          const originalText = span?.textContent;
+          if (span) span.textContent = 'Copied!';
+          copyBtn.setAttribute('aria-label', 'Code copied to clipboard');
+          setTimeout(() => {
+            if (span) span.textContent = originalText || 'Copy';
+            copyBtn.setAttribute('aria-label', 'Copy code to clipboard');
+          }, 2000);
+        })
+        .catch(() => {
+          const textarea = document.createElement('textarea');
+          textarea.value = text;
+          textarea.style.position = 'fixed';
+          textarea.style.opacity = '0';
+          document.body.appendChild(textarea);
+          textarea.select();
+          try {
+            document.execCommand('copy');
+            const span = copyBtn.querySelector('span');
+            if (span) span.textContent = 'Copied!';
+            setTimeout(() => {
+              if (span) span.textContent = 'Copy';
+            }, 2000);
+          } catch {}
+          document.body.removeChild(textarea);
+        });
+      return;
+    }
+
+    const wrapBtn = e.target.closest('[data-word-wrap]');
+    if (wrapBtn) {
+      const codeBlock = wrapBtn.closest('.code-block');
+      const pre = codeBlock?.querySelector('pre');
+      if (!pre) return;
+
+      const isWrapped = pre.hasAttribute('data-wrap');
+      if (isWrapped) {
+        pre.removeAttribute('data-wrap');
+        wrapBtn.removeAttribute('data-wrapped');
+      } else {
+        pre.setAttribute('data-wrap', '');
+        wrapBtn.setAttribute('data-wrapped', '');
+      }
+      return;
+    }
+
+    const collapseBtn = e.target.closest('[data-collapsible]');
+    if (collapseBtn) {
+      const codeBlock = collapseBtn.closest('.code-block');
+      const wrapper = codeBlock?.querySelector('.code-block__wrapper');
+      if (!wrapper) return;
+
+      const isCollapsed = wrapper.hasAttribute('data-collapsed');
+      if (isCollapsed) {
+        wrapper.removeAttribute('data-collapsed');
+        collapseBtn.querySelector('span').textContent = 'Show less';
+      } else {
+        wrapper.setAttribute('data-collapsed', '');
+        collapseBtn.querySelector('span').textContent = 'Show more';
+      }
+    }
+  });
+</script>

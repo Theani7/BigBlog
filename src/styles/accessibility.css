@@ -109,9 +109,45 @@
   .skip-link {
     transition: none;
   }
+
+  .heading-anchor {
+    transition: none;
+  }
 }
 
-/* ── Forced Colors Mode ── */
+/* ── Focus Trap Utility ── */
+
+.focus-trap {
+  outline: none;
+}
+
+.focus-trap:focus {
+  outline: none;
+}
+
+/* ── Keyboard Navigation Hints ── */
+
+[data-keyboard-hint]::after {
+  content: attr(data-keyboard-hint);
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  margin-left: 0.5em;
+  font-size: 0.75em;
+  font-family: var(--font-mono);
+  color: var(--text-tertiary);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-keyboard-hint]::after {
+    transition: none;
+  }
+}
+
+/* ── High Contrast Mode ── */
 
 @media (forced-colors: active) {
   a {
