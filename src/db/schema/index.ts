@@ -1,6 +1,18 @@
 import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
 import { relations } from 'drizzle-orm';
 
+// Re-export analytics tables
+export {
+  analyticsEvents,
+  pageViews,
+  performanceMetrics,
+  errorLogs,
+  searchEvents,
+  apiLatency,
+  scrollDepth,
+  analyticsEventsRelations,
+} from './analytics';
+
 // =============================================================================
 // ANONYMOUS SESSIONS
 // Tracks anonymous users for views, likes, and bookmarks

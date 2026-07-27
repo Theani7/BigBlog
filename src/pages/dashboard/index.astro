@@ -1,0 +1,436 @@
+---
+import DashboardLayout from '../../layouts/DashboardLayout.astro';
+
+const dashboardNav = [
+  { label: 'Overview', href: '/dashboard', active: true },
+  { label: 'Traffic', href: '/dashboard/traffic' },
+  { label: 'Performance', href: '/dashboard/performance' },
+  { label: 'Errors', href: '/dashboard/errors' },
+  { label: 'Content', href: '/dashboard/content' },
+  { label: 'Search', href: '/dashboard/search' },
+];
+---
+
+<DashboardLayout
+  title="Analytics Dashboard"
+  description="Monitor site performance and user engagement"
+>
+  <header class="dashboard-header">
+    <h1 class="dashboard-title">Analytics Dashboard</h1>
+    <p class="dashboard-subtitle">Privacy-first insights into your site's performance</p>
+  </header>
+
+  <nav class="dashboard-nav">
+    {
+      dashboardNav.map((item) => (
+        <a href={item.href} class:list={['dashboard-nav-link', { active: item.active }]}>
+          {item.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <div class="dashboard-grid">
+    <section class="dashboard-card" id="traffic-overview">
+      <h2 class="card-title">Traffic Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total Views</span>
+          <span class="stat-value" id="total-views">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Unique Visitors</span>
+          <span class="stat-value" id="unique-visitors">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Avg. Time on Page</span>
+          <span class="stat-value" id="avg-time">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Bounce Rate</span>
+          <span class="stat-value" id="bounce-rate">--</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-card" id="performance-overview">
+      <h2 class="card-title">Core Web Vitals</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">LCP (p75)</span>
+          <span class="stat-value" id="lcp-value">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">CLS (p75)</span>
+          <span class="stat-value" id="cls-value">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">INP (p75)</span>
+          <span class="stat-value" id="inp-value">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">TTFB (p75)</span>
+          <span class="stat-value" id="ttfb-value">--</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="dashboard-card" id="errors-overview">
+      <h2 class="card-title">Errors (7 days)</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total Errors</span>
+          <span class="stat-value" id="total-errors">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Error Rate</span>
+          <span class="stat-value" id="error-rate">--</span>
+        </div>
+      </div>
+      <div class="error-list" id="recent-errors">
+        <p class="empty-state">Loading...</p>
+      </div>
+    </section>
+
+    <section class="dashboard-card" id="search-overview">
+      <h2 class="card-title">Search Analytics</h2>
+      <div class="stats-grid">
+        <div class="stat-item">
+          <span class="stat-label">Total Queries</span>
+          <span class="stat-value" id="total-queries">--</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Selection Rate</span>
+          <span class="stat-value" id="selection-rate">--</span>
+        </div>
+      </div>
+      <h3 class="list-title">Popular Searches</h3>
+      <div class="search-list" id="popular-searches">
+        <p class="empty-state">Loading...</p>
+      </div>
+      <h3 class="list-title">No Results</h3>
+      <div class="search-list" id="no-result-searches">
+        <p class="empty-state">Loading...</p>
+      </div>
+    </section>
+
+    <section class="dashboard-card full-width" id="top-pages">
+      <h2 class="card-title">Top Pages</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th>Views</th>
+              <th>Unique</th>
+              <th>Avg. Time</th>
+            </tr>
+          </thead>
+          <tbody id="top-pages-body">
+            <tr>
+              <td colspan="4" class="empty-state">Loading...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <div class="dashboard-footer">
+    <p class="privacy-note">
+      <strong>Privacy Note:</strong> All data is anonymized. Do Not Track is respected. No cookies are
+      used for analytics.
+    </p>
+  </div>
+</DashboardLayout>
+
+<style>
+  .dashboard-header {
+    margin-bottom: var(--space-8);
+  }
+
+  .dashboard-title {
+    font-size: var(--text-3xl);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-2) 0;
+  }
+
+  .dashboard-subtitle {
+    font-size: var(--text-lg);
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .dashboard-nav {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-8);
+    padding: var(--space-2);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    overflow-x: auto;
+  }
+
+  .dashboard-nav-link {
+    padding: var(--space-2) var(--space-4);
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .dashboard-nav-link:hover {
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
+  }
+
+  .dashboard-nav-link.active {
+    color: var(--color-primary);
+    background: var(--bg-primary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-6);
+  }
+
+  .dashboard-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+  }
+
+  .dashboard-card.full-width {
+    grid-column: 1 / -1;
+  }
+
+  .card-title {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    margin: 0 0 var(--space-4) 0;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-4);
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+  }
+
+  .stat-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .stat-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--weight-bold);
+    color: var(--text-primary);
+  }
+
+  .list-title {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    margin: var(--space-4) 0 var(--space-2) 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .error-list,
+  .search-list {
+    margin-top: var(--space-2);
+  }
+
+  .empty-state {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
+    text-align: center;
+    padding: var(--space-4);
+  }
+
+  .table-container {
+    overflow-x: auto;
+  }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: var(--space-3) var(--space-4);
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .data-table th {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-semibold);
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .data-table td {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+  }
+
+  .dashboard-footer {
+    margin-top: var(--space-8);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .privacy-note {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    text-align: center;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script is:inline>
+  async function loadDashboardData() {
+    try {
+      const response = await fetch('/api/analytics/dashboard?days=7');
+      const data = await response.json();
+
+      // Traffic
+      document.getElementById('total-views').textContent =
+        data.traffic?.totalViews?.toLocaleString() || '--';
+      document.getElementById('unique-visitors').textContent =
+        data.traffic?.uniqueVisitors?.toLocaleString() || '--';
+
+      // Performance
+      const vitals = data.performance?.coreWebVitals || [];
+      const lcp = vitals.find((v) => v.metric === 'LCP');
+      const cls = vitals.find((v) => v.metric === 'CLS');
+      const inp = vitals.find((v) => v.metric === 'INP');
+      const ttfb = vitals.find((v) => v.metric === 'TTFB');
+
+      document.getElementById('lcp-value').textContent = lcp ? `${Math.round(lcp.p75)}ms` : '--';
+      document.getElementById('cls-value').textContent = cls ? cls.p75.toFixed(3) : '--';
+      document.getElementById('inp-value').textContent = inp ? `${Math.round(inp.p75)}ms` : '--';
+      document.getElementById('ttfb-value').textContent = ttfb ? `${Math.round(ttfb.p75)}ms` : '--';
+
+      // Errors
+      document.getElementById('total-errors').textContent =
+        data.errors?.total?.toLocaleString() || '0';
+      document.getElementById('error-rate').textContent = data.api?.errorRate
+        ? `${(data.api.errorRate * 100).toFixed(1)}%`
+        : '0%';
+
+      const recentErrors = data.errors?.recent || [];
+      const errorListEl = document.getElementById('recent-errors');
+      if (recentErrors.length === 0) {
+        errorListEl.innerHTML = '<p class="empty-state">No errors in the last 7 days</p>';
+      } else {
+        errorListEl.innerHTML = recentErrors
+          .slice(0, 5)
+          .map(
+            (e) => `
+          <div class="error-item">
+            <span class="error-message">${e.message}</span>
+            <span class="error-count">${e.count}x</span>
+          </div>
+        `
+          )
+          .join('');
+      }
+
+      // Search
+      document.getElementById('total-queries').textContent =
+        data.search?.totalQueries?.toLocaleString() || '0';
+      document.getElementById('selection-rate').textContent = data.search?.selectionRate
+        ? `${(data.search.selectionRate * 100).toFixed(1)}%`
+        : '--';
+
+      const popularSearches = data.search?.popularQueries || [];
+      const popularEl = document.getElementById('popular-searches');
+      if (popularSearches.length === 0) {
+        popularEl.innerHTML = '<p class="empty-state">No searches yet</p>';
+      } else {
+        popularEl.innerHTML = popularSearches
+          .slice(0, 5)
+          .map(
+            (s) => `
+          <div class="search-item">
+            <span class="search-query">${s.query}</span>
+            <span class="search-count">${s.count}x</span>
+          </div>
+        `
+          )
+          .join('');
+      }
+
+      const noResultSearches = data.search?.noResultQueries || [];
+      const noResultEl = document.getElementById('no-result-searches');
+      if (noResultSearches.length === 0) {
+        noResultEl.innerHTML = '<p class="empty-state">No failed searches</p>';
+      } else {
+        noResultEl.innerHTML = noResultSearches
+          .slice(0, 5)
+          .map(
+            (s) => `
+          <div class="search-item">
+            <span class="search-query">${s.query}</span>
+            <span class="search-count">${s.count}x</span>
+          </div>
+        `
+          )
+          .join('');
+      }
+
+      // Top Pages
+      const topPages = data.traffic?.viewsByPage || [];
+      const topPagesBody = document.getElementById('top-pages-body');
+      if (topPages.length === 0) {
+        topPagesBody.innerHTML = '<tr><td colspan="4" class="empty-state">No data yet</td></tr>';
+      } else {
+        topPagesBody.innerHTML = topPages
+          .slice(0, 10)
+          .map(
+            (p) => `
+          <tr>
+            <td>${p.page}</td>
+            <td>${p.views.toLocaleString()}</td>
+            <td>--</td>
+            <td>--</td>
+          </tr>
+        `
+          )
+          .join('');
+      }
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    }
+  }
+
+  loadDashboardData();
+</script>

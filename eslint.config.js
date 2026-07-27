@@ -36,6 +36,13 @@ export default [
         queueMicrotask: 'readonly',
         // Node.js globals
         process: 'readonly',
+        // Browser Performance API
+        PerformanceObserver: 'readonly',
+        performance: 'readonly',
+        PerformanceNavigationTiming: 'readonly',
+        // Browser Storage API
+        localStorage: 'readonly',
+        sessionStorage: 'readonly',
       },
     },
     plugins: {
