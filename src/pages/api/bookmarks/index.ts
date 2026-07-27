@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const _body = await request.json();
+    await request.json();
     return new Response(JSON.stringify({ success: true, data: { bookmarked: true } }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },

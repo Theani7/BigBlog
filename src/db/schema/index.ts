@@ -106,7 +106,7 @@ export const comments = sqliteTable(
     sessionId: text('session_id')
       .notNull()
       .references(() => anonymousSessions.id),
-    parentId: integer('parent_id').references(() => comments.id),
+    parentId: integer('parent_id').references((): any => comments.id),
     content: text('content').notNull(),
     authorName: text('author_name').notNull(),
     authorEmail: text('author_email'),

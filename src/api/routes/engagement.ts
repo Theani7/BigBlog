@@ -143,12 +143,19 @@ export async function handleComments(request: Request, env: Env): Promise<Respon
         return errorResponse(new Error(validation.errors.join(', ')));
       }
 
-      const comment = await commentsService.create(body.articleSlug, ctx.sessionId, {
+      const commentData: {
+        content: string;
+        authorName: string;
+        authorEmail?: string;
+        parentId?: number;
+      } = {
         content: body.content,
         authorName: body.authorName,
-        authorEmail: body.authorEmail,
-        parentId: body.parentId,
-      });
+      };
+      if (body.authorEmail !== undefined) commentData.authorEmail = body.authorEmail;
+      if (body.parentId !== undefined) commentData.parentId = body.parentId;
+
+      const comment = await commentsService.create(body.articleSlug, ctx.sessionId, commentData);
 
       return successResponse(comment, 'Comment submitted for moderation', 201);
     }

@@ -39,7 +39,13 @@ export class CommentsRepository {
     const allComments = await this.findByArticle(articleSlug, status);
 
     // Build threaded structure
-    const commentMap = new Map<number, (typeof allComments)[0] & { replies: typeof allComments }>();
+    const commentMap = new Map<
+      number,
+      (typeof allComments)[0] & {
+        replies: typeof allComments;
+        reactionCounts?: Record<string, number>;
+      }
+    >();
     const rootComments: typeof allComments = [];
 
     for (const comment of allComments) {
@@ -59,7 +65,7 @@ export class CommentsRepository {
     for (const comment of allComments) {
       const mapped = commentMap.get(comment.id)!;
       if (mapped.reactions) {
-        mapped.reactionCounts = mapped.reactions.reduce(
+        mapped.reactionCounts = mapped.reactions.reduce<Record<string, number>>(
           (acc, r) => {
             acc[r.emoji] = (acc[r.emoji] || 0) + 1;
             return acc;

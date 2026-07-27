@@ -45,7 +45,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const action = url.searchParams.get('action') || 'subscribe';
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as { email?: string };
 
     if (action === 'unsubscribe') {
       const { email } = body;

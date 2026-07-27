@@ -15,6 +15,11 @@
     "format:check": "prettier --check .",
     "typecheck": "astro check",
     "seo:audit": "bun run scripts/seo-audit.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "npx playwright test",
+    "test:all": "vitest run && npx playwright test",
     "prepare": "husky"
   },
   "dependencies": {
@@ -31,19 +36,23 @@
     "@astrojs/check": "^0.9.9",
     "@cloudflare/workers-types": "^5.20260726.1",
     "@eslint/js": "^9.0.0",
+    "@playwright/test": "^1.62.0",
     "@tailwindcss/vite": "^4.3.3",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
+    "@vitest/coverage-v8": "^4.1.10",
     "astro-eslint-parser": "^3.0.0",
     "drizzle-kit": "^0.31.10",
     "eslint": "^9.0.0",
     "eslint-plugin-astro": "^3.0.1",
     "globals": "^15.0.0",
+    "happy-dom": "^20.11.1",
     "husky": "^9.1.0",
     "lint-staged": "^15.2.0",
     "prettier": "^3.4.0",
     "prettier-plugin-astro": "^0.14.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "~5.9.0"
+    "typescript": "~5.9.0",
+    "vitest": "^4.1.10"
   }
 }

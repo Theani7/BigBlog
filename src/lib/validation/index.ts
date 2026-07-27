@@ -1,4 +1,4 @@
-import type { ValidationResult, CommentInput, NewsletterInput, ReportInput } from '../db/types';
+import type { ValidationResult, CommentInput, NewsletterInput, ReportInput } from '../../db/types';
 
 /**
  * Validate email format

@@ -81,8 +81,8 @@ export interface RelatedArticle {
 }
 
 export interface SeriesNavigation {
-  previous?: Post;
-  next?: Post;
+  previous: Post | undefined;
+  next: Post | undefined;
   series: Series;
   progress: {
     current: number;

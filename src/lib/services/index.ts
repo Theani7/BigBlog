@@ -1,6 +1,6 @@
-import type { Database } from '../db';
-import { createRepositories, type Repositories } from '../db/repositories';
-import { hashIp, generateSessionId } from './validation';
+import type { Database } from '../../db';
+import { createRepositories, type Repositories } from '../../db/repositories';
+import { hashIp, generateSessionId } from '../validation/index';
 
 export class SessionService {
   private repos: Repositories;
@@ -24,7 +24,7 @@ export class SessionService {
       ipHash,
     });
 
-    return newSession[0].id;
+    return newSession[0]!.id;
   }
 
   async getSession(sessionId: string) {
@@ -162,10 +162,10 @@ export class CommentsService {
       sessionId,
       action: 'comment.created',
       entityType: 'comment',
-      entityId: String(comment[0].id),
+      entityId: String(comment[0]!.id),
     });
 
-    return comment[0];
+    return comment[0]!;
   }
 
   async getThreaded(articleSlug: string) {

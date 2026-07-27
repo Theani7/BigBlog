@@ -43,7 +43,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as {
+      articleSlug?: string;
+      progress?: number;
+      readTime?: number;
+    };
     const { articleSlug, progress, readTime: _readTime } = body;
 
     if (!articleSlug || progress === undefined) {

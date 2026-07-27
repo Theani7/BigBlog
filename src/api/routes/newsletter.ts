@@ -45,7 +45,7 @@ export async function handleNewsletter(request: Request, env: Env): Promise<Resp
 }
 
 export async function handleNewsletterConfirm(
-  request: Request,
+  _request: Request,
   env: Env,
   token: string
 ): Promise<Response> {
@@ -60,7 +60,7 @@ export async function handleNewsletterConfirm(
 }
 
 export async function handleNewsletterUnsubscribe(
-  request: Request,
+  _request: Request,
   env: Env,
   email: string
 ): Promise<Response> {

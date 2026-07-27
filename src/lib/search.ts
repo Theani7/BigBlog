@@ -10,7 +10,7 @@ export interface SearchEntry {
   content: string;
   tags: string[];
   category: string;
-  series?: string;
+  series: string | undefined;
   author: string;
   publishedAt: string;
   readingTime: number;

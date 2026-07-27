@@ -1,4 +1,8 @@
-import type { ReadingTimeResult } from './content';
+export interface ReadingTimeResult {
+  minutes: number;
+  words: number;
+  characters: number;
+}
 
 /**
  * Calculate reading time for a given text.
@@ -98,8 +102,8 @@ export function extractHeadings(
   let match;
 
   while ((match = headingRegex.exec(markdown)) !== null) {
-    const level = match[1].length;
-    const text = match[2].trim();
+    const level = match[1]!.length;
+    const text = match[2]!.trim();
     headings.push({
       id: headingId(text),
       text,
@@ -129,14 +133,14 @@ export function generateToc(
   for (const heading of headings) {
     const item = { ...heading, children: [] };
 
-    while (stack.length > 0 && stack[stack.length - 1].level >= heading.level) {
+    while (stack.length > 0 && stack[stack.length - 1]!.level >= heading.level) {
       stack.pop();
     }
 
     if (stack.length === 0) {
       root.push(item);
     } else {
-      const parent = stack[stack.length - 1].item as { children: unknown[] };
+      const parent = stack[stack.length - 1]!.item as { children: unknown[] };
       parent.children.push(item);
     }
 
@@ -227,8 +231,8 @@ export function getPaginationMeta(
   totalPosts: number;
   hasNext: boolean;
   hasPrevious: boolean;
-  nextPage?: number;
-  previousPage?: number;
+  nextPage: number | undefined;
+  previousPage: number | undefined;
 } {
   const totalPages = Math.ceil(totalItems / pageSize);
   const nextPage = currentPage < totalPages ? currentPage + 1 : undefined;

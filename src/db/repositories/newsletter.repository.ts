@@ -3,7 +3,7 @@ import type { Database } from '../index';
 import { newsletterSubscribers } from '../schema';
 import type { InsertNewsletterSubscriber } from '../types';
 import { DatabaseError, ConflictError, NotFoundError } from '../../lib/errors';
-import { generateSessionId } from '../../lib/validation';
+import { generateSessionId } from '../../lib/validation/index';
 
 export class NewsletterRepository {
   constructor(private db: Database) {}

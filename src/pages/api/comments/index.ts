@@ -38,7 +38,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const action = url.searchParams.get('action') || 'create';
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as {
+      articleSlug?: string;
+      content?: string;
+      authorName?: string;
+      authorEmail?: string;
+      parentId?: number;
+      commentId?: number;
+      emoji?: string;
+      reason?: string;
+      details?: string;
+    };
 
     switch (action) {
       case 'create': {

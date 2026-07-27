@@ -30,7 +30,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
         'Content-Type': 'application/json',
         ...headers,
       },
-      body: body ? JSON.stringify(body) : undefined,
+      body: body ? JSON.stringify(body) : null,
     });
 
     const data = await response.json();

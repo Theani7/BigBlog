@@ -34,7 +34,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   }
 
   try {
-    const body = await request.json();
+    const body = (await request.json()) as {
+      theme?: string;
+      fontSize?: number;
+      contentWidth?: number;
+      lineHeight?: number;
+      readingMode?: string;
+    };
     const { theme, fontSize, contentWidth, lineHeight, readingMode } = body;
 
     // Validate inputs

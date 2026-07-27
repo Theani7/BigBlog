@@ -133,9 +133,12 @@ export function getSeriesNavigation(posts: Post[], currentPost: Post): SeriesNav
 
   if (currentIndex === -1) return null;
 
+  const previous = currentIndex > 0 ? seriesPosts[currentIndex - 1] : undefined;
+  const next = currentIndex < seriesPosts.length - 1 ? seriesPosts[currentIndex + 1] : undefined;
+
   return {
-    previous: currentIndex > 0 ? seriesPosts[currentIndex - 1] : undefined,
-    next: currentIndex < seriesPosts.length - 1 ? seriesPosts[currentIndex + 1] : undefined,
+    previous,
+    next,
     series: {
       title: currentPost.data.series,
       slug: '',

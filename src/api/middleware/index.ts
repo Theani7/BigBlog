@@ -1,5 +1,5 @@
 import type { Database } from '../../db';
-import { SessionService } from '../services';
+import { SessionService } from '../../lib/services';
 
 export interface ApiContext {
   db: Database;
@@ -16,8 +16,11 @@ async function getSessionId(request: Request, db: Database): Promise<string> {
   const cookieHeader = request.headers.get('Cookie') || '';
   const cookies = Object.fromEntries(
     cookieHeader.split(';').map((c) => {
-      const [key, ...val] = c.split('=');
-      return [key.trim(), val.join('=').trim()];
+      const eqIndex = c.indexOf('=');
+      if (eqIndex === -1) return [c.trim(), ''];
+      const key = c.substring(0, eqIndex).trim();
+      const val = c.substring(eqIndex + 1).trim();
+      return [key, val];
     })
   );
 
@@ -33,7 +36,7 @@ async function getSessionId(request: Request, db: Database): Promise<string> {
     sessionId = await sessionService.getOrCreateSession(fingerprint, clientIp, userAgent);
   }
 
-  return sessionId;
+  return sessionId ?? '';
 }
 
 /**

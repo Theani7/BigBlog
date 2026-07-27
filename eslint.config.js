@@ -58,6 +58,6 @@ export default [
     },
   },
   {
-    ignores: ['dist/', 'node_modules/', '.astro/', 'public/', '**/*.astro'],
+    ignores: ['dist/', 'node_modules/', '.astro/', '.vercel/', 'public/', '**/*.astro'],
   },
 ];
