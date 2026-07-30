@@ -799,47 +799,7 @@ const structuredDataList = structuredData
     top: 0;
   }
 
-  .glass-blob {
-    position: fixed;
-    border-radius: 50%;
-    filter: blur(90px);
-    z-index: -1;
-    opacity: 0.6;
-    animation: blob-float 20s infinite alternate ease-in-out;
-    pointer-events: none;
-  }
 
-  .blob-1 {
-    top: 10%;
-    left: 10%;
-    width: 450px;
-    height: 450px;
-    background: hsla(28, 100%, 74%, 1);
-  }
-
-  .blob-2 {
-    bottom: 10%;
-    right: 5%;
-    width: 550px;
-    height: 550px;
-    background: hsla(189, 100%, 56%, 1);
-    animation-delay: -5s;
-  }
-
-  .blob-3 {
-    top: 50%;
-    left: 50%;
-    width: 350px;
-    height: 350px;
-    background: hsla(355, 100%, 83%, 1);
-    transform: translate(-50%, -50%);
-    animation-delay: -10s;
-  }
-
-  @keyframes blob-float {
-    0% { transform: translate(0, 0) scale(1); }
-    100% { transform: translate(60px, -60px) scale(1.15); }
-  }
 
   :global(:focus-visible) {
     outline: 2px solid var(--color-primary);

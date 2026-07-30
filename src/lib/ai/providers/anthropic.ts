@@ -1,4 +1,5 @@
 // =============================================================================
+/* global AbortSignal, AbortController */
 // ANTHROPIC PROVIDER
 // Direct fetch-based Anthropic API adapter for the AI abstraction layer
 // =============================================================================

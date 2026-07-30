@@ -1,4 +1,5 @@
 // =============================================================================
+/* global AbortSignal, AbortController */
 // OPENAI PROVIDER
 // Direct fetch-based OpenAI API adapter for the AI abstraction layer
 // =============================================================================
