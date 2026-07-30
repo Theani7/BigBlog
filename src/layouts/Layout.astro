@@ -2,6 +2,7 @@
 import '../styles/tokens.css';
 import '../styles/global.css';
 import CommandPalette from '../components/navigation/CommandPalette.astro';
+import AuthModal from '../components/auth/AuthModal.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
 import ThemeSwitch from '../components/navigation/ThemeSwitch.astro';
 import { siteConfig, seo as defaultSeo, socials } from '@config/site';
@@ -163,9 +164,10 @@ const structuredDataList = structuredData
           </nav>
           <div class="header-actions">
             <div class="auth-links">
-              <a href="/login" class="nav-link">Log in</a>
+              <a href="#" data-auth-modal="login" class="nav-link">Log in</a>
               <a
-                href="/signup"
+                href="#"
+                data-auth-modal="signup"
                 class="btn btn-primary"
                 style="padding: 0.375rem 1rem; font-size: 0.875rem;">Get Started</a
               >
@@ -288,46 +290,42 @@ const structuredDataList = structuredData
 
     <footer class="site-footer" role="contentinfo">
       <div class="container footer-inner">
+        <div class="footer-top">
+          <h2 class="footer-huge-title">BigBlog.</h2>
+          <p class="footer-tagline">Ideas that shape tomorrow.</p>
+        </div>
         <div class="footer-grid">
           <div class="footer-section">
-            <h3 class="footer-heading">BigBlog</h3>
-            <p class="footer-desc">
-              A premium developer publishing platform for building world-class documentation and
-              blogs.
-            </p>
-          </div>
-          <div class="footer-section">
-            <h3 class="footer-heading">Quick Links</h3>
+            <h3 class="footer-heading">Platform</h3>
             <ul class="footer-links">
-              <li><a href="/blog">Blog</a></li>
-              <li><a href="/about">About</a></li>
-              <li><a href="/projects">Projects</a></li>
-              <li><a href="/contact">Contact</a></li>
+              <li><a href="/about">Our story</a></li>
+              <li><a href="/write">Publish</a></li>
+              <li><a href="#" data-auth-modal="login">Log in</a></li>
+              <li><a href="#" data-auth-modal="signup">Sign up</a></li>
             </ul>
           </div>
           <div class="footer-section">
-            <h3 class="footer-heading">Categories</h3>
+            <h3 class="footer-heading">Topics</h3>
             <ul class="footer-links">
-              <li><a href="/category/engineering">Engineering</a></li>
-              <li><a href="/category/design">Design</a></li>
-              <li><a href="/category/accessibility">Accessibility</a></li>
-              <li><a href="/category/performance">Performance</a></li>
-              <li><a href="/category/vercel">Vercel</a></li>
+              <li><a href="#">Science</a></li>
+              <li><a href="#">Technology</a></li>
+              <li><a href="#">Cosmos</a></li>
+              <li><a href="#">Medicine</a></li>
             </ul>
           </div>
           <div class="footer-section">
             <h3 class="footer-heading">Connect</h3>
             <ul class="footer-links">
-              <li><a href="https://github.com/BigBlog">GitHub</a></li>
               <li><a href="https://twitter.com/bigblog">Twitter</a></li>
               <li><a href="https://linkedin.com/company/bigblog">LinkedIn</a></li>
+              <li><a href="https://github.com/BigBlog">GitHub</a></li>
               <li><a href="/rss.xml">RSS</a></li>
             </ul>
           </div>
         </div>
         <div class="footer-bottom">
           <p class="footer-copyright">
-            &copy; {new Date().getFullYear()} BigBlog. Built with Astro.
+            &copy; {new Date().getFullYear()} BigBlog. All rights reserved.
           </p>
         </div>
       </div>
@@ -557,6 +555,7 @@ const structuredDataList = structuredData
         }
       })();
     </script>
+    <AuthModal />
   </body>
 </html>
 
@@ -1240,32 +1239,50 @@ const structuredDataList = structuredData
   }
 
   .site-footer {
-    border-top: 1px solid var(--color-hairline);
-    padding: var(--space-12) 0 var(--space-6);
-    background: var(--bg-surface-dark);
+    padding: var(--space-xxl) 0 var(--space-xl);
+    background: var(--bg-inverse);
     color: var(--color-on-dark);
+    border-top: 1px solid var(--color-hairline);
+    text-align: center;
+  }
+
+  .footer-top {
+    margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-xl);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .footer-huge-title {
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 6vw, 5rem);
+    line-height: 1;
+    letter-spacing: -1.5px;
+    color: var(--color-on-dark);
+    margin: 0;
+  }
+
+  .footer-tagline {
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    color: var(--color-on-dark-soft);
+    margin-top: var(--space-sm);
   }
 
   .footer-grid {
     display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
-    margin-bottom: var(--space-8);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-xl);
+    margin-bottom: var(--space-xl);
   }
 
   .footer-heading {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    letter-spacing: 0.05em;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--color-on-dark);
-    margin-bottom: var(--space-4);
-  }
-
-  .footer-desc {
-    color: var(--color-on-dark-soft);
-    font-size: var(--text-sm);
-    line-height: var(--leading-relaxed);
+    margin-bottom: var(--space-md);
   }
 
   .footer-links {
@@ -1274,33 +1291,35 @@ const structuredDataList = structuredData
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--space-sm);
+    align-items: center;
   }
 
   .footer-links a {
     color: var(--color-on-dark-soft);
     text-decoration: none;
-    font-size: var(--text-sm);
+    font-size: 1rem;
+    font-family: var(--font-sans);
     transition: color var(--duration-fast) var(--ease-default);
   }
 
   .footer-links a:hover {
-    color: var(--color-primary);
+    color: #ffffff;
     text-decoration: none;
-  }
-
-  .footer-placeholder {
-    color: var(--text-tertiary);
-    font-size: var(--text-sm);
-    font-style: italic;
   }
 
   .footer-bottom {
     display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-    padding-top: var(--space-6);
-    border-top: 1px solid var(--border-color);
+    justify-content: center;
+    align-items: center;
+    padding-top: var(--space-lg);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .footer-copyright {
+    color: var(--color-on-dark-soft);
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
   }
 
   .footer-socials {

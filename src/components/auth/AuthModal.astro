@@ -1,0 +1,444 @@
+---
+import Eye from 'lucide-astro/Eye';
+import EyeOff from 'lucide-astro/EyeOff';
+import X from 'lucide-astro/X';
+---
+
+<div id="auth-modal" class="auth-modal-overlay">
+  <div class="auth-modal-dialog">
+    <button type="button" class="auth-modal-close" aria-label="Close modal">
+      <X size={24} />
+    </button>
+
+    <div class="auth-modal-content">
+      <!-- Header -->
+      <h2 id="auth-modal-title" class="auth-modal-title">Welcome back.</h2>
+      <p id="auth-modal-subtitle" class="auth-modal-subtitle">Continue your reading journey.</p>
+
+      <form id="auth-modal-form" class="auth-form">
+        <!-- Name field (only for signup) -->
+        <div class="form-group" id="auth-name-group" style="display: none;">
+          <label for="auth-name">Full name</label>
+          <input
+            type="text"
+            id="auth-name"
+            name="name"
+            placeholder="John Doe"
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="auth-email">Email address</label>
+          <input
+            type="email"
+            id="auth-email"
+            name="email"
+            required
+            placeholder="you@example.com"
+            autocomplete="email"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <div class="password-wrapper">
+            <input
+              type="password"
+              id="auth-password"
+              name="password"
+              required
+              placeholder="••••••••"
+            />
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <Eye class="icon-eye" size={20} />
+              <EyeOff class="icon-eye-off" size={20} style="display: none;" />
+            </button>
+          </div>
+          <!-- Password strength meter (only for signup) -->
+          <div id="password-strength" class="password-strength" style="display: none;">
+            <div class="strength-bar"><div class="strength-fill"></div></div>
+            <span class="strength-text">Password strength</span>
+          </div>
+        </div>
+
+        <div id="auth-error-message" class="error-message" style="display: none;"></div>
+
+        <button type="submit" id="auth-submit-btn" class="btn-dark-pill auth-btn">Log In</button>
+      </form>
+
+      <p class="auth-toggle-text">
+        <span id="auth-toggle-prompt">Don't have an account?</span>
+        <button type="button" id="auth-mode-toggle" class="auth-text-btn">Sign up</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+  .auth-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(24, 23, 21, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-md);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .auth-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .auth-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 440px;
+    background: var(--bg-canvas);
+    border-radius: 8px; /* Slight radius for modal */
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    padding: var(--space-xxl) var(--space-xl);
+    transform: translateY(20px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .auth-modal-overlay.is-open .auth-modal-dialog {
+    transform: translateY(0);
+  }
+
+  .auth-modal-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .auth-modal-close:hover {
+    color: var(--color-ink);
+  }
+
+  .auth-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .auth-modal-title {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    color: var(--color-ink);
+    margin-bottom: var(--space-xs);
+    line-height: 1.1;
+  }
+
+  .auth-modal-subtitle {
+    font-family: var(--font-sans);
+    color: var(--color-muted);
+    margin-bottom: var(--space-xl);
+    font-size: 1rem;
+  }
+
+  .auth-form {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    text-align: left;
+  }
+
+  .form-group label {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+  }
+
+  .form-group input {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    padding: 12px 16px;
+    border: 1px solid var(--color-hairline);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--color-ink);
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--color-ink);
+  }
+
+  .password-wrapper {
+    position: relative;
+  }
+
+  .password-toggle {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .password-toggle:hover {
+    color: var(--color-ink);
+  }
+
+  .btn-dark-pill {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    font-weight: 500;
+    padding: 0.875rem 2rem;
+    border-radius: 9999px;
+    background: #181715;
+    color: #ffffff;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition:
+      opacity var(--duration-fast) var(--ease-default),
+      transform var(--duration-fast) var(--ease-default);
+  }
+  .btn-dark-pill:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .auth-btn {
+    margin-top: var(--space-md);
+    width: 100%;
+  }
+
+  .auth-toggle-text {
+    margin-top: var(--space-xl);
+    font-family: var(--font-sans);
+    font-size: 0.875rem;
+    color: var(--color-muted);
+  }
+
+  .auth-text-btn {
+    background: transparent;
+    border: none;
+    color: var(--color-primary);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .auth-text-btn:hover {
+    text-decoration: underline;
+  }
+
+  .error-message {
+    color: #e53e3e;
+    font-size: 0.875rem;
+    padding: 8px;
+    background: #fff5f5;
+    border-radius: 4px;
+    text-align: center;
+  }
+
+  /* Password Strength */
+  .password-strength {
+    margin-top: 8px;
+    font-size: 0.75rem;
+  }
+  .strength-bar {
+    height: 4px;
+    background: var(--color-hairline);
+    border-radius: 2px;
+    margin-bottom: 4px;
+    overflow: hidden;
+  }
+  .strength-fill {
+    height: 100%;
+    width: 0%;
+    transition:
+      width 0.3s,
+      background 0.3s;
+  }
+</style>
+
+<script>
+  // DOM Elements
+  const modal = document.getElementById('auth-modal');
+  const closeBtn = document.querySelector('.auth-modal-close');
+  const form = document.getElementById('auth-modal-form') as HTMLFormElement;
+  const title = document.getElementById('auth-modal-title');
+  const subtitle = document.getElementById('auth-modal-subtitle');
+  const nameGroup = document.getElementById('auth-name-group');
+  const nameInput = document.getElementById('auth-name') as HTMLInputElement;
+  const submitBtn = document.getElementById('auth-submit-btn');
+  const errorMsg = document.getElementById('auth-error-message');
+  const toggleBtn = document.getElementById('auth-mode-toggle');
+  const togglePrompt = document.getElementById('auth-toggle-prompt');
+
+  // Password Elements
+  const pwdInput = document.getElementById('auth-password') as HTMLInputElement;
+  const pwdToggleBtn = document.querySelector('.password-toggle');
+  const iconEye = document.querySelector('.icon-eye') as HTMLElement;
+  const iconEyeOff = document.querySelector('.icon-eye-off') as HTMLElement;
+  const pwdStrength = document.getElementById('password-strength');
+  const pwdFill = document.querySelector('.strength-fill') as HTMLElement;
+  const pwdText = document.querySelector('.strength-text') as HTMLElement;
+
+  let mode: 'login' | 'signup' = 'login';
+
+  // Toggle Mode function
+  function setMode(newMode: 'login' | 'signup') {
+    mode = newMode;
+    if (mode === 'signup') {
+      title!.textContent = 'Join BigBlog.';
+      subtitle!.textContent = 'Create an account to start publishing.';
+      nameGroup!.style.display = 'block';
+      nameInput.required = true;
+      pwdStrength!.style.display = 'block';
+      submitBtn!.textContent = 'Sign Up';
+      togglePrompt!.textContent = 'Already have an account?';
+      toggleBtn!.textContent = 'Log in';
+    } else {
+      title!.textContent = 'Welcome back.';
+      subtitle!.textContent = 'Continue your reading journey.';
+      nameGroup!.style.display = 'none';
+      nameInput.required = false;
+      pwdStrength!.style.display = 'none';
+      submitBtn!.textContent = 'Log In';
+      togglePrompt!.textContent = "Don't have an account?";
+      toggleBtn!.textContent = 'Sign up';
+    }
+    if (errorMsg) errorMsg.style.display = 'none';
+  }
+
+  toggleBtn?.addEventListener('click', () => {
+    setMode(mode === 'login' ? 'signup' : 'login');
+  });
+
+  // Open/Close logic
+  window.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement;
+    // Check if clicked element has data-auth-modal or if its parent has it
+    const trigger = target.closest('[data-auth-modal]');
+    if (trigger) {
+      e.preventDefault();
+      const reqMode = trigger.getAttribute('data-auth-modal') as 'login' | 'signup';
+      if (reqMode === 'signup' || reqMode === 'login') {
+        setMode(reqMode);
+      }
+      modal?.classList.add('is-open');
+    }
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    modal?.classList.remove('is-open');
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal?.classList.remove('is-open');
+    }
+  });
+
+  // Password visibility
+  pwdToggleBtn?.addEventListener('click', () => {
+    if (pwdInput.type === 'password') {
+      pwdInput.type = 'text';
+      if (iconEye) iconEye.style.display = 'none';
+      if (iconEyeOff) iconEyeOff.style.display = 'block';
+    } else {
+      pwdInput.type = 'password';
+      if (iconEye) iconEye.style.display = 'block';
+      if (iconEyeOff) iconEyeOff.style.display = 'none';
+    }
+  });
+
+  // Password strength check
+  pwdInput?.addEventListener('input', () => {
+    if (mode !== 'signup') return;
+    const val = pwdInput.value;
+    let score = 0;
+    if (val.length > 5) score++;
+    if (val.length > 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+
+    if (val.length === 0) {
+      pwdFill.style.width = '0%';
+      pwdText.textContent = 'Password strength';
+    } else if (score < 2) {
+      pwdFill.style.width = '33%';
+      pwdFill.style.backgroundColor = '#e53e3e';
+      pwdText.textContent = 'Weak';
+      pwdText.style.color = '#e53e3e';
+    } else if (score < 4) {
+      pwdFill.style.width = '66%';
+      pwdFill.style.backgroundColor = '#dd6b20';
+      pwdText.textContent = 'Good';
+      pwdText.style.color = '#dd6b20';
+    } else {
+      pwdFill.style.width = '100%';
+      pwdFill.style.backgroundColor = '#38a169';
+      pwdText.textContent = 'Strong';
+      pwdText.style.color = '#38a169';
+    }
+  });
+
+  // Form Submit
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (errorMsg) errorMsg.style.display = 'none';
+
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/signup';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        window.location.reload(); // Reload to update auth state
+      } else {
+        if (errorMsg) {
+          errorMsg.textContent = result.error || 'Authentication failed';
+          errorMsg.style.display = 'block';
+        }
+      }
+    } catch (err) {
+      if (errorMsg) {
+        errorMsg.textContent = 'Network error. Please try again.';
+        errorMsg.style.display = 'block';
+      }
+    }
+  });
+</script>
