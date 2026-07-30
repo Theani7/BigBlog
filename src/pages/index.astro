@@ -60,15 +60,36 @@ const structuredData = homepageSchemas();
   structuredData={structuredData}
 >
   <section class="hero" aria-label="Hero">
-    <div class="container">
-      <p class="hero-eyebrow">Developer Publishing Platform</p>
-      <h1 class="hero-title">Build something<br />worth reading.</h1>
-      <p class="hero-subtitle">
-        A modern publishing platform for developers who care about craft, clarity, and community.
-      </p>
-      <div class="hero-actions">
-        <a href="/blog" class="btn btn-primary">Read the Blog</a>
-        <a href="/about" class="btn btn-secondary">Learn More</a>
+    <div class="container hero-container">
+      <div class="hero-content">
+        <h1 class="hero-title">Build something<br />worth reading.</h1>
+        <p class="hero-subtitle">
+          A modern publishing platform for developers who care about craft, clarity, and community.
+        </p>
+        <div class="hero-actions">
+          <a href="/blog" class="btn btn-primary">Read the Blog</a>
+          <a href="/about" class="btn btn-secondary">Learn More</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="code-window-card">
+          <div class="code-window-header">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+          </div>
+          <pre><code><span class="keyword">import</span> &#123; createDatabase &#125; <span class="keyword">from</span> <span class="string">'@db'</span>;
+
+<span class="keyword">const</span> db = createDatabase();
+
+<span class="keyword">await</span> db.posts.insert(&#123;
+  title: <span class="string">'The Future of Web Typography'</span>,
+  author: <span class="string">'Sarah Chen'</span>,
+  published: <span class="boolean">true</span>
+&#125;);
+
+console.log(<span class="string">"Published to Edge Network"</span>);</code></pre>
+        </div>
       </div>
     </div>
   </section>
@@ -355,23 +376,31 @@ const structuredData = homepageSchemas();
 <style>
   .hero {
     padding: var(--space-section) 0;
-    text-align: center;
     background: var(--bg-canvas);
     border-bottom: 1px solid var(--color-hairline);
   }
 
-  .hero-eyebrow {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--color-primary);
-    margin-bottom: var(--space-4);
+  .hero-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    align-items: center;
+  }
+
+  @media (min-width: 1024px) {
+    .hero-container {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-section);
+    }
+  }
+
+  .hero-content {
+    max-width: 36rem;
   }
 
   .hero-title {
     font-family: var(--font-serif);
-    font-size: var(--text-display-xl);
+    font-size: clamp(3rem, 5vw, var(--text-display-xl));
     font-weight: var(--weight-normal);
     letter-spacing: -1.5px;
     line-height: var(--leading-tight);
@@ -383,16 +412,52 @@ const structuredData = homepageSchemas();
     font-size: var(--text-lg);
     line-height: var(--leading-relaxed);
     color: var(--text-secondary);
-    max-width: 36rem;
-    margin: 0 auto var(--space-8);
+    margin-bottom: var(--space-8);
   }
 
   .hero-actions {
     display: flex;
     gap: var(--space-4);
-    justify-content: center;
     flex-wrap: wrap;
   }
+
+  /* Code Window Card */
+  .code-window-card {
+    background: var(--bg-surface-dark);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+
+  .code-window-header {
+    display: flex;
+    gap: 8px;
+    margin-bottom: var(--space-md);
+  }
+
+  .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .code-window-card pre {
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--color-on-dark);
+    margin: 0;
+    overflow-x: auto;
+  }
+
+  .code-window-card .keyword { color: #cc785c; }
+  .code-window-card .string { color: #5db8a6; }
+  .code-window-card .boolean { color: #e8a55a; }
 
   .btn {
     display: inline-block;
