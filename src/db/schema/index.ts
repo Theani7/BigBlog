@@ -2,6 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 
 // Re-export analytics tables
 export * from './analytics';
+export * from './user';
 
 // =============================================================================
 // ANONYMOUS SESSIONS
@@ -19,7 +20,9 @@ const anonymousSessionsSchema = new Schema({
 anonymousSessionsSchema.index({ fingerprint: 1 });
 anonymousSessionsSchema.index({ createdAt: 1 });
 
-export const anonymousSessions = mongoose.models.AnonymousSession || mongoose.model<any>('AnonymousSession', anonymousSessionsSchema);
+export const anonymousSessions =
+  mongoose.models.AnonymousSession ||
+  mongoose.model<any>('AnonymousSession', anonymousSessionsSchema);
 
 // =============================================================================
 // ARTICLE VIEWS
@@ -38,7 +41,8 @@ articleViewsSchema.index({ viewedAt: 1 });
 articleViewsSchema.index({ articleSlug: 1, viewedAt: 1 });
 articleViewsSchema.index({ articleSlug: 1, sessionId: 1, viewedAt: 1 }, { unique: true });
 
-export const articleViews = mongoose.models.ArticleView || mongoose.model<any>('ArticleView', articleViewsSchema);
+export const articleViews =
+  mongoose.models.ArticleView || mongoose.model<any>('ArticleView', articleViewsSchema);
 
 // =============================================================================
 // ARTICLE LIKES
@@ -53,7 +57,8 @@ articleLikesSchema.index({ articleSlug: 1 });
 articleLikesSchema.index({ sessionId: 1 });
 articleLikesSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
-export const articleLikes = mongoose.models.ArticleLike || mongoose.model<any>('ArticleLike', articleLikesSchema);
+export const articleLikes =
+  mongoose.models.ArticleLike || mongoose.model<any>('ArticleLike', articleLikesSchema);
 
 // =============================================================================
 // ARTICLE BOOKMARKS
@@ -69,7 +74,8 @@ articleBookmarksSchema.index({ articleSlug: 1 });
 articleBookmarksSchema.index({ sessionId: 1 });
 articleBookmarksSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
-export const articleBookmarks = mongoose.models.ArticleBookmark || mongoose.model<any>('ArticleBookmark', articleBookmarksSchema);
+export const articleBookmarks =
+  mongoose.models.ArticleBookmark || mongoose.model<any>('ArticleBookmark', articleBookmarksSchema);
 
 // =============================================================================
 // COMMENTS
@@ -81,7 +87,12 @@ const commentsSchema = new Schema({
   content: { type: String, required: true },
   authorName: { type: String, required: true },
   authorEmail: { type: String },
-  status: { type: String, enum: ['pending', 'approved', 'rejected', 'spam'], required: true, default: 'pending' },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected', 'spam'],
+    required: true,
+    default: 'pending',
+  },
   isEdited: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
@@ -110,7 +121,8 @@ commentReactionsSchema.index({ commentId: 1 });
 commentReactionsSchema.index({ sessionId: 1 });
 commentReactionsSchema.index({ commentId: 1, sessionId: 1, emoji: 1 }, { unique: true });
 
-export const commentReactions = mongoose.models.CommentReaction || mongoose.model<any>('CommentReaction', commentReactionsSchema);
+export const commentReactions =
+  mongoose.models.CommentReaction || mongoose.model<any>('CommentReaction', commentReactionsSchema);
 
 // =============================================================================
 // COMMENT REPORTS
@@ -120,7 +132,12 @@ const commentReportsSchema = new Schema({
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
   reason: { type: String, enum: ['spam', 'abuse', 'off-topic', 'other'], required: true },
   details: { type: String },
-  status: { type: String, enum: ['pending', 'reviewed', 'resolved'], required: true, default: 'pending' },
+  status: {
+    type: String,
+    enum: ['pending', 'reviewed', 'resolved'],
+    required: true,
+    default: 'pending',
+  },
   createdAt: { type: Date, default: Date.now },
   reviewedAt: { type: Date },
 });
@@ -128,7 +145,8 @@ const commentReportsSchema = new Schema({
 commentReportsSchema.index({ commentId: 1 });
 commentReportsSchema.index({ status: 1 });
 
-export const commentReports = mongoose.models.CommentReport || mongoose.model<any>('CommentReport', commentReportsSchema);
+export const commentReports =
+  mongoose.models.CommentReport || mongoose.model<any>('CommentReport', commentReportsSchema);
 
 // =============================================================================
 // NEWSLETTER SUBSCRIBERS
@@ -136,7 +154,12 @@ export const commentReports = mongoose.models.CommentReport || mongoose.model<an
 const newsletterSubscribersSchema = new Schema({
   email: { type: String, required: true },
   sessionId: { type: String, ref: 'AnonymousSession' },
-  status: { type: String, enum: ['pending', 'confirmed', 'unsubscribed'], required: true, default: 'pending' },
+  status: {
+    type: String,
+    enum: ['pending', 'confirmed', 'unsubscribed'],
+    required: true,
+    default: 'pending',
+  },
   confirmationToken: { type: String },
   subscribedAt: { type: Date, default: Date.now },
   confirmedAt: { type: Date },
@@ -147,7 +170,9 @@ newsletterSubscribersSchema.index({ email: 1 }, { unique: true });
 newsletterSubscribersSchema.index({ status: 1 });
 newsletterSubscribersSchema.index({ confirmationToken: 1 });
 
-export const newsletterSubscribers = mongoose.models.NewsletterSubscriber || mongoose.model<any>('NewsletterSubscriber', newsletterSubscribersSchema);
+export const newsletterSubscribers =
+  mongoose.models.NewsletterSubscriber ||
+  mongoose.model<any>('NewsletterSubscriber', newsletterSubscribersSchema);
 
 // =============================================================================
 // READING HISTORY
@@ -167,7 +192,8 @@ readingHistorySchema.index({ sessionId: 1 });
 readingHistorySchema.index({ updatedAt: 1 });
 readingHistorySchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
-export const readingHistory = mongoose.models.ReadingHistory || mongoose.model<any>('ReadingHistory', readingHistorySchema);
+export const readingHistory =
+  mongoose.models.ReadingHistory || mongoose.model<any>('ReadingHistory', readingHistorySchema);
 
 // =============================================================================
 // USER PREFERENCES
@@ -185,7 +211,8 @@ const userPreferencesSchema = new Schema({
 
 userPreferencesSchema.index({ sessionId: 1 }, { unique: true });
 
-export const userPreferences = mongoose.models.UserPreference || mongoose.model<any>('UserPreference', userPreferencesSchema);
+export const userPreferences =
+  mongoose.models.UserPreference || mongoose.model<any>('UserPreference', userPreferencesSchema);
 
 // =============================================================================
 // AUDIT LOGS
@@ -205,4 +232,5 @@ auditLogsSchema.index({ action: 1 });
 auditLogsSchema.index({ entityType: 1, entityId: 1 });
 auditLogsSchema.index({ createdAt: 1 });
 
-export const auditLogs = mongoose.models.AuditLog || mongoose.model<any>('AuditLog', auditLogsSchema);
+export const auditLogs =
+  mongoose.models.AuditLog || mongoose.model<any>('AuditLog', auditLogsSchema);
