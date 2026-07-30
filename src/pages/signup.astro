@@ -55,7 +55,36 @@ import EyeOff from 'lucide-astro/EyeOff';
                 minlength="8"
                 autocomplete="new-password"
               />
-              <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+              <button
+                type="button"
+                class="password-toggle"
+                data-target="password"
+                aria-label="Toggle password visibility"
+              >
+                <Eye class="icon-eye" size={20} />
+                <EyeOff class="icon-eye-off" size={20} style="display: none;" />
+              </button>
+            </div>
+            <div id="password-strength" class="password-strength"></div>
+          </div>
+          <div class="form-group">
+            <label for="confirm-password">Confirm Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="confirm-password"
+                name="confirm-password"
+                required
+                placeholder="••••••••"
+                minlength="8"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="password-toggle"
+                data-target="confirm-password"
+                aria-label="Toggle password visibility"
+              >
                 <Eye class="icon-eye" size={20} />
                 <EyeOff class="icon-eye-off" size={20} style="display: none;" />
               </button>
@@ -77,22 +106,60 @@ import EyeOff from 'lucide-astro/EyeOff';
   const form = document.getElementById('signup-form');
   const errorMsg = document.getElementById('error-message');
 
-  // Password toggle
-  const pwdInput = document.getElementById('password') as HTMLInputElement;
-  const toggleBtn = document.querySelector('.password-toggle');
-  const iconEye = document.querySelector('.icon-eye') as HTMLElement;
-  const iconEyeOff = document.querySelector('.icon-eye-off') as HTMLElement;
+  // Password toggle for multiple fields
+  const toggleBtns = document.querySelectorAll('.password-toggle');
 
-  if (toggleBtn && pwdInput) {
-    toggleBtn.addEventListener('click', () => {
-      if (pwdInput.type === 'password') {
-        pwdInput.type = 'text';
-        if (iconEye) iconEye.style.display = 'none';
-        if (iconEyeOff) iconEyeOff.style.display = 'block';
+  toggleBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.getAttribute('data-target');
+      if (!targetId) return;
+
+      const pwdInput = document.getElementById(targetId) as HTMLInputElement;
+      const iconEye = btn.querySelector('.icon-eye') as HTMLElement;
+      const iconEyeOff = btn.querySelector('.icon-eye-off') as HTMLElement;
+
+      if (pwdInput && iconEye && iconEyeOff) {
+        if (pwdInput.type === 'password') {
+          pwdInput.type = 'text';
+          iconEye.style.display = 'none';
+          iconEyeOff.style.display = 'block';
+        } else {
+          pwdInput.type = 'password';
+          iconEye.style.display = 'block';
+          iconEyeOff.style.display = 'none';
+        }
+      }
+    });
+  });
+
+  // Password strength indicator
+  const passwordInput = document.getElementById('password') as HTMLInputElement;
+  const strengthIndicator = document.getElementById('password-strength');
+
+  if (passwordInput && strengthIndicator) {
+    passwordInput.addEventListener('input', (e) => {
+      const val = (e.target as HTMLInputElement).value;
+      if (!val) {
+        strengthIndicator.textContent = '';
+        strengthIndicator.className = 'password-strength';
+        return;
+      }
+
+      let strength = 0;
+      if (val.length >= 8) strength++;
+      if (/[A-Z]/.test(val)) strength++;
+      if (/[0-9]/.test(val)) strength++;
+      if (/[^A-Za-z0-9]/.test(val)) strength++;
+
+      if (strength <= 1) {
+        strengthIndicator.textContent = 'Weak';
+        strengthIndicator.className = 'password-strength strength-weak';
+      } else if (strength === 2 || strength === 3) {
+        strengthIndicator.textContent = 'Medium';
+        strengthIndicator.className = 'password-strength strength-medium';
       } else {
-        pwdInput.type = 'password';
-        if (iconEye) iconEye.style.display = 'block';
-        if (iconEyeOff) iconEyeOff.style.display = 'none';
+        strengthIndicator.textContent = 'Strong';
+        strengthIndicator.className = 'password-strength strength-strong';
       }
     });
   }
@@ -106,6 +173,15 @@ import EyeOff from 'lucide-astro/EyeOff';
       const name = formData.get('name');
       const email = formData.get('email');
       const password = formData.get('password');
+      const confirmPassword = formData.get('confirm-password');
+
+      if (password !== confirmPassword) {
+        if (errorMsg) {
+          errorMsg.textContent = 'Passwords do not match';
+          errorMsg.style.display = 'block';
+        }
+        return;
+      }
 
       try {
         const res = await fetch('/api/auth/signup', {
@@ -173,6 +249,21 @@ import EyeOff from 'lucide-astro/EyeOff';
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
+  }
+
+  .password-strength {
+    font-size: 0.75rem;
+    margin-top: var(--space-xs);
+    font-weight: 500;
+  }
+  .strength-weak {
+    color: #e53e3e;
+  }
+  .strength-medium {
+    color: #d69e2e;
+  }
+  .strength-strong {
+    color: #38a169;
   }
 
   .form-group {
