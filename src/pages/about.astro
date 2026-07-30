@@ -1,0 +1,124 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout
+  title="Our Story — BigBlog"
+  description="Learn more about BigBlog, your daily source for science and tech."
+>
+  <div class="story-container">
+    <div class="story-header">
+      <h1 class="story-title">Our Story</h1>
+      <p class="story-subtitle">Exploring the frontiers of science, technology, and beyond.</p>
+    </div>
+
+    <div class="story-content">
+      <p>
+        At BigBlog, we believe that the best way to understand the rapidly changing world is through
+        rigorous, thoughtful, and daily writing. What started as a small side project has grown into
+        a vibrant publishing platform dedicated to bringing you the most fascinating insights across
+        multiple disciplines.
+      </p>
+
+      <p>
+        <strong>We post daily blogs about science, tech, and many other topics.</strong> Our mission is
+        to bridge the gap between complex discoveries and everyday curiosity. Whether it's the latest
+        breakthrough in quantum computing, a deep dive into astrophysics, or the nuances of modern software
+        engineering, our writers are committed to clarity and craft.
+      </p>
+
+      <div class="story-stats">
+        <div class="stat">
+          <div class="stat-number">Daily</div>
+          <div class="stat-label">Publications</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number">100%</div>
+          <div class="stat-label">Editorially Curated</div>
+        </div>
+      </div>
+
+      <p>
+        Join our growing community of readers and writers. Whether you are here to consume knowledge
+        or contribute your own voice, there is a place for you on our canvas.
+      </p>
+
+      <div class="story-actions">
+        <a href="/write" class="btn btn-primary">Start Writing</a>
+        <a href="/signup" class="btn btn-secondary">Join the Community</a>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .story-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-xxl) var(--space-md);
+    min-height: calc(100vh - 64px);
+  }
+
+  .story-header {
+    text-align: center;
+    margin-bottom: var(--space-xxl);
+  }
+
+  .story-title {
+    font-family: var(--font-serif);
+    font-size: clamp(3rem, 5vw, 4.5rem);
+    color: var(--color-ink);
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    margin-bottom: var(--space-md);
+  }
+
+  .story-subtitle {
+    font-size: var(--text-body-lg);
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+  }
+
+  .story-content {
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--color-ink);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .story-content p {
+    margin: 0;
+  }
+
+  .story-stats {
+    display: flex;
+    gap: var(--space-xl);
+    padding: var(--space-xl) 0;
+    border-top: 1px solid var(--color-hairline);
+    border-bottom: 1px solid var(--color-hairline);
+    margin: var(--space-md) 0;
+  }
+
+  .stat-number {
+    font-family: var(--font-serif);
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    line-height: 1;
+    margin-bottom: var(--space-xs);
+  }
+
+  .stat-label {
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .story-actions {
+    display: flex;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+</style>

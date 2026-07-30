@@ -1,0 +1,132 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Write a Blog — BigBlog" description="Publish your thoughts to the world.">
+  <div class="write-container" id="editor-container" style="display: none;">
+    <div class="write-header">
+      <input type="text" class="write-title-input" placeholder="Title" />
+      <div class="write-actions">
+        <button class="btn btn-secondary" id="save-draft-btn">Save Draft</button>
+        <button class="btn btn-primary" id="publish-btn">Publish</button>
+      </div>
+    </div>
+
+    <div class="write-body">
+      <textarea class="write-content-input" placeholder="Tell your story..."></textarea>
+    </div>
+  </div>
+
+  <div class="loading-state" id="loading-state">
+    <p>Verifying authentication...</p>
+  </div>
+</Layout>
+
+<script>
+  async function checkAuth() {
+    try {
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+
+      if (!data.success || !data.user) {
+        // Not authenticated, redirect to login
+        window.location.href = '/login?redirect=/write';
+      } else {
+        // Authenticated, show editor
+        const loader = document.getElementById('loading-state');
+        const editor = document.getElementById('editor-container');
+        if (loader) loader.style.display = 'none';
+        if (editor) editor.style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Failed to authenticate:', err);
+      window.location.href = '/login?redirect=/write';
+    }
+  }
+
+  // Run on mount
+  if (typeof window !== 'undefined') {
+    checkAuth();
+  }
+</script>
+
+<style>
+  .loading-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 64px);
+    font-family: var(--font-sans);
+    color: var(--color-muted);
+  }
+
+  .write-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--space-xl) var(--space-md);
+    min-height: calc(100vh - 64px);
+  }
+
+  .write-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+    gap: var(--space-md);
+  }
+
+  .write-title-input {
+    flex: 1;
+    min-width: 200px;
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    border: none;
+    background: transparent;
+    color: var(--color-ink);
+    outline: none;
+    letter-spacing: -1px;
+    line-height: 1.1;
+  }
+
+  .write-title-input::placeholder {
+    color: rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme='dark'] .write-title-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+  }
+
+  .write-actions {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .write-body {
+    display: flex;
+    flex-direction: column;
+    min-height: 50vh;
+  }
+
+  .write-content-input {
+    flex: 1;
+    width: 100%;
+    min-height: 50vh;
+    font-family: var(--font-sans);
+    font-size: 1.25rem;
+    line-height: 1.8;
+    color: var(--color-ink);
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+  }
+
+  .write-content-input::placeholder {
+    color: rgba(0, 0, 0, 0.2);
+  }
+
+  [data-theme='dark'] .write-content-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+  }
+</style>

@@ -45,7 +45,10 @@ const resolvedCanonical = canonical ?? `${siteConfig.url}${currentPath}`;
 const resolvedOgImage = ogImage ?? `${siteConfig.url}${defaultSeo.defaultImage}`;
 const robotsContent = noindex ? 'noindex, nofollow' : (robots ?? 'index, follow');
 
-const navLinks: Array<{ label: string; href: string }> = [];
+const navLinks: Array<{ label: string; href: string }> = [
+  { label: 'Our story', href: '/about' },
+  { label: 'Write', href: '/write' },
+];
 
 const activeLink = navLinks.find((link) => {
   if (link.href === '/') return currentPath === '/';
