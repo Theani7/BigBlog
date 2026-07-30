@@ -34,8 +34,8 @@ const roundedMap = {
 };
 
 const bgMap = {
-  primary: 'var(--bg-primary)',
-  secondary: 'var(--bg-secondary)',
+  primary: 'var(--glass-bg)',
+  secondary: 'var(--glass-bg)',
   tertiary: 'var(--bg-tertiary)',
   inverse: 'var(--bg-inverse)',
 };
@@ -49,7 +49,10 @@ const paddingMap = {
 ---
 
 <div
-  class="surface"
+  class:list={[
+    "surface",
+    { "surface--glass": bg === 'primary' || bg === 'secondary' }
+  ]}
   style={`
     --surface-elevation: ${elevationMap[elevation]};
     --surface-rounded: ${roundedMap[rounded]};
@@ -66,6 +69,13 @@ const paddingMap = {
     border-radius: var(--surface-rounded);
     box-shadow: var(--surface-elevation);
     padding: var(--surface-padding);
+  }
+
+  .surface--glass {
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--glass-shadow);
   }
 
   @media (prefers-reduced-motion: reduce) {
