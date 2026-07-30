@@ -45,13 +45,7 @@ const resolvedCanonical = canonical ?? `${siteConfig.url}${currentPath}`;
 const resolvedOgImage = ogImage ?? `${siteConfig.url}${defaultSeo.defaultImage}`;
 const robotsContent = noindex ? 'noindex, nofollow' : (robots ?? 'index, follow');
 
-const navLinks = [
-  { label: 'Home', href: '/' },
-  { label: 'Blog', href: '/blog' },
-  { label: 'About', href: '/about' },
-  { label: 'Projects', href: '/projects' },
-  { label: 'Contact', href: '/contact' },
-];
+const navLinks: Array<{ label: string; href: string }> = [];
 
 const activeLink = navLinks.find((link) => {
   if (link.href === '/') return currentPath === '/';
@@ -143,43 +137,45 @@ const structuredDataList = structuredData
         <a href="/" class="logo" aria-label="BigBlog home">
           <span class="logo-text">BigBlog</span>
         </a>
-        <nav class="site-nav" aria-label="Main navigation">
-          <ul class="nav-list">
-            {
-              navLinks.map((link) => (
-                <li>
-                  <a
-                    href={link.href}
-                    aria-current={activeLink?.href === link.href ? 'page' : undefined}
-                    class:list={[
-                      'nav-link',
-                      { 'nav-link--active': activeLink?.href === link.href },
-                    ]}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
-        <div class="header-actions">
-          <div class="auth-links">
-            <a href="/login" class="nav-link">Log in</a>
-            <a
-              href="/signup"
-              class="btn btn-primary"
-              style="padding: 0.375rem 1rem; font-size: 0.875rem;">Sign up</a
+        <div class="header-right-group">
+          <nav class="site-nav" aria-label="Main navigation">
+            <ul class="nav-list">
+              {
+                navLinks.map((link) => (
+                  <li>
+                    <a
+                      href={link.href}
+                      aria-current={activeLink?.href === link.href ? 'page' : undefined}
+                      class:list={[
+                        'nav-link',
+                        { 'nav-link--active': activeLink?.href === link.href },
+                      ]}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+          <div class="header-actions">
+            <div class="auth-links">
+              <a href="/login" class="nav-link">Log in</a>
+              <a
+                href="/signup"
+                class="btn btn-primary"
+                style="padding: 0.375rem 1rem; font-size: 0.875rem;">Get Started</a
+              >
+            </div>
+            <button
+              class="mobile-nav-toggle"
+              aria-label="Open menu"
+              aria-expanded="false"
+              type="button"
             >
+              <span class="mobile-nav-icon" aria-hidden="true"></span>
+            </button>
           </div>
-          <button
-            class="mobile-nav-toggle"
-            aria-label="Open menu"
-            aria-expanded="false"
-            type="button"
-          >
-            <span class="mobile-nav-icon" aria-hidden="true"></span>
-          </button>
         </div>
       </div>
     </header>
@@ -990,6 +986,12 @@ const structuredDataList = structuredData
   .nav-link--active {
     color: var(--color-primary);
     background: var(--bg-tertiary);
+  }
+
+  .header-right-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
   }
 
   .nav-link:focus-visible {
