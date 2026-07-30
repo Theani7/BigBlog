@@ -13,6 +13,7 @@ import {
 import { NewsletterRepository } from './newsletter.repository';
 import { ReadingHistoryRepository, UserPreferencesRepository } from './user.repository';
 import { AuditLogRepository } from './audit.repository';
+import { AnalyticsRepository } from './analytics.repository';
 
 export interface Repositories {
   sessions: SessionRepository;
@@ -26,6 +27,7 @@ export interface Repositories {
   readingHistory: ReadingHistoryRepository;
   userPreferences: UserPreferencesRepository;
   auditLogs: AuditLogRepository;
+  analytics: AnalyticsRepository;
 }
 
 export function createRepositories(db: Database): Repositories {
@@ -41,6 +43,7 @@ export function createRepositories(db: Database): Repositories {
     readingHistory: new ReadingHistoryRepository(db),
     userPreferences: new UserPreferencesRepository(db),
     auditLogs: new AuditLogRepository(db),
+    analytics: new AnalyticsRepository(db),
   };
 }
 
@@ -56,4 +59,5 @@ export {
   ReadingHistoryRepository,
   UserPreferencesRepository,
   AuditLogRepository,
+  AnalyticsRepository,
 };

@@ -1,99 +1,75 @@
-import { eq, and, desc, sql } from 'drizzle-orm';
 import type { Database } from '../index';
 import { readingHistory, userPreferences } from '../schema';
 import type { InsertReadingHistory, InsertUserPreference, Theme, ReadingMode } from '../types';
 import { DatabaseError } from '../../lib/errors';
 
 export class ReadingHistoryRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async upsert(data: InsertReadingHistory) {
     try {
-      const existing = await this.db.query.readingHistory.findFirst({
-        where: and(
-          eq(readingHistory.articleSlug, data.articleSlug),
-          eq(readingHistory.sessionId, data.sessionId)
-        ),
+      const existing = await readingHistory.findOne({
+        articleSlug: data.articleSlug,
+        sessionId: data.sessionId,
       });
 
       if (existing) {
-        await this.db
-          .update(readingHistory)
-          .set({
-            progress: data.progress,
-            readTime: data.readTime,
-            completedAt: data.completedAt,
-            updatedAt: new Date(),
-          })
-          .where(eq(readingHistory.id, existing.id));
-        return this.db.query.readingHistory.findFirst({
-          where: eq(readingHistory.id, existing.id),
-        });
+        await readingHistory.updateOne(
+          { _id: existing._id },
+          {
+            $set: {
+              progress: data.progress,
+              readTime: data.readTime,
+              completedAt: data.completedAt,
+              updatedAt: new Date(),
+            }
+          }
+        );
+        return readingHistory.findById(existing._id);
       }
 
-      return await this.db.insert(readingHistory).values(data).returning();
+      return await readingHistory.create(data);
     } catch (_error) {
       throw new DatabaseError('Failed to update reading history');
     }
   }
 
   async getRecent(sessionId: string, limit = 5) {
-    return this.db.query.readingHistory.findMany({
-      where: eq(readingHistory.sessionId, sessionId),
-      orderBy: [desc(readingHistory.updatedAt)],
-      limit,
-    });
+    return readingHistory.find({ sessionId }).sort({ updatedAt: -1 }).limit(limit);
   }
 
   async getContinueReading(sessionId: string) {
-    return this.db.query.readingHistory.findFirst({
-      where: and(eq(readingHistory.sessionId, sessionId), sql`${readingHistory.progress} < 1`),
-      orderBy: [desc(readingHistory.updatedAt)],
-    });
+    return readingHistory.findOne({ sessionId, progress: { $lt: 1 } }).sort({ updatedAt: -1 });
   }
 
   async getProgress(articleSlug: string, sessionId: string) {
-    return this.db.query.readingHistory.findFirst({
-      where: and(
-        eq(readingHistory.articleSlug, articleSlug),
-        eq(readingHistory.sessionId, sessionId)
-      ),
-    });
+    return readingHistory.findOne({ articleSlug, sessionId });
   }
 }
 
 export class UserPreferencesRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async upsert(sessionId: string, preferences: Partial<InsertUserPreference>) {
     try {
-      const existing = await this.db.query.userPreferences.findFirst({
-        where: eq(userPreferences.sessionId, sessionId),
-      });
+      const existing = await userPreferences.findOne({ sessionId });
 
       if (existing) {
-        await this.db
-          .update(userPreferences)
-          .set({ ...preferences, updatedAt: new Date() })
-          .where(eq(userPreferences.id, existing.id));
-        return this.db.query.userPreferences.findFirst({
-          where: eq(userPreferences.id, existing.id),
-        });
+        await userPreferences.updateOne(
+          { _id: existing._id },
+          { $set: { ...preferences, updatedAt: new Date() } }
+        );
+        return userPreferences.findById(existing._id);
       }
 
-      return await this.db
-        .insert(userPreferences)
-        .values({ sessionId, ...preferences } as InsertUserPreference)
-        .returning();
+      return await userPreferences.create({ sessionId, ...preferences });
     } catch (_error) {
       throw new DatabaseError('Failed to update preferences');
     }
   }
 
   async get(sessionId: string) {
-    return this.db.query.userPreferences.findFirst({
-      where: eq(userPreferences.sessionId, sessionId),
-    });
+    return userPreferences.findOne({ sessionId });
   }
 
   async updateTheme(sessionId: string, theme: Theme) {

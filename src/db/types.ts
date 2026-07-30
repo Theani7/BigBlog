@@ -1,5 +1,10 @@
-import type { InferInsertModel, InferSelectModel } from 'drizzle-orm';
-import type {
+declare global {
+  type D1Database = any;
+}
+
+import type { InferSchemaType } from 'mongoose';
+
+import {
   anonymousSessions,
   articleViews,
   articleLikes,
@@ -11,19 +16,19 @@ import type {
   readingHistory,
   userPreferences,
   auditLogs,
-} from '../db/schema';
+} from './schema';
 
 // =============================================================================
 // SESSION TYPES
 // =============================================================================
-export type AnonymousSession = InferSelectModel<typeof anonymousSessions>;
-export type InsertAnonymousSession = InferInsertModel<typeof anonymousSessions>;
+export type AnonymousSession = InferSchemaType<typeof anonymousSessions.schema>;
+export type InsertAnonymousSession = Partial<AnonymousSession>;
 
 // =============================================================================
 // ARTICLE VIEW TYPES
 // =============================================================================
-export type ArticleView = InferSelectModel<typeof articleViews>;
-export type InsertArticleView = InferInsertModel<typeof articleViews>;
+export type ArticleView = InferSchemaType<typeof articleViews.schema>;
+export type InsertArticleView = Partial<ArticleView>;
 
 export interface ArticleViewStats {
   totalViews: number;
@@ -36,24 +41,25 @@ export interface ArticleViewStats {
 // =============================================================================
 // ARTICLE LIKE TYPES
 // =============================================================================
-export type ArticleLike = InferSelectModel<typeof articleLikes>;
-export type InsertArticleLike = InferInsertModel<typeof articleLikes>;
+export type ArticleLike = InferSchemaType<typeof articleLikes.schema>;
+export type InsertArticleLike = Partial<ArticleLike>;
 
 // =============================================================================
 // ARTICLE BOOKMARK TYPES
 // =============================================================================
-export type ArticleBookmark = InferSelectModel<typeof articleBookmarks>;
-export type InsertArticleBookmark = InferInsertModel<typeof articleBookmarks>;
+export type ArticleBookmark = InferSchemaType<typeof articleBookmarks.schema>;
+export type InsertArticleBookmark = Partial<ArticleBookmark>;
 
 // =============================================================================
 // COMMENT TYPES
 // =============================================================================
-export type Comment = InferSelectModel<typeof comments>;
-export type InsertComment = InferInsertModel<typeof comments>;
+export type Comment = InferSchemaType<typeof comments.schema>;
+export type InsertComment = Partial<Comment>;
 
 export type CommentStatus = 'pending' | 'approved' | 'rejected' | 'spam';
 
 export interface CommentWithReplies extends Comment {
+  _id: string;
   replies?: CommentWithReplies[];
   reactionCounts?: Record<string, number>;
 }
@@ -61,36 +67,36 @@ export interface CommentWithReplies extends Comment {
 // =============================================================================
 // COMMENT REACTION TYPES
 // =============================================================================
-export type CommentReaction = InferSelectModel<typeof commentReactions>;
-export type InsertCommentReaction = InferInsertModel<typeof commentReactions>;
+export type CommentReaction = InferSchemaType<typeof commentReactions.schema>;
+export type InsertCommentReaction = Partial<CommentReaction>;
 
 // =============================================================================
 // COMMENT REPORT TYPES
 // =============================================================================
-export type CommentReport = InferSelectModel<typeof commentReports>;
-export type InsertCommentReport = InferInsertModel<typeof commentReports>;
+export type CommentReport = InferSchemaType<typeof commentReports.schema>;
+export type InsertCommentReport = Partial<CommentReport>;
 
 export type ReportReason = 'spam' | 'abuse' | 'off-topic' | 'other';
 
 // =============================================================================
 // NEWSLETTER TYPES
 // =============================================================================
-export type NewsletterSubscriber = InferSelectModel<typeof newsletterSubscribers>;
-export type InsertNewsletterSubscriber = InferInsertModel<typeof newsletterSubscribers>;
+export type NewsletterSubscriber = InferSchemaType<typeof newsletterSubscribers.schema>;
+export type InsertNewsletterSubscriber = Partial<NewsletterSubscriber>;
 
 export type NewsletterStatus = 'pending' | 'confirmed' | 'unsubscribed';
 
 // =============================================================================
 // READING HISTORY TYPES
 // =============================================================================
-export type ReadingHistoryEntry = InferSelectModel<typeof readingHistory>;
-export type InsertReadingHistory = InferInsertModel<typeof readingHistory>;
+export type ReadingHistoryEntry = InferSchemaType<typeof readingHistory.schema>;
+export type InsertReadingHistory = Partial<ReadingHistoryEntry>;
 
 // =============================================================================
 // USER PREFERENCE TYPES
 // =============================================================================
-export type UserPreference = InferSelectModel<typeof userPreferences>;
-export type InsertUserPreference = InferInsertModel<typeof userPreferences>;
+export type UserPreference = InferSchemaType<typeof userPreferences.schema>;
+export type InsertUserPreference = Partial<UserPreference>;
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ReadingMode = 'default' | 'reader' | 'focused';
@@ -98,8 +104,8 @@ export type ReadingMode = 'default' | 'reader' | 'focused';
 // =============================================================================
 // AUDIT LOG TYPES
 // =============================================================================
-export type AuditLog = InferSelectModel<typeof auditLogs>;
-export type InsertAuditLog = InferInsertModel<typeof auditLogs>;
+export type AuditLog = InferSchemaType<typeof auditLogs.schema>;
+export type InsertAuditLog = Partial<AuditLog>;
 
 // =============================================================================
 // API RESPONSE TYPES
@@ -133,7 +139,7 @@ export interface CommentInput {
   content: string;
   authorName: string;
   authorEmail?: string;
-  parentId?: number;
+  parentId?: number | string;
 }
 
 export interface NewsletterInput {
@@ -141,7 +147,7 @@ export interface NewsletterInput {
 }
 
 export interface ReportInput {
-  commentId: number;
+  commentId: string;
   reason: ReportReason;
   details?: string;
 }

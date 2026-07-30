@@ -10,16 +10,16 @@ export interface LogEntry {
   level: LogLevel;
   message: string;
   timestamp: Date;
-  requestId?: string;
-  correlationId?: string;
-  sessionId?: string;
-  page?: string;
-  metadata?: Record<string, unknown>;
+  requestId?: string | undefined;
+  correlationId?: string | undefined;
+  sessionId?: string | undefined;
+  page?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
   error?: {
     name: string;
     message: string;
-    stack?: string;
-  };
+    stack?: string | undefined;
+  } | undefined;
 }
 
 // =============================================================================

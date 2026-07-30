@@ -1,39 +1,34 @@
-import { eq, and, desc, sql, gte, count } from 'drizzle-orm';
 import type { Database } from '../index';
 import { anonymousSessions, articleViews, articleLikes, articleBookmarks } from '../schema';
 import type { InsertAnonymousSession, InsertArticleView, ArticleViewStats } from '../types';
 import { DatabaseError } from '../../lib/errors';
 
 export class SessionRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async create(data: InsertAnonymousSession) {
     try {
-      return await this.db.insert(anonymousSessions).values(data).returning();
+      return await anonymousSessions.create(data);
     } catch (_error) {
       throw new DatabaseError('Failed to create session');
     }
   }
 
   async findById(id: string) {
-    return this.db.query.anonymousSessions.findFirst({
-      where: eq(anonymousSessions.id, id),
-    });
+    return anonymousSessions.findOne({ id });
   }
 
   async findByFingerprint(fingerprint: string) {
-    return this.db.query.anonymousSessions.findFirst({
-      where: eq(anonymousSessions.fingerprint, fingerprint),
-    });
+    return anonymousSessions.findOne({ fingerprint });
   }
 
   async upsertByFingerprint(fingerprint: string, data: Partial<InsertAnonymousSession>) {
     const existing = await this.findByFingerprint(fingerprint);
     if (existing) {
-      await this.db
-        .update(anonymousSessions)
-        .set({ ...data, updatedAt: new Date(), lastActiveAt: new Date() })
-        .where(eq(anonymousSessions.id, existing.id));
+      await anonymousSessions.updateOne(
+        { _id: existing._id },
+        { $set: { ...data, updatedAt: new Date(), lastActiveAt: new Date() } }
+      );
       return this.findById(existing.id);
     }
     return this.create({
@@ -44,19 +39,19 @@ export class SessionRepository {
   }
 
   async updateLastActive(id: string) {
-    await this.db
-      .update(anonymousSessions)
-      .set({ lastActiveAt: new Date() })
-      .where(eq(anonymousSessions.id, id));
+    await anonymousSessions.updateOne(
+      { id },
+      { $set: { lastActiveAt: new Date() } }
+    );
   }
 }
 
 export class ViewsRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async recordView(data: InsertArticleView) {
     try {
-      return await this.db.insert(articleViews).values(data).returning();
+      return await articleViews.create(data);
     } catch (_error) {
       throw new DatabaseError('Failed to record view');
     }
@@ -70,41 +65,20 @@ export class ViewsRepository {
     const monthStart = new Date(todayStart);
     monthStart.setMonth(monthStart.getMonth() - 1);
 
-    const [totalViews] = await this.db
-      .select({ count: count() })
-      .from(articleViews)
-      .where(eq(articleViews.articleSlug, articleSlug));
+    const totalViews = await articleViews.countDocuments({ articleSlug });
+    const uniqueViewsResult = await articleViews.distinct('sessionId', { articleSlug });
+    const uniqueViews = uniqueViewsResult.length;
 
-    const [uniqueViews] = await this.db
-      .select({ count: count(sql`DISTINCT ${articleViews.sessionId}`) })
-      .from(articleViews)
-      .where(eq(articleViews.articleSlug, articleSlug));
-
-    const [dailyViews] = await this.db
-      .select({ count: count() })
-      .from(articleViews)
-      .where(
-        and(eq(articleViews.articleSlug, articleSlug), gte(articleViews.viewedAt, todayStart))
-      );
-
-    const [weeklyViews] = await this.db
-      .select({ count: count() })
-      .from(articleViews)
-      .where(and(eq(articleViews.articleSlug, articleSlug), gte(articleViews.viewedAt, weekStart)));
-
-    const [monthlyViews] = await this.db
-      .select({ count: count() })
-      .from(articleViews)
-      .where(
-        and(eq(articleViews.articleSlug, articleSlug), gte(articleViews.viewedAt, monthStart))
-      );
+    const dailyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: todayStart } });
+    const weeklyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: weekStart } });
+    const monthlyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: monthStart } });
 
     return {
-      totalViews: totalViews?.count ?? 0,
-      uniqueViews: uniqueViews?.count ?? 0,
-      dailyViews: dailyViews?.count ?? 0,
-      weeklyViews: weeklyViews?.count ?? 0,
-      monthlyViews: monthlyViews?.count ?? 0,
+      totalViews,
+      uniqueViews,
+      dailyViews,
+      weeklyViews,
+      monthlyViews,
     };
   }
 
@@ -112,107 +86,66 @@ export class ViewsRepository {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [existing] = await this.db
-      .select({ id: articleViews.id })
-      .from(articleViews)
-      .where(
-        and(
-          eq(articleViews.articleSlug, articleSlug),
-          eq(articleViews.sessionId, sessionId),
-          gte(articleViews.viewedAt, todayStart)
-        )
-      )
-      .limit(1);
+    const existing = await articleViews.findOne({
+      articleSlug,
+      sessionId,
+      viewedAt: { $gte: todayStart }
+    });
 
     return !!existing;
   }
 }
 
 export class LikesRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async toggleLike(
     articleSlug: string,
     sessionId: string
   ): Promise<{ liked: boolean; count: number }> {
-    const existing = await this.db.query.articleLikes.findFirst({
-      where: and(eq(articleLikes.articleSlug, articleSlug), eq(articleLikes.sessionId, sessionId)),
-    });
+    const existing = await articleLikes.findOne({ articleSlug, sessionId });
 
     if (existing) {
-      await this.db
-        .delete(articleLikes)
-        .where(
-          and(eq(articleLikes.articleSlug, articleSlug), eq(articleLikes.sessionId, sessionId))
-        );
+      await articleLikes.deleteOne({ _id: existing._id });
     } else {
-      await this.db.insert(articleLikes).values({ articleSlug, sessionId });
+      await articleLikes.create({ articleSlug, sessionId });
     }
 
-    const countResult = await this.getCount(articleSlug);
-    return { liked: !existing, count: countResult };
+    const count = await this.getCount(articleSlug);
+    return { liked: !existing, count };
   }
 
   async getCount(articleSlug: string): Promise<number> {
-    const [result] = await this.db
-      .select({ count: count() })
-      .from(articleLikes)
-      .where(eq(articleLikes.articleSlug, articleSlug));
-
-    return result?.count ?? 0;
+    return articleLikes.countDocuments({ articleSlug });
   }
 
   async hasLiked(articleSlug: string, sessionId: string): Promise<boolean> {
-    const existing = await this.db.query.articleLikes.findFirst({
-      where: and(eq(articleLikes.articleSlug, articleSlug), eq(articleLikes.sessionId, sessionId)),
-    });
-
+    const existing = await articleLikes.findOne({ articleSlug, sessionId });
     return !!existing;
   }
 }
 
 export class BookmarksRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async toggleBookmark(articleSlug: string, sessionId: string): Promise<{ bookmarked: boolean }> {
-    const existing = await this.db.query.articleBookmarks.findFirst({
-      where: and(
-        eq(articleBookmarks.articleSlug, articleSlug),
-        eq(articleBookmarks.sessionId, sessionId)
-      ),
-    });
+    const existing = await articleBookmarks.findOne({ articleSlug, sessionId });
 
     if (existing) {
-      await this.db
-        .delete(articleBookmarks)
-        .where(
-          and(
-            eq(articleBookmarks.articleSlug, articleSlug),
-            eq(articleBookmarks.sessionId, sessionId)
-          )
-        );
+      await articleBookmarks.deleteOne({ _id: existing._id });
     } else {
-      await this.db.insert(articleBookmarks).values({ articleSlug, sessionId });
+      await articleBookmarks.create({ articleSlug, sessionId });
     }
 
     return { bookmarked: !existing };
   }
 
   async getBookmarks(sessionId: string) {
-    return this.db.query.articleBookmarks.findMany({
-      where: eq(articleBookmarks.sessionId, sessionId),
-      orderBy: [desc(articleBookmarks.createdAt)],
-    });
+    return articleBookmarks.find({ sessionId }).sort({ createdAt: -1 });
   }
 
   async hasBookmarked(articleSlug: string, sessionId: string): Promise<boolean> {
-    const existing = await this.db.query.articleBookmarks.findFirst({
-      where: and(
-        eq(articleBookmarks.articleSlug, articleSlug),
-        eq(articleBookmarks.sessionId, sessionId)
-      ),
-    });
-
+    const existing = await articleBookmarks.findOne({ articleSlug, sessionId });
     return !!existing;
   }
 }

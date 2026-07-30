@@ -1,60 +1,39 @@
-import { eq, desc, and, gte, count } from 'drizzle-orm';
 import type { Database } from '../index';
 import { auditLogs } from '../schema';
 import type { InsertAuditLog } from '../types';
 
 export class AuditLogRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
   async log(data: InsertAuditLog) {
     try {
-      return await this.db.insert(auditLogs).values(data).returning();
+      return await auditLogs.create(data);
     } catch (_error) {
-      // Audit logs should never throw errors
       console.error('Failed to write audit log:', _error);
       return null;
     }
   }
 
   async findBySession(sessionId: string, limit = 50) {
-    return this.db.query.auditLogs.findMany({
-      where: eq(auditLogs.sessionId, sessionId),
-      orderBy: [desc(auditLogs.createdAt)],
-      limit,
-    });
+    return auditLogs.find({ sessionId }).sort({ createdAt: -1 }).limit(limit);
   }
 
   async findByAction(action: string, since?: Date) {
-    const conditions = [eq(auditLogs.action, action)];
+    const query: any = { action };
     if (since) {
-      conditions.push(gte(auditLogs.createdAt, since));
+      query.createdAt = { $gte: since };
     }
-
-    return this.db.query.auditLogs.findMany({
-      where: and(...conditions),
-      orderBy: [desc(auditLogs.createdAt)],
-    });
+    return auditLogs.find(query).sort({ createdAt: -1 });
   }
 
   async findByEntity(entityType: string, entityId: string) {
-    return this.db.query.auditLogs.findMany({
-      where: and(eq(auditLogs.entityType, entityType), eq(auditLogs.entityId, entityId)),
-      orderBy: [desc(auditLogs.createdAt)],
-    });
+    return auditLogs.find({ entityType, entityId }).sort({ createdAt: -1 });
   }
 
   async getStats(since?: Date): Promise<{ total: number; byAction: Record<string, number> }> {
-    const conditions = since ? [gte(auditLogs.createdAt, since)] : [];
-
-    const [total] = await this.db
-      .select({ count: count() })
-      .from(auditLogs)
-      .where(conditions.length ? and(...conditions) : undefined);
-
-    const logs = await this.db.query.auditLogs.findMany({
-      where: conditions.length ? and(...conditions) : undefined,
-      columns: { action: true },
-    });
+    const query = since ? { createdAt: { $gte: since } } : {};
+    const total = await auditLogs.countDocuments(query);
+    const logs = await auditLogs.find(query).select('action');
 
     const byAction = logs.reduce(
       (acc, log) => {
@@ -64,9 +43,6 @@ export class AuditLogRepository {
       {} as Record<string, number>
     );
 
-    return {
-      total: total?.count ?? 0,
-      byAction,
-    };
+    return { total, byAction };
   }
 }

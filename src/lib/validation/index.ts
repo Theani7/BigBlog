@@ -77,7 +77,7 @@ export function validateNewsletter(input: NewsletterInput): ValidationResult {
 export function validateReport(input: ReportInput): ValidationResult {
   const errors: string[] = [];
 
-  if (!input.commentId || input.commentId <= 0) {
+  if (!input.commentId) {
     errors.push('Valid comment ID is required');
   }
 

@@ -1,185 +1,150 @@
-import { sqliteTable, text, integer, real, index } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
+import mongoose, { Schema } from 'mongoose';
 
 // =============================================================================
 // ANALYTICS EVENTS
 // Privacy-first event tracking for page views, engagement, and performance
 // =============================================================================
-export const analyticsEvents = sqliteTable(
-  'analytics_events',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    event: text('event').notNull(),
-    sessionId: text('session_id'),
-    page: text('page').notNull(),
-    referrer: text('referrer'),
-    userAgent: text('user_agent'),
-    ipHash: text('ip_hash'),
-    country: text('country'),
-    device: text('device'),
-    browser: text('browser'),
-    os: text('os'),
-    language: text('language'),
-    metadata: text('metadata'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_analytics_events_event').on(table.event),
-    index('idx_analytics_events_page').on(table.page),
-    index('idx_analytics_events_session').on(table.sessionId),
-    index('idx_analytics_events_created_at').on(table.createdAt),
-    index('idx_analytics_events_event_page').on(table.event, table.page),
-    index('idx_analytics_events_event_created').on(table.event, table.createdAt),
-  ]
-);
+const analyticsEventsSchema = new Schema({
+  event: { type: String, required: true },
+  sessionId: { type: String },
+  page: { type: String, required: true },
+  referrer: { type: String },
+  userAgent: { type: String },
+  ipHash: { type: String },
+  country: { type: String },
+  device: { type: String },
+  browser: { type: String },
+  os: { type: String },
+  language: { type: String },
+  metadata: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+analyticsEventsSchema.index({ event: 1 });
+analyticsEventsSchema.index({ page: 1 });
+analyticsEventsSchema.index({ sessionId: 1 });
+analyticsEventsSchema.index({ createdAt: 1 });
+analyticsEventsSchema.index({ event: 1, page: 1 });
+analyticsEventsSchema.index({ event: 1, createdAt: 1 });
+
+export const analyticsEvents = mongoose.models.AnalyticsEvent || mongoose.model<any>('AnalyticsEvent', analyticsEventsSchema);
 
 // =============================================================================
 // PAGE VIEWS
 // Deduplicated page view tracking
 // =============================================================================
-export const pageViews = sqliteTable(
-  'page_views',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    page: text('page').notNull(),
-    sessionId: text('session_id').notNull(),
-    referrer: text('referrer'),
-    country: text('country'),
-    device: text('device'),
-    browser: text('browser'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_page_views_page').on(table.page),
-    index('idx_page_views_session').on(table.sessionId),
-    index('idx_page_views_created_at').on(table.createdAt),
-    index('idx_page_views_page_created').on(table.page, table.createdAt),
-  ]
-);
+const pageViewsSchema = new Schema({
+  page: { type: String, required: true },
+  sessionId: { type: String, required: true },
+  referrer: { type: String },
+  country: { type: String },
+  device: { type: String },
+  browser: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+pageViewsSchema.index({ page: 1 });
+pageViewsSchema.index({ sessionId: 1 });
+pageViewsSchema.index({ createdAt: 1 });
+pageViewsSchema.index({ page: 1, createdAt: 1 });
+
+export const pageViews = mongoose.models.PageView || mongoose.model<any>('PageView', pageViewsSchema);
 
 // =============================================================================
 // PERFORMANCE METRICS
 // Core Web Vitals and custom performance metrics
 // =============================================================================
-export const performanceMetrics = sqliteTable(
-  'performance_metrics',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    metric: text('metric').notNull(),
-    value: real('value').notNull(),
-    sessionId: text('session_id'),
-    page: text('page').notNull(),
-    userAgent: text('user_agent'),
-    connection: text('connection'),
-    device: text('device'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_performance_metrics_metric').on(table.metric),
-    index('idx_performance_metrics_page').on(table.page),
-    index('idx_performance_metrics_created_at').on(table.createdAt),
-    index('idx_performance_metrics_metric_created').on(table.metric, table.createdAt),
-  ]
-);
+const performanceMetricsSchema = new Schema({
+  metric: { type: String, required: true },
+  value: { type: Number, required: true },
+  sessionId: { type: String },
+  page: { type: String, required: true },
+  userAgent: { type: String },
+  connection: { type: String },
+  device: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+performanceMetricsSchema.index({ metric: 1 });
+performanceMetricsSchema.index({ page: 1 });
+performanceMetricsSchema.index({ createdAt: 1 });
+performanceMetricsSchema.index({ metric: 1, createdAt: 1 });
+
+export const performanceMetrics = mongoose.models.PerformanceMetric || mongoose.model<any>('PerformanceMetric', performanceMetricsSchema);
 
 // =============================================================================
 // ERROR LOGS
 // Client and server error tracking
 // =============================================================================
-export const errorLogs = sqliteTable(
-  'error_logs',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    level: text('level', { enum: ['error', 'warning', 'info'] })
-      .notNull()
-      .default('error'),
-    message: text('message').notNull(),
-    stack: text('stack'),
-    page: text('page'),
-    sessionId: text('session_id'),
-    userAgent: text('user_agent'),
-    metadata: text('metadata'),
-    resolved: integer('resolved', { mode: 'boolean' }).default(false),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_error_logs_level').on(table.level),
-    index('idx_error_logs_page').on(table.page),
-    index('idx_error_logs_created_at').on(table.createdAt),
-    index('idx_error_logs_resolved').on(table.resolved),
-  ]
-);
+const errorLogsSchema = new Schema({
+  level: { type: String, enum: ['error', 'warning', 'info'], required: true, default: 'error' },
+  message: { type: String, required: true },
+  stack: { type: String },
+  page: { type: String },
+  sessionId: { type: String },
+  userAgent: { type: String },
+  metadata: { type: String },
+  resolved: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+errorLogsSchema.index({ level: 1 });
+errorLogsSchema.index({ page: 1 });
+errorLogsSchema.index({ createdAt: 1 });
+errorLogsSchema.index({ resolved: 1 });
+
+export const errorLogs = mongoose.models.ErrorLog || mongoose.model<any>('ErrorLog', errorLogsSchema);
 
 // =============================================================================
 // SEARCH EVENTS
 // Track search queries and results
 // =============================================================================
-export const searchEvents = sqliteTable(
-  'search_events',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    query: text('query').notNull(),
-    results: integer('results').notNull(),
-    selectedSlug: text('selected_slug'),
-    sessionId: text('session_id'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_search_events_query').on(table.query),
-    index('idx_search_events_created_at').on(table.createdAt),
-  ]
-);
+const searchEventsSchema = new Schema({
+  query: { type: String, required: true },
+  results: { type: Number, required: true },
+  selectedSlug: { type: String },
+  sessionId: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+searchEventsSchema.index({ query: 1 });
+searchEventsSchema.index({ createdAt: 1 });
+
+export const searchEvents = mongoose.models.SearchEvent || mongoose.model<any>('SearchEvent', searchEventsSchema);
 
 // =============================================================================
 // API LATENCY
 // Track API endpoint performance
 // =============================================================================
-export const apiLatency = sqliteTable(
-  'api_latency',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    endpoint: text('endpoint').notNull(),
-    method: text('method').notNull(),
-    statusCode: integer('status_code').notNull(),
-    latencyMs: integer('latency_ms').notNull(),
-    sessionId: text('session_id'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_api_latency_endpoint').on(table.endpoint),
-    index('idx_api_latency_created_at').on(table.createdAt),
-    index('idx_api_latency_status').on(table.statusCode),
-  ]
-);
+const apiLatencySchema = new Schema({
+  endpoint: { type: String, required: true },
+  method: { type: String, required: true },
+  statusCode: { type: Number, required: true },
+  latencyMs: { type: Number, required: true },
+  sessionId: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
+
+apiLatencySchema.index({ endpoint: 1 });
+apiLatencySchema.index({ createdAt: 1 });
+apiLatencySchema.index({ statusCode: 1 });
+
+export const apiLatency = mongoose.models.ApiLatency || mongoose.model<any>('ApiLatency', apiLatencySchema);
 
 // =============================================================================
 // SCROLL DEPTH
 // Track how far users scroll on articles
 // =============================================================================
-export const scrollDepth = sqliteTable(
-  'scroll_depth',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    page: text('page').notNull(),
-    sessionId: text('session_id').notNull(),
-    maxDepth: real('max_depth').notNull(),
-    timeOnPage: integer('time_on_page'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_scroll_depth_page').on(table.page),
-    index('idx_scroll_depth_session').on(table.sessionId),
-    index('idx_scroll_depth_created_at').on(table.createdAt),
-  ]
-);
+const scrollDepthSchema = new Schema({
+  page: { type: String, required: true },
+  sessionId: { type: String, required: true },
+  maxDepth: { type: Number, required: true },
+  timeOnPage: { type: Number },
+  createdAt: { type: Date, default: Date.now },
+});
 
-// =============================================================================
-// RELATIONS
-// =============================================================================
-export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
-  session: one(analyticsEvents, {
-    fields: [analyticsEvents.sessionId],
-    references: [analyticsEvents.sessionId],
-    relationName: 'analyticsSession',
-  }),
-}));
+scrollDepthSchema.index({ page: 1 });
+scrollDepthSchema.index({ sessionId: 1 });
+scrollDepthSchema.index({ createdAt: 1 });
+
+export const scrollDepth = mongoose.models.ScrollDepth || mongoose.model<any>('ScrollDepth', scrollDepthSchema);

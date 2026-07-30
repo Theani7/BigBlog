@@ -1,377 +1,208 @@
-import { sqliteTable, text, integer, real, index, uniqueIndex } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
+import mongoose, { Schema } from 'mongoose';
 
 // Re-export analytics tables
-export {
-  analyticsEvents,
-  pageViews,
-  performanceMetrics,
-  errorLogs,
-  searchEvents,
-  apiLatency,
-  scrollDepth,
-  analyticsEventsRelations,
-} from './analytics';
+export * from './analytics';
 
 // =============================================================================
 // ANONYMOUS SESSIONS
-// Tracks anonymous users for views, likes, and bookmarks
 // =============================================================================
-export const anonymousSessions = sqliteTable(
-  'anonymous_sessions',
-  {
-    id: text('id').primaryKey(),
-    fingerprint: text('fingerprint').notNull(),
-    userAgent: text('user_agent'),
-    ipHash: text('ip_hash'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    lastActiveAt: integer('last_active_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_anonymous_sessions_fingerprint').on(table.fingerprint),
-    index('idx_anonymous_sessions_created_at').on(table.createdAt),
-  ]
-);
+const anonymousSessionsSchema = new Schema({
+  _id: { type: String, required: true },
+  fingerprint: { type: String, required: true },
+  userAgent: { type: String },
+  ipHash: { type: String },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  lastActiveAt: { type: Date, default: Date.now },
+});
+
+anonymousSessionsSchema.index({ fingerprint: 1 });
+anonymousSessionsSchema.index({ createdAt: 1 });
+
+export const anonymousSessions = mongoose.models.AnonymousSession || mongoose.model<any>('AnonymousSession', anonymousSessionsSchema);
 
 // =============================================================================
 // ARTICLE VIEWS
-// Tracks page views with deduplication
 // =============================================================================
-export const articleViews = sqliteTable(
-  'article_views',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    articleSlug: text('article_slug').notNull(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    viewedAt: integer('viewed_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    duration: integer('duration'),
-    referrer: text('referrer'),
-  },
-  (table) => [
-    index('idx_article_views_slug').on(table.articleSlug),
-    index('idx_article_views_session').on(table.sessionId),
-    index('idx_article_views_date').on(table.viewedAt),
-    index('idx_article_views_slug_date').on(table.articleSlug, table.viewedAt),
-    uniqueIndex('idx_article_views_unique_view').on(
-      table.articleSlug,
-      table.sessionId,
-      table.viewedAt
-    ),
-  ]
-);
+const articleViewsSchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  viewedAt: { type: Date, default: Date.now },
+  duration: { type: Number },
+  referrer: { type: String },
+});
+
+articleViewsSchema.index({ articleSlug: 1 });
+articleViewsSchema.index({ sessionId: 1 });
+articleViewsSchema.index({ viewedAt: 1 });
+articleViewsSchema.index({ articleSlug: 1, viewedAt: 1 });
+articleViewsSchema.index({ articleSlug: 1, sessionId: 1, viewedAt: 1 }, { unique: true });
+
+export const articleViews = mongoose.models.ArticleView || mongoose.model<any>('ArticleView', articleViewsSchema);
 
 // =============================================================================
 // ARTICLE LIKES
-// Anonymous likes with deduplication
 // =============================================================================
-export const articleLikes = sqliteTable(
-  'article_likes',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    articleSlug: text('article_slug').notNull(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_article_likes_slug').on(table.articleSlug),
-    index('idx_article_likes_session').on(table.sessionId),
-    uniqueIndex('idx_article_likes_unique').on(table.articleSlug, table.sessionId),
-  ]
-);
+const articleLikesSchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+articleLikesSchema.index({ articleSlug: 1 });
+articleLikesSchema.index({ sessionId: 1 });
+articleLikesSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
+
+export const articleLikes = mongoose.models.ArticleLike || mongoose.model<any>('ArticleLike', articleLikesSchema);
 
 // =============================================================================
 // ARTICLE BOOKMARKS
-// Anonymous bookmarks with local-first sync
 // =============================================================================
-export const articleBookmarks = sqliteTable(
-  'article_bookmarks',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    articleSlug: text('article_slug').notNull(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    syncedAt: integer('synced_at', { mode: 'timestamp' }),
-  },
-  (table) => [
-    index('idx_article_bookmarks_slug').on(table.articleSlug),
-    index('idx_article_bookmarks_session').on(table.sessionId),
-    uniqueIndex('idx_article_bookmarks_unique').on(table.articleSlug, table.sessionId),
-  ]
-);
+const articleBookmarksSchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  createdAt: { type: Date, default: Date.now },
+  syncedAt: { type: Date },
+});
+
+articleBookmarksSchema.index({ articleSlug: 1 });
+articleBookmarksSchema.index({ sessionId: 1 });
+articleBookmarksSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
+
+export const articleBookmarks = mongoose.models.ArticleBookmark || mongoose.model<any>('ArticleBookmark', articleBookmarksSchema);
 
 // =============================================================================
 // COMMENTS
-// Threaded comments with markdown support
 // =============================================================================
-export const comments = sqliteTable(
-  'comments',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    articleSlug: text('article_slug').notNull(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    parentId: integer('parent_id').references((): any => comments.id),
-    content: text('content').notNull(),
-    authorName: text('author_name').notNull(),
-    authorEmail: text('author_email'),
-    status: text('status', { enum: ['pending', 'approved', 'rejected', 'spam'] })
-      .notNull()
-      .default('pending'),
-    isEdited: integer('is_edited', { mode: 'boolean' }).default(false),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    deletedAt: integer('deleted_at', { mode: 'timestamp' }),
-  },
-  (table) => [
-    index('idx_comments_slug').on(table.articleSlug),
-    index('idx_comments_session').on(table.sessionId),
-    index('idx_comments_parent').on(table.parentId),
-    index('idx_comments_status').on(table.status),
-    index('idx_comments_created_at').on(table.createdAt),
-  ]
-);
+const commentsSchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  parentId: { type: Schema.Types.ObjectId, ref: 'Comment' },
+  content: { type: String, required: true },
+  authorName: { type: String, required: true },
+  authorEmail: { type: String },
+  status: { type: String, enum: ['pending', 'approved', 'rejected', 'spam'], required: true, default: 'pending' },
+  isEdited: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  deletedAt: { type: Date },
+});
+
+commentsSchema.index({ articleSlug: 1 });
+commentsSchema.index({ sessionId: 1 });
+commentsSchema.index({ parentId: 1 });
+commentsSchema.index({ status: 1 });
+commentsSchema.index({ createdAt: 1 });
+
+export const comments = mongoose.models.Comment || mongoose.model<any>('Comment', commentsSchema);
 
 // =============================================================================
 // COMMENT REACTIONS
-// Emoji reactions on comments
 // =============================================================================
-export const commentReactions = sqliteTable(
-  'comment_reactions',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    commentId: integer('comment_id')
-      .notNull()
-      .references(() => comments.id),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    emoji: text('emoji').notNull(),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_comment_reactions_comment').on(table.commentId),
-    index('idx_comment_reactions_session').on(table.sessionId),
-    uniqueIndex('idx_comment_reactions_unique').on(table.commentId, table.sessionId, table.emoji),
-  ]
-);
+const commentReactionsSchema = new Schema({
+  commentId: { type: Schema.Types.ObjectId, required: true, ref: 'Comment' },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  emoji: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+commentReactionsSchema.index({ commentId: 1 });
+commentReactionsSchema.index({ sessionId: 1 });
+commentReactionsSchema.index({ commentId: 1, sessionId: 1, emoji: 1 }, { unique: true });
+
+export const commentReactions = mongoose.models.CommentReaction || mongoose.model<any>('CommentReaction', commentReactionsSchema);
 
 // =============================================================================
 // COMMENT REPORTS
-// Moderation reports for comments
 // =============================================================================
-export const commentReports = sqliteTable(
-  'comment_reports',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    commentId: integer('comment_id')
-      .notNull()
-      .references(() => comments.id),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    reason: text('reason', {
-      enum: ['spam', 'abuse', 'off-topic', 'other'],
-    }).notNull(),
-    details: text('details'),
-    status: text('status', { enum: ['pending', 'reviewed', 'resolved'] })
-      .notNull()
-      .default('pending'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    reviewedAt: integer('reviewed_at', { mode: 'timestamp' }),
-  },
-  (table) => [
-    index('idx_comment_reports_comment').on(table.commentId),
-    index('idx_comment_reports_status').on(table.status),
-  ]
-);
+const commentReportsSchema = new Schema({
+  commentId: { type: Schema.Types.ObjectId, required: true, ref: 'Comment' },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  reason: { type: String, enum: ['spam', 'abuse', 'off-topic', 'other'], required: true },
+  details: { type: String },
+  status: { type: String, enum: ['pending', 'reviewed', 'resolved'], required: true, default: 'pending' },
+  createdAt: { type: Date, default: Date.now },
+  reviewedAt: { type: Date },
+});
+
+commentReportsSchema.index({ commentId: 1 });
+commentReportsSchema.index({ status: 1 });
+
+export const commentReports = mongoose.models.CommentReport || mongoose.model<any>('CommentReport', commentReportsSchema);
 
 // =============================================================================
 // NEWSLETTER SUBSCRIBERS
-// Email subscriptions with confirmation flow
 // =============================================================================
-export const newsletterSubscribers = sqliteTable(
-  'newsletter_subscribers',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    email: text('email').notNull(),
-    sessionId: text('session_id').references(() => anonymousSessions.id),
-    status: text('status', { enum: ['pending', 'confirmed', 'unsubscribed'] })
-      .notNull()
-      .default('pending'),
-    confirmationToken: text('confirmation_token'),
-    subscribedAt: integer('subscribed_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    confirmedAt: integer('confirmed_at', { mode: 'timestamp' }),
-    unsubscribedAt: integer('unsubscribed_at', { mode: 'timestamp' }),
-  },
-  (table) => [
-    uniqueIndex('idx_newsletter_email').on(table.email),
-    index('idx_newsletter_status').on(table.status),
-    index('idx_newsletter_token').on(table.confirmationToken),
-  ]
-);
+const newsletterSubscribersSchema = new Schema({
+  email: { type: String, required: true },
+  sessionId: { type: String, ref: 'AnonymousSession' },
+  status: { type: String, enum: ['pending', 'confirmed', 'unsubscribed'], required: true, default: 'pending' },
+  confirmationToken: { type: String },
+  subscribedAt: { type: Date, default: Date.now },
+  confirmedAt: { type: Date },
+  unsubscribedAt: { type: Date },
+});
+
+newsletterSubscribersSchema.index({ email: 1 }, { unique: true });
+newsletterSubscribersSchema.index({ status: 1 });
+newsletterSubscribersSchema.index({ confirmationToken: 1 });
+
+export const newsletterSubscribers = mongoose.models.NewsletterSubscriber || mongoose.model<any>('NewsletterSubscriber', newsletterSubscribersSchema);
 
 // =============================================================================
 // READING HISTORY
-// Track reading progress and continue reading
 // =============================================================================
-export const readingHistory = sqliteTable(
-  'reading_history',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    articleSlug: text('article_slug').notNull(),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    progress: real('progress').notNull().default(0),
-    readTime: integer('read_time'),
-    completedAt: integer('completed_at', { mode: 'timestamp' }),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_reading_history_slug').on(table.articleSlug),
-    index('idx_reading_history_session').on(table.sessionId),
-    index('idx_reading_history_updated').on(table.updatedAt),
-    uniqueIndex('idx_reading_history_unique').on(table.articleSlug, table.sessionId),
-  ]
-);
+const readingHistorySchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  progress: { type: Number, required: true, default: 0 },
+  readTime: { type: Number },
+  completedAt: { type: Date },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+readingHistorySchema.index({ articleSlug: 1 });
+readingHistorySchema.index({ sessionId: 1 });
+readingHistorySchema.index({ updatedAt: 1 });
+readingHistorySchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
+
+export const readingHistory = mongoose.models.ReadingHistory || mongoose.model<any>('ReadingHistory', readingHistorySchema);
 
 // =============================================================================
 // USER PREFERENCES
-// Persist user settings with D1 + localStorage fallback
 // =============================================================================
-export const userPreferences = sqliteTable(
-  'user_preferences',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    sessionId: text('session_id')
-      .notNull()
-      .references(() => anonymousSessions.id),
-    theme: text('theme', { enum: ['light', 'dark', 'system'] }).default('system'),
-    fontSize: integer('font_size').default(16),
-    contentWidth: integer('content_width').default(720),
-    lineHeight: real('line_height').default(1.7),
-    readingMode: text('reading_mode', { enum: ['default', 'reader', 'focused'] }).default(
-      'default'
-    ),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-    updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [uniqueIndex('idx_user_preferences_session').on(table.sessionId)]
-);
+const userPreferencesSchema = new Schema({
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
+  fontSize: { type: Number, default: 16 },
+  contentWidth: { type: Number, default: 720 },
+  lineHeight: { type: Number, default: 1.7 },
+  readingMode: { type: String, enum: ['default', 'reader', 'focused'], default: 'default' },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+userPreferencesSchema.index({ sessionId: 1 }, { unique: true });
+
+export const userPreferences = mongoose.models.UserPreference || mongoose.model<any>('UserPreference', userPreferencesSchema);
 
 // =============================================================================
 // AUDIT LOGS
-// Track important actions for debugging and compliance
 // =============================================================================
-export const auditLogs = sqliteTable(
-  'audit_logs',
-  {
-    id: integer('id').primaryKey({ autoIncrement: true }),
-    sessionId: text('session_id').references(() => anonymousSessions.id),
-    action: text('action').notNull(),
-    entityType: text('entity_type').notNull(),
-    entityId: text('entity_id'),
-    metadata: text('metadata'),
-    ipHash: text('ip_hash'),
-    createdAt: integer('created_at', { mode: 'timestamp' }).notNull().default(new Date()),
-  },
-  (table) => [
-    index('idx_audit_logs_session').on(table.sessionId),
-    index('idx_audit_logs_action').on(table.action),
-    index('idx_audit_logs_entity').on(table.entityType, table.entityId),
-    index('idx_audit_logs_created_at').on(table.createdAt),
-  ]
-);
+const auditLogsSchema = new Schema({
+  sessionId: { type: String, ref: 'AnonymousSession' },
+  action: { type: String, required: true },
+  entityType: { type: String, required: true },
+  entityId: { type: String },
+  metadata: { type: String },
+  ipHash: { type: String },
+  createdAt: { type: Date, default: Date.now },
+});
 
-// =============================================================================
-// RELATIONS
-// =============================================================================
-export const anonymousSessionsRelations = relations(anonymousSessions, ({ many }) => ({
-  views: many(articleViews),
-  likes: many(articleLikes),
-  bookmarks: many(articleBookmarks),
-  comments: many(comments),
-  readingHistory: many(readingHistory),
-  preferences: many(userPreferences),
-}));
+auditLogsSchema.index({ sessionId: 1 });
+auditLogsSchema.index({ action: 1 });
+auditLogsSchema.index({ entityType: 1, entityId: 1 });
+auditLogsSchema.index({ createdAt: 1 });
 
-export const articleViewsRelations = relations(articleViews, ({ one }) => ({
-  session: one(anonymousSessions, {
-    fields: [articleViews.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const articleLikesRelations = relations(articleLikes, ({ one }) => ({
-  session: one(anonymousSessions, {
-    fields: [articleLikes.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const articleBookmarksRelations = relations(articleBookmarks, ({ one }) => ({
-  session: one(anonymousSessions, {
-    fields: [articleBookmarks.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const commentsRelations = relations(comments, ({ one, many }) => ({
-  session: one(anonymousSessions, {
-    fields: [comments.sessionId],
-    references: [anonymousSessions.id],
-  }),
-  parent: one(comments, {
-    fields: [comments.parentId],
-    references: [comments.id],
-    relationName: 'commentReplies',
-  }),
-  replies: many(comments, { relationName: 'commentReplies' }),
-  reactions: many(commentReactions),
-  reports: many(commentReports),
-}));
-
-export const commentReactionsRelations = relations(commentReactions, ({ one }) => ({
-  comment: one(comments, {
-    fields: [commentReactions.commentId],
-    references: [comments.id],
-  }),
-  session: one(anonymousSessions, {
-    fields: [commentReactions.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const commentReportsRelations = relations(commentReports, ({ one }) => ({
-  comment: one(comments, {
-    fields: [commentReports.commentId],
-    references: [comments.id],
-  }),
-  session: one(anonymousSessions, {
-    fields: [commentReports.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const readingHistoryRelations = relations(readingHistory, ({ one }) => ({
-  session: one(anonymousSessions, {
-    fields: [readingHistory.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
-
-export const userPreferencesRelations = relations(userPreferences, ({ one }) => ({
-  session: one(anonymousSessions, {
-    fields: [userPreferences.sessionId],
-    references: [anonymousSessions.id],
-  }),
-}));
+export const auditLogs = mongoose.models.AuditLog || mongoose.model<any>('AuditLog', auditLogsSchema);

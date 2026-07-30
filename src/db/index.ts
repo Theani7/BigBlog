@@ -1,22 +1,20 @@
-import { drizzle } from 'drizzle-orm/d1';
-import * as schema from './schema';
+import mongoose from 'mongoose';
 
-export type Database = ReturnType<typeof createDatabase>;
+export type Database = any;
 
 export interface Env {
-  DB: D1Database;
+  MONGO_URI: string;
 }
 
 /**
- * Create a Drizzle ORM database instance
- * @param env - Cloudflare Workers environment with D1 binding
- * @returns Drizzle database instance
+ * Create a Mongoose database connection
+ * @param env - Environment variables including MONGO_URI
+ * @returns Mongoose instance
  */
-export function createDatabase(env: Env) {
-  return drizzle(env.DB, { schema });
-}
-
-/**
- * Type for D1 database binding
- */
-export type D1Binding = D1Database;
+export const createDatabase = async (env: Env) => {
+  if (mongoose.connection.readyState >= 1) {
+    return mongoose;
+  }
+  await mongoose.connect(env.MONGO_URI);
+  return mongoose;
+};

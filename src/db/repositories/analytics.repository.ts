@@ -1,4 +1,3 @@
-import { eq, and, gte, lte, desc, sql, count } from 'drizzle-orm';
 import type { Database } from '../index';
 import {
   analyticsEvents,
@@ -67,17 +66,11 @@ export interface ScrollDepthEvent {
   timeOnPage?: number;
 }
 
-// =============================================================================
-// ANALYTICS REPOSITORY
-// =============================================================================
 export class AnalyticsRepository {
-  constructor(private db: Database) {}
+  constructor(_db: Database) {}
 
-  // -------------------------------------------------------------------------
-  // Events
-  // -------------------------------------------------------------------------
   async trackEvent(event: AnalyticsEvent): Promise<void> {
-    await this.db.insert(analyticsEvents).values({
+    await analyticsEvents.create({
       event: event.event,
       sessionId: event.sessionId,
       page: event.page,
@@ -89,7 +82,7 @@ export class AnalyticsRepository {
       browser: event.browser,
       os: event.os,
       language: event.language,
-      metadata: event.metadata ? JSON.stringify(event.metadata) : undefined,
+      metadata: event.metadata,
     });
   }
 
@@ -98,28 +91,19 @@ export class AnalyticsRepository {
     endDate: Date,
     event?: string
   ): Promise<{ event: string; count: number }[]> {
-    const conditions = [
-      gte(analyticsEvents.createdAt, startDate),
-      lte(analyticsEvents.createdAt, endDate),
-    ];
-    if (event) {
-      conditions.push(eq(analyticsEvents.event, event));
-    }
+    const match: any = {
+      createdAt: { $gte: startDate, $lte: endDate },
+    };
+    if (event) match.event = event;
 
-    return this.db
-      .select({
-        event: analyticsEvents.event,
-        count: count(),
-      })
-      .from(analyticsEvents)
-      .where(and(...conditions))
-      .groupBy(analyticsEvents.event)
-      .orderBy(desc(count()));
+    return analyticsEvents.aggregate([
+      { $match: match },
+      { $group: { _id: '$event', count: { $sum: 1 } } },
+      { $project: { event: '$_id', count: 1, _id: 0 } },
+      { $sort: { count: -1 } }
+    ]);
   }
 
-  // -------------------------------------------------------------------------
-  // Page Views
-  // -------------------------------------------------------------------------
   async trackPageView(view: {
     page: string;
     sessionId: string;
@@ -128,14 +112,7 @@ export class AnalyticsRepository {
     device?: string;
     browser?: string;
   }): Promise<void> {
-    await this.db.insert(pageViews).values({
-      page: view.page,
-      sessionId: view.sessionId,
-      referrer: view.referrer,
-      country: view.country,
-      device: view.device,
-      browser: view.browser,
-    });
+    await pageViews.create(view);
   }
 
   async getPageViewStats(
@@ -148,65 +125,37 @@ export class AnalyticsRepository {
     byPage: { page: string; views: number }[];
     byDay: { date: string; views: number }[];
   }> {
-    const conditions = [gte(pageViews.createdAt, startDate), lte(pageViews.createdAt, endDate)];
-    if (page) {
-      conditions.push(eq(pageViews.page, page));
-    }
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
+    if (page) match.page = page;
 
-    const [totalResult] = await this.db
-      .select({ count: count() })
-      .from(pageViews)
-      .where(and(...conditions));
+    const total = await pageViews.countDocuments(match);
+    const uniqueResult = await pageViews.distinct('sessionId', match);
+    const unique = uniqueResult.length;
 
-    const [uniqueResult] = await this.db
-      .select({ count: count() })
-      .from(pageViews)
-      .where(and(...conditions))
-      .groupBy(pageViews.sessionId)
-      .execute()
-      .then((rows: { count: number }[]) => [{ count: rows.length }]);
+    const byPage = await pageViews.aggregate([
+      { $match: match },
+      { $group: { _id: '$page', views: { $sum: 1 } } },
+      { $project: { page: '$_id', views: 1, _id: 0 } },
+      { $sort: { views: -1 } }
+    ]);
 
-    const byPage = await this.db
-      .select({
-        page: pageViews.page,
-        views: count(),
-      })
-      .from(pageViews)
-      .where(and(...conditions))
-      .groupBy(pageViews.page)
-      .orderBy(desc(count()));
+    const byDay = await pageViews.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          views: { $sum: 1 }
+        }
+      },
+      { $project: { date: '$_id', views: 1, _id: 0 } },
+      { $sort: { date: 1 } }
+    ]);
 
-    const byDay = await this.db
-      .select({
-        date: sql<string>`date(${pageViews.createdAt}, 'unixepoch')`,
-        views: count(),
-      })
-      .from(pageViews)
-      .where(and(...conditions))
-      .groupBy(sql`date(${pageViews.createdAt}, 'unixepoch')`)
-      .orderBy(sql`date(${pageViews.createdAt}, 'unixepoch')`);
-
-    return {
-      total: totalResult?.count ?? 0,
-      unique: uniqueResult?.count ?? 0,
-      byPage,
-      byDay,
-    };
+    return { total, unique, byPage, byDay };
   }
 
-  // -------------------------------------------------------------------------
-  // Performance Metrics
-  // -------------------------------------------------------------------------
   async trackPerformance(metric: PerformanceMetric): Promise<void> {
-    await this.db.insert(performanceMetrics).values({
-      metric: metric.metric,
-      value: metric.value,
-      page: metric.page,
-      sessionId: metric.sessionId,
-      userAgent: metric.userAgent,
-      connection: metric.connection,
-      device: metric.device,
-    });
+    await performanceMetrics.create(metric);
   }
 
   async getPerformanceStats(
@@ -217,53 +166,44 @@ export class AnalyticsRepository {
     byMetric: { metric: string; p50: number; p75: number; p90: number; p99: number }[];
     byPage: { page: string; metric: string; avg: number }[];
   }> {
-    const conditions = [
-      gte(performanceMetrics.createdAt, startDate),
-      lte(performanceMetrics.createdAt, endDate),
-    ];
-    if (metric) {
-      conditions.push(eq(performanceMetrics.metric, metric));
-    }
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
+    if (metric) match.metric = metric;
 
-    const byMetric = await this.db
-      .select({
-        metric: performanceMetrics.metric,
-        p50: sql<number>`percentile_cont(0.5) within group (order by ${performanceMetrics.value})`,
-        p75: sql<number>`percentile_cont(0.75) within group (order by ${performanceMetrics.value})`,
-        p90: sql<number>`percentile_cont(0.9) within group (order by ${performanceMetrics.value})`,
-        p99: sql<number>`percentile_cont(0.99) within group (order by ${performanceMetrics.value})`,
-      })
-      .from(performanceMetrics)
-      .where(and(...conditions))
-      .groupBy(performanceMetrics.metric);
+    // Approximating percentiles with averages for simplicity as exact percentiles are complex in standard MongoDB aggregate without atlas search or specific functions.
+    // In a real Mongoose setup you'd either use a specialized tool, calculate it in memory, or use $percentile if MongoDB >= 7.0
+    // We'll calculate simple averages here for the mock, or we can use the $percentile operator assuming MongoDB 7.0+
+    const byMetric = await performanceMetrics.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$metric',
+          values: { $push: '$value' }
+        }
+      }
+    ]).then(results => results.map(r => {
+      const sorted = r.values.sort((a: number, b: number) => a - b);
+      const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
+      return {
+        metric: r._id,
+        p50: getP(0.5),
+        p75: getP(0.75),
+        p90: getP(0.9),
+        p99: getP(0.99)
+      };
+    }));
 
-    const byPage = await this.db
-      .select({
-        page: performanceMetrics.page,
-        metric: performanceMetrics.metric,
-        avg: sql<number>`avg(${performanceMetrics.value})`,
-      })
-      .from(performanceMetrics)
-      .where(and(...conditions))
-      .groupBy(performanceMetrics.page, performanceMetrics.metric)
-      .orderBy(performanceMetrics.page);
+    const byPage = await performanceMetrics.aggregate([
+      { $match: match },
+      { $group: { _id: { page: '$page', metric: '$metric' }, avg: { $avg: '$value' } } },
+      { $project: { page: '$_id.page', metric: '$_id.metric', avg: 1, _id: 0 } },
+      { $sort: { page: 1 } }
+    ]);
 
     return { byMetric, byPage };
   }
 
-  // -------------------------------------------------------------------------
-  // Error Logs
-  // -------------------------------------------------------------------------
   async logError(error: ErrorLog): Promise<void> {
-    await this.db.insert(errorLogs).values({
-      level: error.level,
-      message: error.message,
-      stack: error.stack,
-      page: error.page,
-      sessionId: error.sessionId,
-      userAgent: error.userAgent,
-      metadata: error.metadata ? JSON.stringify(error.metadata) : undefined,
-    });
+    await errorLogs.create(error);
   }
 
   async getErrorStats(
@@ -276,71 +216,37 @@ export class AnalyticsRepository {
     byPage: { page: string; count: number }[];
     recent: { message: string; count: number; lastSeen: Date }[];
   }> {
-    const conditions = [gte(errorLogs.createdAt, startDate), lte(errorLogs.createdAt, endDate)];
-    if (level) {
-      conditions.push(eq(errorLogs.level, level));
-    }
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
+    if (level) match.level = level;
 
-    const [totalResult] = await this.db
-      .select({ count: count() })
-      .from(errorLogs)
-      .where(and(...conditions));
+    const total = await errorLogs.countDocuments(match);
 
-    const byLevel = await this.db
-      .select({
-        level: errorLogs.level,
-        count: count(),
-      })
-      .from(errorLogs)
-      .where(and(...conditions))
-      .groupBy(errorLogs.level);
+    const byLevel = await errorLogs.aggregate([
+      { $match: match },
+      { $group: { _id: '$level', count: { $sum: 1 } } },
+      { $project: { level: '$_id', count: 1, _id: 0 } }
+    ]);
 
-    const byPage = await this.db
-      .select({
-        page: errorLogs.page,
-        count: count(),
-      })
-      .from(errorLogs)
-      .where(and(...conditions))
-      .groupBy(errorLogs.page)
-      .orderBy(desc(count()));
+    const byPage = await errorLogs.aggregate([
+      { $match: match },
+      { $group: { _id: '$page', count: { $sum: 1 } } },
+      { $project: { page: { $ifNull: ['$_id', 'unknown'] }, count: 1, _id: 0 } },
+      { $sort: { count: -1 } }
+    ]);
 
-    // Cast nullable page to string
-    const byPageTyped = byPage.map((row) => ({
-      page: row.page || 'unknown',
-      count: row.count,
-    }));
+    const recent = await errorLogs.aggregate([
+      { $match: match },
+      { $group: { _id: '$message', count: { $sum: 1 }, lastSeen: { $max: '$createdAt' } } },
+      { $project: { message: '$_id', count: 1, lastSeen: 1, _id: 0 } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
 
-    const recent = await this.db
-      .select({
-        message: errorLogs.message,
-        count: count(),
-        lastSeen: sql<Date>`max(${errorLogs.createdAt})`,
-      })
-      .from(errorLogs)
-      .where(and(...conditions))
-      .groupBy(errorLogs.message)
-      .orderBy(desc(count()))
-      .limit(10);
-
-    return {
-      total: totalResult?.count ?? 0,
-      byLevel,
-      byPage: byPageTyped,
-      recent,
-    };
+    return { total, byLevel, byPage, recent };
   }
 
-  // -------------------------------------------------------------------------
-  // Search Events
-  // -------------------------------------------------------------------------
   async trackSearch(event: SearchEvent): Promise<void> {
-    await this.db.insert(searchEvents).values({
-      query: event.query,
-      results: event.results,
-      selectedSlug: event.selectedSlug,
-      sessionId: event.sessionId,
-    });
+    await searchEvents.create(event);
   }
 
   async getSearchStats(
@@ -352,62 +258,32 @@ export class AnalyticsRepository {
     popular: { query: string; count: number }[];
     withSelection: number;
   }> {
-    const conditions = [
-      gte(searchEvents.createdAt, startDate),
-      lte(searchEvents.createdAt, endDate),
-    ];
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
+    const total = await searchEvents.countDocuments(match);
 
-    const [totalResult] = await this.db
-      .select({ count: count() })
-      .from(searchEvents)
-      .where(and(...conditions));
+    const noResults = await searchEvents.aggregate([
+      { $match: { ...match, results: 0 } },
+      { $group: { _id: '$query', count: { $sum: 1 } } },
+      { $project: { query: '$_id', count: 1, _id: 0 } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
 
-    const noResults = await this.db
-      .select({
-        query: searchEvents.query,
-        count: count(),
-      })
-      .from(searchEvents)
-      .where(and(...conditions, eq(searchEvents.results, 0)))
-      .groupBy(searchEvents.query)
-      .orderBy(desc(count()))
-      .limit(10);
+    const popular = await searchEvents.aggregate([
+      { $match: match },
+      { $group: { _id: '$query', count: { $sum: 1 } } },
+      { $project: { query: '$_id', count: 1, _id: 0 } },
+      { $sort: { count: -1 } },
+      { $limit: 10 }
+    ]);
 
-    const popular = await this.db
-      .select({
-        query: searchEvents.query,
-        count: count(),
-      })
-      .from(searchEvents)
-      .where(and(...conditions))
-      .groupBy(searchEvents.query)
-      .orderBy(desc(count()))
-      .limit(10);
+    const withSelection = await searchEvents.countDocuments({ ...match, selectedSlug: { $ne: null } });
 
-    const [withSelectionResult] = await this.db
-      .select({ count: count() })
-      .from(searchEvents)
-      .where(and(...conditions, sql`${searchEvents.selectedSlug} is not null`));
-
-    return {
-      total: totalResult?.count ?? 0,
-      noResults,
-      popular,
-      withSelection: withSelectionResult?.count ?? 0,
-    };
+    return { total, noResults, popular, withSelection };
   }
 
-  // -------------------------------------------------------------------------
-  // API Latency
-  // -------------------------------------------------------------------------
   async trackApiLatency(event: ApiLatencyEvent): Promise<void> {
-    await this.db.insert(apiLatency).values({
-      endpoint: event.endpoint,
-      method: event.method,
-      statusCode: event.statusCode,
-      latencyMs: event.latencyMs,
-      sessionId: event.sessionId,
-    });
+    await apiLatency.create(event);
   }
 
   async getApiLatencyStats(
@@ -424,34 +300,32 @@ export class AnalyticsRepository {
     }[];
     errorRate: number;
   }> {
-    const conditions = [gte(apiLatency.createdAt, startDate), lte(apiLatency.createdAt, endDate)];
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
 
-    const byEndpoint = await this.db
-      .select({
-        endpoint: apiLatency.endpoint,
-        method: apiLatency.method,
-        p50: sql<number>`percentile_cont(0.5) within group (order by ${apiLatency.latencyMs})`,
-        p95: sql<number>`percentile_cont(0.95) within group (order by ${apiLatency.latencyMs})`,
-        p99: sql<number>`percentile_cont(0.99) within group (order by ${apiLatency.latencyMs})`,
-        count: count(),
-      })
-      .from(apiLatency)
-      .where(and(...conditions))
-      .groupBy(apiLatency.endpoint, apiLatency.method)
-      .orderBy(desc(count()));
+    const byEndpoint = await apiLatency.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: { endpoint: '$endpoint', method: '$method' },
+          latencies: { $push: '$latencyMs' },
+          count: { $sum: 1 }
+        }
+      }
+    ]).then(results => results.map(r => {
+      const sorted = r.latencies.sort((a: number, b: number) => a - b);
+      const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
+      return {
+        endpoint: r._id.endpoint,
+        method: r._id.method,
+        p50: getP(0.5),
+        p95: getP(0.95),
+        p99: getP(0.99),
+        count: r.count
+      };
+    })).then(results => results.sort((a, b) => b.count - a.count));
 
-    const [totalResult] = await this.db
-      .select({ count: count() })
-      .from(apiLatency)
-      .where(and(...conditions));
-
-    const [errorResult] = await this.db
-      .select({ count: count() })
-      .from(apiLatency)
-      .where(and(...conditions, sql`${apiLatency.statusCode} >= 400`));
-
-    const total = totalResult?.count ?? 0;
-    const errors = errorResult?.count ?? 0;
+    const total = await apiLatency.countDocuments(match);
+    const errors = await apiLatency.countDocuments({ ...match, statusCode: { $gte: 400 } });
 
     return {
       byEndpoint,
@@ -459,16 +333,8 @@ export class AnalyticsRepository {
     };
   }
 
-  // -------------------------------------------------------------------------
-  // Scroll Depth
-  // -------------------------------------------------------------------------
   async trackScrollDepth(event: ScrollDepthEvent): Promise<void> {
-    await this.db.insert(scrollDepth).values({
-      page: event.page,
-      sessionId: event.sessionId,
-      maxDepth: event.maxDepth,
-      timeOnPage: event.timeOnPage,
-    });
+    await scrollDepth.create(event);
   }
 
   async getScrollDepthStats(
@@ -478,22 +344,22 @@ export class AnalyticsRepository {
   ): Promise<{
     byPage: { page: string; avgDepth: number; avgTime: number; count: number }[];
   }> {
-    const conditions = [gte(scrollDepth.createdAt, startDate), lte(scrollDepth.createdAt, endDate)];
-    if (page) {
-      conditions.push(eq(scrollDepth.page, page));
-    }
+    const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
+    if (page) match.page = page;
 
-    const byPage = await this.db
-      .select({
-        page: scrollDepth.page,
-        avgDepth: sql<number>`avg(${scrollDepth.maxDepth})`,
-        avgTime: sql<number>`avg(${scrollDepth.timeOnPage})`,
-        count: count(),
-      })
-      .from(scrollDepth)
-      .where(and(...conditions))
-      .groupBy(scrollDepth.page)
-      .orderBy(desc(count()));
+    const byPage = await scrollDepth.aggregate([
+      { $match: match },
+      {
+        $group: {
+          _id: '$page',
+          avgDepth: { $avg: '$maxDepth' },
+          avgTime: { $avg: '$timeOnPage' },
+          count: { $sum: 1 }
+        }
+      },
+      { $project: { page: '$_id', avgDepth: 1, avgTime: 1, count: 1, _id: 0 } },
+      { $sort: { count: -1 } }
+    ]);
 
     return { byPage };
   }
