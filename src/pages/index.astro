@@ -5,12 +5,9 @@ import ArticleCard from '../components/cards/ArticleCard.astro';
 import FeaturedCard from '../components/cards/FeaturedCard.astro';
 import AuthorCard from '../components/cards/AuthorCard.astro';
 import SeriesCard from '../components/cards/SeriesCard.astro';
-import CategoryCard from '../components/cards/CategoryCard.astro';
 import CategoryPill from '../components/article/CategoryPill.astro';
 import TagChip from '../components/article/TagChip.astro';
-import NewsletterBlock from '../components/article/NewsletterBlock.astro';
-import CTABlock from '../components/article/CTABlock.astro';
-import { getFeaturedPosts, getLatestPosts, archive, groupByYear } from '../lib/content';
+import { getFeaturedPosts, getLatestPosts, archive } from '../lib/content';
 import { formatDate } from '../utils/content';
 import { canonicalUrl } from '../lib/canonical';
 import { homepageSchemas } from '../lib/schema';
@@ -27,8 +24,6 @@ const allTags = [...new Set(allPosts.flatMap((p) => p.data.tags as string[]))].s
 
 const authors = await getCollection('authors');
 const series = await getCollection('series');
-const categories = await getCollection('categories');
-const yearArchive = archive(allPosts);
 
 const authorsWithCounts = authors.map((author) => ({
   ...author,
@@ -40,11 +35,8 @@ const seriesWithCounts = series.map((s) => ({
   postCount: publishedPosts.filter((p) => p.data.series === s.data.title).length,
 }));
 
-const popularPosts = publishedPosts.slice(0, 6);
-
 const totalPosts = publishedPosts.length;
 const totalCategories = allCategories.length;
-const totalTags = allTags.length;
 const totalAuthors = authors.length;
 
 const pageTitle = 'Home';
@@ -59,9 +51,14 @@ const structuredData = homepageSchemas();
   canonical={canonicalUrl('/')}
   structuredData={structuredData}
 >
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 1 — HERO · Cream Canvas
+       6-6 grid: headline left, code-window-card right
+       ═══════════════════════════════════════════════════════════════════════ -->
   <section class="hero" aria-label="Hero">
     <div class="container hero-container">
       <div class="hero-content">
+        <p class="hero-eyebrow">Developer Publishing Platform</p>
         <h1 class="hero-title">Build something<br />worth reading.</h1>
         <p class="hero-subtitle">
           A modern publishing platform for developers who care about craft, clarity, and community.
@@ -71,47 +68,99 @@ const structuredData = homepageSchemas();
           <a href="/about" class="btn btn-secondary">Learn More</a>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="code-window-card">
-          <div class="code-window-header">
-            <span class="dot red"></span>
-            <span class="dot yellow"></span>
-            <span class="dot green"></span>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 2 — FEATURE CARDS · Surface Card (cream-card)
+       3-up grid with icon + title + description
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="features-band" aria-label="Features">
+    <div class="container">
+      <p class="section-eyebrow">Why BigBlog</p>
+      <h2 class="section-heading">Everything you need to publish.</h2>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              ><path
+                d="M12 3l1.912 5.813a2 2 0 0 0 1.275 1.275L21 12l-5.813 1.912a2 2 0 0 0-1.275 1.275L12 21l-1.912-5.813a2 2 0 0 0-1.275-1.275L3 12l5.813-1.912a2 2 0 0 0 1.275-1.275L12 3z"
+              ></path></svg
+            >
           </div>
-          <pre><code><span class="keyword">import</span> &#123; createDatabase &#125; <span class="keyword">from</span> <span class="string">'@db'</span>;
-
-<span class="keyword">const</span> db = createDatabase();
-
-<span class="keyword">await</span> db.posts.insert(&#123;
-  title: <span class="string">'The Future of Web Typography'</span>,
-  author: <span class="string">'Sarah Chen'</span>,
-  published: <span class="boolean">true</span>
-&#125;);
-
-console.log(<span class="string">"Published to Edge Network"</span>);</code></pre>
+          <h3 class="feature-card__title">Content Collections</h3>
+          <p class="feature-card__desc">
+            Type-safe Markdown and MDX content with frontmatter validation, automatic slug
+            generation, and rich querying APIs.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg
+            >
+          </div>
+          <h3 class="feature-card__title">Edge-First Performance</h3>
+          <p class="feature-card__desc">
+            Static generation with zero-JS pages by default. Every article loads instantly on
+            Vercel's edge network.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              ><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path
+                d="M12 8h.01"></path></svg
+            >
+          </div>
+          <h3 class="feature-card__title">Built-In Analytics</h3>
+          <p class="feature-card__desc">
+            Privacy-first page views, scroll depth, and Core Web Vitals tracking — no third-party
+            scripts required.
+          </p>
         </div>
       </div>
     </div>
   </section>
 
-  {
-    featuredPosts.length > 0 && (
-      <section class="featured" aria-label="Featured articles">
-        <div class="container">
-          <h2 class="section-label">Featured</h2>
-          <div class="featured-grid">
-            {featuredPosts.slice(0, 2).map((post) => (
-              <FeaturedCard post={post} />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <section class="latest" aria-label="Latest articles">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 3 — LATEST ARTICLES · Cream Canvas
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="latest-band" aria-label="Latest articles">
     <div class="container">
-      <h2 class="section-label">Latest Articles</h2>
+      <div class="section-header">
+        <div>
+          <p class="section-eyebrow">Latest</p>
+          <h2 class="section-heading">Fresh from the blog.</h2>
+        </div>
+        <a href="/blog" class="text-link">View all articles →</a>
+      </div>
       {
         latestPosts.length > 0 ? (
           <div class="article-grid">
@@ -121,84 +170,86 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
           </div>
         ) : (
           <div class="empty-state">
-            <p>No articles published yet.</p>
+            <p>No articles published yet. Check back soon.</p>
           </div>
         )
       }
     </div>
   </section>
 
-  <section class="categories" aria-label="Categories">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 4 — ABOUT + STATS · Dark Navy (product-mockup-card-dark)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="about-band" aria-label="About">
+    <div class="container about-grid">
+      <div class="about-content">
+        <p class="section-eyebrow section-eyebrow--on-dark">About</p>
+        <h2 class="section-heading section-heading--on-dark">
+          Crafted for developers,<br />by developers.
+        </h2>
+        <p class="about-desc">
+          BigBlog is a publishing platform built for developers who care about craft, clarity, and
+          community. We believe in the power of well-crafted writing to share knowledge and inspire
+          others.
+        </p>
+        <a href="/about" class="btn btn-secondary-on-dark">Learn More</a>
+      </div>
+      <div class="stats-cluster">
+        <div class="stat-card">
+          <span class="stat-card__number">{totalPosts}</span>
+          <span class="stat-card__label">Articles</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__number">{totalCategories}</span>
+          <span class="stat-card__label">Categories</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-card__number">{totalAuthors}</span>
+          <span class="stat-card__label">Authors</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 5 — TOPICS + TAGS · Surface Card
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="topics-band" aria-label="Topics">
     <div class="container">
-      <h2 class="section-label">Topics</h2>
-      <div class="chip-grid">
+      <p class="section-eyebrow">Explore</p>
+      <h2 class="section-heading">Browse by topic.</h2>
+      <div class="chip-row">
         {
           allCategories.map((cat) => (
-            <CategoryPill label={cat} href={`/category/${cat.toLowerCase()}`} />
+            <a href={`/category/${cat.toLowerCase()}`} class="badge-pill">
+              {cat}
+            </a>
           ))
         }
       </div>
+      {
+        allTags.length > 0 && (
+          <div class="chip-row chip-row--tags">
+            {allTags.slice(0, 12).map((tag) => (
+              <a href={`/tag/${tag.toLowerCase()}`} class="badge-pill badge-pill--muted">
+                {tag}
+              </a>
+            ))}
+          </div>
+        )
+      }
     </div>
   </section>
 
-  <section class="newsletter" aria-label="Newsletter">
-    <div class="container">
-      <div class="newsletter-inner">
-        <h2 class="section-label">Stay Updated</h2>
-        <h3 class="newsletter-title">Get the latest posts delivered to your inbox.</h3>
-        <p class="newsletter-desc">Join 1,000+ developers who read BigBlog every week.</p>
-        <form class="newsletter-form" onsubmit="event.preventDefault();">
-          <label for="newsletter-email" class="sr-only">Email address</label>
-          <input
-            id="newsletter-email"
-            type="email"
-            placeholder="your@email.com"
-            required
-            class="newsletter-input"
-            aria-label="Email address"
-          />
-          <button type="submit" class="btn btn-primary">Subscribe</button>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <section class="about-preview" aria-label="About">
-    <div class="container">
-      <div class="about-grid">
-        <div class="about-text">
-          <p class="page-eyebrow">About</p>
-          <h2 class="section-title">Crafted for developers, by developers.</h2>
-          <p class="about-desc">
-            BigBlog is a publishing platform built for developers who care about craft, clarity, and
-            community. We believe in the power of well-crafted writing to share knowledge and
-            inspire others.
-          </p>
-          <a href="/about" class="btn btn-secondary">Learn More</a>
-        </div>
-        <div class="about-stats">
-          <div class="stat">
-            <span class="stat-number">{totalPosts}</span>
-            <span class="stat-label">Articles</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number">{totalCategories}</span>
-            <span class="stat-label">Categories</span>
-          </div>
-          <div class="stat">
-            <span class="stat-number">{totalTags}</span>
-            <span class="stat-label">Topics</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 6 — AUTHORS · Cream Canvas
+       ═══════════════════════════════════════════════════════════════════════ -->
   {
     authorsWithCounts.length > 0 && (
-      <section class="authors" aria-label="Authors">
+      <section class="authors-band" aria-label="Authors">
         <div class="container">
-          <h2 class="section-label">Authors</h2>
+          <p class="section-eyebrow">Writers</p>
+          <h2 class="section-heading">Meet the authors.</h2>
           <div class="author-grid">
             {authorsWithCounts.map((author) => (
               <AuthorCard
@@ -218,11 +269,15 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
     )
   }
 
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 7 — SERIES · Surface Card
+       ═══════════════════════════════════════════════════════════════════════ -->
   {
     seriesWithCounts.length > 0 && (
-      <section class="series" aria-label="Series">
+      <section class="series-band" aria-label="Series">
         <div class="container">
-          <h2 class="section-label">Series</h2>
+          <p class="section-eyebrow">Series</p>
+          <h2 class="section-heading">Deep-dive collections.</h2>
           <div class="series-grid">
             {seriesWithCounts.map((s) => (
               <SeriesCard
@@ -239,411 +294,467 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
     )
   }
 
-  <section class="tags" aria-label="Tags">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 8 — TESTIMONIALS · Cream Canvas
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="testimonials-band" aria-label="Testimonials">
     <div class="container">
-      <h2 class="section-label">Tags</h2>
-      <div class="chip-grid">
-        {allTags.map((tag) => <TagChip label={tag} href={`/tag/${tag.toLowerCase()}`} />)}
-      </div>
-    </div>
-  </section>
-
-  {
-    Object.keys(yearArchive).length > 0 && (
-      <section class="archive" aria-label="Archive">
-        <div class="container">
-          <h2 class="section-label">Archive</h2>
-          <div class="archive-list">
-            {Object.entries(yearArchive).map(([year, months]) => (
-              <div class="archive-year">
-                <h3 class="archive-year-title">{year}</h3>
-                <ul class="archive-months">
-                  {Object.entries(months).map(([month, posts]) => (
-                    <li class="archive-month">
-                      <a href={`/blog?month=${month.toLowerCase()}`} class="archive-month-link">
-                        {month}
-                      </a>
-                      <span class="archive-month-count">{posts.length}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  {
-    popularPosts.length > 0 && (
-      <section class="popular" aria-label="Popular articles">
-        <div class="container">
-          <h2 class="section-label">Popular</h2>
-          <div class="article-grid">
-            {popularPosts.map((post) => (
-              <ArticleCard
-                title={post.data.title}
-                description={post.data.description}
-                slug={post.data.slug ?? post.slug}
-                date={formatDate(post.data.publishedAt)}
-                category={post.data.category}
-                tags={post.data.tags}
-                cover={post.data.cover}
-                author={post.data.author}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-    )
-  }
-
-  <section class="testimonials" aria-label="Testimonials">
-    <div class="container">
-      <h2 class="section-label">From the Community</h2>
+      <p class="section-eyebrow">Community</p>
+      <h2 class="section-heading">What developers are saying.</h2>
       <div class="testimonial-grid">
-        <blockquote class="testimonial">
-          <p class="testimonial-text">
-            BigBlog has transformed how our team documents and shares knowledge. The MDX support and
-            content collections make it effortless.
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__text">
+            "BigBlog has transformed how our team documents and shares knowledge. The MDX support
+            and content collections make it effortless."
           </p>
-          <cite class="testimonial-author">— Sarah Chen, Senior Engineer</cite>
+          <cite class="testimonial-card__cite">Sarah Chen<span>Senior Engineer</span></cite>
         </blockquote>
-        <blockquote class="testimonial">
-          <p class="testimonial-text">
-            The static generation and Vercel deployment mean our blog loads instantly. Zero
-            compromises on performance.
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__text">
+            "The static generation and Vercel deployment mean our blog loads instantly. Zero
+            compromises on performance."
           </p>
-          <cite class="testimonial-author">— Marcus Rivera, CTO</cite>
+          <cite class="testimonial-card__cite">Marcus Rivera<span>CTO</span></cite>
+        </blockquote>
+        <blockquote class="testimonial-card">
+          <p class="testimonial-card__text">
+            "Finally a blogging platform that respects my craft. The typography and reading
+            experience are unmatched."
+          </p>
+          <cite class="testimonial-card__cite">Priya Patel<span>Staff Writer</span></cite>
         </blockquote>
       </div>
     </div>
   </section>
 
-  <section class="cta" aria-label="Call to action">
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 9 — NEWSLETTER · Dark Navy
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="newsletter-band" aria-label="Newsletter">
+    <div class="container newsletter-inner">
+      <p class="section-eyebrow section-eyebrow--on-dark">Newsletter</p>
+      <h2 class="section-heading section-heading--on-dark">Stay in the loop.</h2>
+      <p class="newsletter-desc">
+        Get the latest posts delivered to your inbox. Join 1,000+ developers who read BigBlog every
+        week.
+      </p>
+      <form class="newsletter-form" onsubmit="event.preventDefault();">
+        <label for="newsletter-email" class="sr-only">Email address</label>
+        <input
+          id="newsletter-email"
+          type="email"
+          placeholder="your@email.com"
+          required
+          class="newsletter-input"
+          aria-label="Email address"
+        />
+        <button type="submit" class="btn btn-primary">Subscribe</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════
+       BAND 10 — CTA · Coral Callout (callout-card-coral)
+       ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="cta-band" aria-label="Call to action">
     <div class="container">
-      <div class="cta-inner">
-        <h2 class="section-title">Start writing today.</h2>
-        <p class="cta-desc">
-          Join our community of developers sharing knowledge and building better products.
+      <div class="cta-card">
+        <h2 class="cta-card__title">Start writing today.</h2>
+        <p class="cta-card__desc">
+          Join our community of developers sharing knowledge and building better products together.
         </p>
-        <a href="/contact" class="btn btn-primary">Get Started</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="quick-links" aria-label="Quick links">
-    <div class="container">
-      <h2 class="section-label">Quick Links</h2>
-      <div class="quick-links-grid">
-        <a href="/blog" class="quick-link">Blog</a>
-        <a href="/about" class="quick-link">About</a>
-        <a href="/projects" class="quick-link">Projects</a>
-        <a href="/contact" class="quick-link">Contact</a>
-        <a href="/category/engineering" class="quick-link">Engineering</a>
-        <a href="/category/design" class="quick-link">Design</a>
-        <a href="/tag/astro" class="quick-link">Astro</a>
-        <a href="/tag/tailwind" class="quick-link">Tailwind CSS</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="site-stats" aria-label="Site statistics">
-    <div class="container">
-      <div class="stats-grid">
-        <div class="stat">
-          <span class="stat-number">{totalPosts}</span>
-          <span class="stat-label">Articles</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">{totalCategories}</span>
-          <span class="stat-label">Categories</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">{totalTags}</span>
-          <span class="stat-label">Topics</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">{totalAuthors}</span>
-          <span class="stat-label">Authors</span>
-        </div>
+        <a href="/contact" class="btn btn-on-coral">Get Started</a>
       </div>
     </div>
   </section>
 </Layout>
 
 <style>
-  .hero {
-    padding: var(--space-section) 0;
-    background: var(--bg-canvas);
-    border-bottom: 1px solid var(--color-hairline);
+  /* ═══════════════════════════════════════════════════════════════════════
+     SHARED PRIMITIVES
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .section-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-primary);
+    margin-bottom: var(--space-sm);
   }
 
-  .hero-container {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-xl);
-    align-items: center;
+  .section-eyebrow--on-dark {
+    color: var(--color-primary);
   }
 
-  @media (min-width: 1024px) {
-    .hero-container {
-      grid-template-columns: 1fr 1fr;
-      gap: var(--space-section);
-    }
-  }
-
-  .hero-content {
-    max-width: 36rem;
-  }
-
-  .hero-title {
+  .section-heading {
     font-family: var(--font-serif);
-    font-size: clamp(3rem, 5vw, var(--text-display-xl));
-    font-weight: var(--weight-normal);
-    letter-spacing: -1.5px;
-    line-height: var(--leading-tight);
-    color: var(--text-primary);
-    margin-bottom: var(--space-6);
+    font-size: var(--text-display-lg);
+    font-weight: 400;
+    letter-spacing: -1px;
+    line-height: 1.1;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-xl);
   }
 
-  .hero-subtitle {
-    font-size: var(--text-lg);
-    line-height: var(--leading-relaxed);
-    color: var(--text-secondary);
-    margin-bottom: var(--space-8);
-  }
-
-  .hero-actions {
-    display: flex;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-  }
-
-  /* Code Window Card */
-  .code-window-card {
-    background: var(--bg-surface-dark);
-    border-radius: var(--radius-lg);
-    padding: var(--space-lg);
-    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    overflow: hidden;
-  }
-
-  .code-window-header {
-    display: flex;
-    gap: 8px;
-    margin-bottom: var(--space-md);
-  }
-
-  .dot {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-  }
-
-  .dot.red { background: #ff5f56; }
-  .dot.yellow { background: #ffbd2e; }
-  .dot.green { background: #27c93f; }
-
-  .code-window-card pre {
-    font-family: var(--font-mono);
-    font-size: var(--text-sm);
-    line-height: 1.6;
+  .section-heading--on-dark {
     color: var(--color-on-dark);
-    margin: 0;
-    overflow-x: auto;
   }
 
-  .code-window-card .keyword { color: #cc785c; }
-  .code-window-card .string { color: #5db8a6; }
-  .code-window-card .boolean { color: #e8a55a; }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--space-xl);
+    gap: var(--space-md);
+  }
 
-  .btn {
-    display: inline-block;
-    padding: 0.75rem 1.5rem;
-    border-radius: var(--radius-lg);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
+  .section-header .section-heading {
+    margin-bottom: 0;
+  }
+
+  .text-link {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-primary);
     text-decoration: none;
-    transition: all var(--duration-fast) var(--ease-default);
+    white-space: nowrap;
+  }
+
+  .text-link:hover {
+    text-decoration: underline;
+  }
+
+  /* Buttons — per DESIGN.md component specs */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 12px 20px;
+    height: 40px;
+    border-radius: var(--radius-md);
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background var(--duration-fast) var(--ease-default);
   }
 
   .btn-primary {
     background: var(--color-primary);
-    color: var(--text-inverse);
+    color: var(--color-on-primary);
   }
 
   .btn-primary:hover {
-    background: var(--color-primary-hover);
+    background: var(--color-primary-active);
+    text-decoration: none;
   }
 
   .btn-secondary {
-    background: transparent;
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
+    background: var(--bg-canvas);
+    color: var(--color-ink);
+    border: 1px solid var(--color-hairline);
   }
 
   .btn-secondary:hover {
     border-color: var(--color-primary);
     color: var(--color-primary);
+    text-decoration: none;
   }
 
-  .featured {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-card);
-  }
-
-  .section-label {
-    font-size: var(--text-sm);
-    font-weight: var(--weight-semibold);
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-tertiary);
-    margin-bottom: var(--space-6);
-  }
-
-  .featured-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
-  }
-
-  .latest {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-dark);
+  .btn-secondary-on-dark {
+    background: var(--bg-surface-dark-elevated);
     color: var(--color-on-dark);
   }
 
-  .article-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-6);
+  .btn-secondary-on-dark:hover {
+    background: #2f2d2a;
+    text-decoration: none;
   }
 
-  .empty-state {
-    padding: var(--space-8) 0;
-    text-align: center;
-    color: var(--text-tertiary);
+  .btn-on-coral {
+    background: var(--bg-canvas);
+    color: var(--color-ink);
   }
 
-  .categories {
+  .btn-on-coral:hover {
+    background: #fff;
+    text-decoration: none;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 1 — HERO
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .hero {
     padding: var(--space-section) 0;
     background: var(--bg-canvas);
-  }
-
-  .chip-grid {
+    border-bottom: 1px solid var(--color-hairline);
     display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-2);
-  }
-
-  .newsletter {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-card);
-  }
-
-  .newsletter-inner {
-    max-width: 36rem;
-    margin: 0 auto;
-    text-align: center;
-  }
-
-  .newsletter-title {
-    font-size: var(--text-xl);
-    font-weight: var(--weight-bold);
-    margin: var(--space-4) 0 var(--space-2);
-  }
-
-  .newsletter-desc {
-    color: var(--text-secondary);
-    font-size: var(--text-sm);
-    margin: 0 0 var(--space-6);
-  }
-
-  .newsletter-form {
-    display: flex;
-    gap: var(--space-3);
     justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .newsletter-input {
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    font-size: var(--text-sm);
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    min-width: 240px;
-    flex: 1;
-  }
-
-  .newsletter-input:focus {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .about-preview {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-dark);
-    color: var(--color-on-dark);
-  }
-
-  .about-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--space-8);
     align-items: center;
+    width: 100%;
   }
 
-  .about-text {
-    max-width: 36rem;
-  }
-
-  .section-title {
-    font-family: var(--font-serif);
-    font-size: var(--text-display-md);
-    font-weight: var(--weight-normal);
-    letter-spacing: -0.5px;
-    line-height: var(--leading-tight);
-    margin: 0 0 var(--space-4);
-  }
-
-  .about-desc {
-    color: var(--text-secondary);
-    font-size: var(--text-base);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-6);
-  }
-
-  .about-stats {
+  .hero-container {
     display: flex;
-    gap: var(--space-8);
-    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
   }
 
-  .stat {
+  .hero-content {
+    max-width: 48rem;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
   }
 
-  .stat-number {
-    font-size: var(--text-3xl);
-    font-weight: var(--weight-bold);
+  .hero-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    margin-bottom: var(--space-md);
+  }
+
+  .hero-title {
+    font-family: var(--font-serif);
+    font-size: clamp(2.5rem, 5vw, var(--text-display-xl));
+    font-weight: 400;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+    color: var(--color-ink);
+    margin-bottom: var(--space-lg);
+  }
+
+  .hero-subtitle {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-body);
+    margin-bottom: var(--space-xl);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 2 — FEATURE CARDS
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .features-band {
+    padding: var(--space-section) 0;
+    background: var(--bg-surface-soft);
+  }
+
+  .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .feature-card {
+    background: var(--bg-surface-card);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .feature-icon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-canvas);
+    border-radius: var(--radius-md);
+    color: var(--color-primary);
+    margin-bottom: var(--space-lg);
+  }
+
+  .feature-card__title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-sm);
+  }
+
+  .feature-card__desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-body);
+    margin: 0;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 3 — LATEST ARTICLES
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .latest-band {
+    padding: var(--space-section) 0;
+    background: var(--bg-canvas);
+  }
+
+  .article-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  .empty-state {
+    padding: var(--space-xxl) 0;
+    text-align: center;
+    color: var(--color-muted);
+    font-family: var(--font-sans);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 4 — ABOUT + STATS (DARK)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .about-band {
+    padding: var(--space-section) 0;
+    background: var(--bg-surface-dark);
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xxl);
+    align-items: center;
+  }
+
+  .about-content {
+    max-width: 32rem;
+  }
+
+  .about-desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-on-dark-soft);
+    margin: 0 0 var(--space-xl);
+  }
+
+  .stats-cluster {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-lg);
+  }
+
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: var(--space-xl);
+    background: var(--bg-surface-dark-elevated);
+    border-radius: var(--radius-lg);
+  }
+
+  .stat-card__number {
+    font-family: var(--font-serif);
+    font-size: var(--text-display-md);
+    font-weight: 400;
+    letter-spacing: -0.5px;
     color: var(--color-primary);
     line-height: 1;
   }
 
-  .stat-label {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    margin-top: var(--space-2);
+  .stat-card__label {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--color-on-dark-soft);
+    margin-top: var(--space-sm);
   }
 
-  .authors {
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 5 — TOPICS
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .topics-band {
+    padding: var(--space-section) 0;
+    background: var(--bg-surface-soft);
+  }
+
+  .chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+  }
+
+  .chip-row--tags {
+    margin-top: var(--space-md);
+  }
+
+  .badge-pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--color-ink);
+    background: var(--bg-surface-card);
+    padding: 4px 12px;
+    border-radius: 9999px;
+    text-decoration: none;
+    transition: background var(--duration-fast) var(--ease-default);
+  }
+
+  .badge-pill:hover {
+    background: var(--bg-surface-cream-strong);
+    text-decoration: none;
+  }
+
+  .badge-pill--muted {
+    color: var(--color-muted);
+    background: var(--bg-canvas);
+  }
+
+  .badge-pill--muted:hover {
+    background: var(--bg-surface-card);
+    color: var(--color-ink);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 6 — AUTHORS
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .authors-band {
     padding: var(--space-section) 0;
     background: var(--bg-canvas);
   }
@@ -651,183 +762,178 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
   .author-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-6);
+    gap: var(--space-lg);
   }
 
-  .series {
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 7 — SERIES
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .series-band {
     padding: var(--space-section) 0;
-    background: var(--bg-surface-card);
+    background: var(--bg-surface-soft);
   }
 
   .series-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-6);
+    gap: var(--space-lg);
   }
 
-  .tags {
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 8 — TESTIMONIALS
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .testimonials-band {
     padding: var(--space-section) 0;
     background: var(--bg-canvas);
-  }
-
-  .archive {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-dark);
-    color: var(--color-on-dark);
-  }
-
-  .archive-list {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-4);
-  }
-
-  .archive-year-title {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-bold);
-    margin: 0 0 var(--space-3);
-    color: var(--text-primary);
-  }
-
-  .archive-months {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-  }
-
-  .archive-month {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .archive-month-link {
-    color: var(--color-primary);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-  }
-
-  .archive-month-link:hover {
-    text-decoration: underline;
-  }
-
-  .archive-month-count {
-    font-size: var(--text-xs);
-    color: var(--text-tertiary);
-    font-weight: var(--weight-semibold);
-  }
-
-  .popular {
-    padding: var(--space-section) 0;
-    background: var(--bg-canvas);
-  }
-
-  .testimonials {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-card);
   }
 
   .testimonial-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--space-6);
+    gap: var(--space-lg);
   }
 
-  .testimonial {
-    padding: var(--space-6);
-    border: 1px solid var(--glass-border);
+  .testimonial-card {
+    background: var(--bg-surface-card);
     border-radius: var(--radius-lg);
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    box-shadow: var(--glass-shadow);
+    padding: var(--space-xl);
     margin: 0;
+    border: none;
   }
 
-  .testimonial-text {
-    font-size: var(--text-base);
-    line-height: var(--leading-relaxed);
-    color: var(--text-primary);
-    margin: 0 0 var(--space-4);
+  .testimonial-card__text {
+    font-family: var(--font-serif);
+    font-size: var(--text-title-md);
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-lg);
   }
 
-  .testimonial-author {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
+  .testimonial-card__cite {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
     font-style: normal;
-    font-weight: var(--weight-semibold);
+    color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
   }
 
-  .cta {
-    padding: var(--space-xxl);
-    background: var(--color-primary);
-    color: var(--color-on-primary);
-    border-radius: var(--radius-lg);
-    margin: var(--space-section) auto;
-    max-width: var(--container-lg);
+  .testimonial-card__cite span {
+    color: var(--color-muted);
+    font-weight: 400;
   }
 
-  .cta-inner {
-    max-width: 36rem;
+  .testimonial-card__cite span::before {
+    content: '·';
+    margin-right: var(--space-xs);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 9 — NEWSLETTER (DARK)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .newsletter-band {
+    padding: var(--space-section) 0;
+    background: var(--bg-surface-dark);
+  }
+
+  .newsletter-inner {
+    max-width: 32rem;
     margin: 0 auto;
     text-align: center;
   }
 
-  .cta-desc {
-    color: var(--color-on-primary);
-    opacity: 0.9;
-    font-size: var(--text-base);
-    line-height: var(--leading-relaxed);
-    margin: 0 0 var(--space-6);
+  .newsletter-desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-on-dark-soft);
+    margin: 0 0 var(--space-xl);
   }
 
-  .quick-links {
+  .newsletter-form {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .newsletter-input {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    padding: 10px 14px;
+    height: 40px;
+    border: 1px solid var(--bg-surface-dark-elevated);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-dark-elevated);
+    color: var(--color-on-dark);
+    min-width: 240px;
+    flex: 1;
+  }
+
+  .newsletter-input::placeholder {
+    color: var(--color-on-dark-soft);
+  }
+
+  .newsletter-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════════
+     BAND 10 — CTA (CORAL)
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  .cta-band {
     padding: var(--space-section) 0;
     background: var(--bg-canvas);
   }
 
-  .quick-links-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-3);
-  }
-
-  .quick-link {
-    padding: var(--space-3) var(--space-4);
-    border: 1px solid var(--border-color);
+  .cta-card {
+    background: var(--color-primary);
+    color: var(--color-on-primary);
     border-radius: var(--radius-lg);
-    background: var(--bg-secondary);
-    color: var(--text-primary);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    transition: border-color var(--duration-fast) var(--ease-default);
+    padding: 64px;
+    text-align: center;
+    max-width: var(--container-lg);
+    margin: 0 auto;
   }
 
-  .quick-link:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    text-decoration: none;
+  .cta-card__title {
+    font-family: var(--font-serif);
+    font-size: var(--text-display-sm);
+    font-weight: 400;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+    color: var(--color-on-primary);
+    margin: 0 0 var(--space-md);
   }
 
-  .site-stats {
-    padding: var(--space-section) 0;
-    background: var(--bg-surface-dark);
-    color: var(--color-on-dark);
+  .cta-card__desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-on-primary);
+    opacity: 0.9;
+    margin: 0 0 var(--space-xl);
+    max-width: 28rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
-  .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: var(--space-6);
-  }
+  /* ═══════════════════════════════════════════════════════════════════════
+     RESPONSIVE — per DESIGN.md breakpoints
+     ═══════════════════════════════════════════════════════════════════════ */
 
   @media (min-width: 768px) {
-    .featured-grid {
+    .feature-grid {
       grid-template-columns: repeat(2, 1fr);
     }
 
@@ -850,17 +956,13 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
     .testimonial-grid {
       grid-template-columns: repeat(2, 1fr);
     }
-
-    .quick-links-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
-
-    .stats-grid {
-      grid-template-columns: repeat(4, 1fr);
-    }
   }
 
   @media (min-width: 1024px) {
+    .feature-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+
     .article-grid {
       grid-template-columns: repeat(3, 1fr);
     }
@@ -872,15 +974,30 @@ console.log(<span class="string">"Published to Edge Network"</span>);</code></pr
     .series-grid {
       grid-template-columns: repeat(3, 1fr);
     }
+
+    .testimonial-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
+  /* Mobile polish */
+  @media (max-width: 767px) {
+    .section-heading {
+      font-size: var(--text-display-sm);
+      letter-spacing: -0.3px;
+    }
+
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .cta-card {
+      padding: var(--space-xxl) var(--space-lg);
+    }
+
+    .stats-cluster {
+      grid-template-columns: 1fr;
     }
   }
 </style>

@@ -91,9 +91,9 @@
   --shadow-none: none;
 
   /* ── Typography ── */
-  --font-sans: 'Inter', 'StyreneB', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-serif: 'Cormorant Garamond', 'EB Garamond', 'Copernicus', 'Tiempos Headline', 'Times New Roman', serif;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
+  --font-serif: 'Cormorant Garamond', 'EB Garamond', 'Times New Roman', serif;
 
   --text-display-xl: 64px;
   --text-display-lg: 48px;

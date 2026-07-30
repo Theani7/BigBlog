@@ -3,6 +3,7 @@ import '../styles/tokens.css';
 import '../styles/global.css';
 import CommandPalette from '../components/navigation/CommandPalette.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
+import ThemeSwitch from '../components/navigation/ThemeSwitch.astro';
 import { siteConfig, seo as defaultSeo, socials } from '@config/site';
 
 interface LayoutProps {
@@ -77,17 +78,9 @@ const structuredDataList = structuredData
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
     />
-    <noscript>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap"
-        rel="stylesheet"
-      />
-    </noscript>
 
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={siteDescription} />
@@ -172,32 +165,6 @@ const structuredDataList = structuredData
         </nav>
         <div class="header-actions">
           <button
-            class="search-toggle"
-            aria-label="Search (⌘K)"
-            type="button"
-            data-command-palette-trigger
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <circle cx="11" cy="11" r="8"></circle>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            </svg>
-            <kbd class="search-kbd" aria-hidden="true">⌘K</kbd>
-          </button>
-          <button class="theme-toggle" aria-label="Toggle theme" type="button">
-            <span class="theme-icon" aria-hidden="true"></span>
-          </button>
-          <button
             class="mobile-nav-toggle"
             aria-label="Open menu"
             aria-expanded="false"
@@ -236,9 +203,14 @@ const structuredDataList = structuredData
       </div>
     </div>
 
-
-    <main id="main-content" class="container main-content">
-      {breadcrumbs && breadcrumbs.length > 0 && <Breadcrumb items={breadcrumbs} />}
+    <main id="main-content" class="main-content">
+      {
+        breadcrumbs && breadcrumbs.length > 0 && (
+          <div class="container">
+            <Breadcrumb items={breadcrumbs} />
+          </div>
+        )
+      }
       <button
         class="reader-settings-toggle"
         aria-label="Reading settings"
@@ -799,8 +771,6 @@ const structuredDataList = structuredData
     top: 0;
   }
 
-
-
   :global(:focus-visible) {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
@@ -938,15 +908,15 @@ const structuredDataList = structuredData
     outline-offset: 2px;
   }
 
-  .container {
+  :global(.container) {
     max-width: var(--container-max);
     margin: 0 auto;
     padding: 0 var(--space-6);
   }
 
   .site-header {
-    border-bottom: 1px solid var(--border-color);
-    background: var(--bg-primary);
+    border-bottom: 1px solid var(--color-hairline);
+    background: var(--bg-canvas);
     position: sticky;
     top: 0;
     z-index: var(--z-sticky);
@@ -971,10 +941,11 @@ const structuredDataList = structuredData
   }
 
   .logo-text {
-    font-family: var(--font-sans);
-    font-size: var(--text-xl);
-    font-weight: var(--weight-bold);
-    letter-spacing: -0.02em;
+    font-family: var(--font-serif);
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    color: var(--color-ink);
   }
 
   .site-nav {
@@ -1026,7 +997,7 @@ const structuredDataList = structuredData
 
   .search-toggle {
     background: none;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
     height: 2.5rem;
     padding: 0 var(--space-3);
@@ -1034,7 +1005,7 @@ const structuredDataList = structuredData
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    color: var(--text-secondary);
+    color: var(--color-body);
     transition: all var(--duration-fast) var(--ease-default);
   }
 
@@ -1051,10 +1022,10 @@ const structuredDataList = structuredData
   .search-kbd {
     font-family: var(--font-mono);
     font-size: var(--text-xs);
-    color: var(--text-tertiary);
+    color: var(--color-muted);
     padding: 0.1em 0.35em;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
+    background: var(--bg-surface-soft);
+    border: 1px solid var(--color-hairline);
     border-radius: var(--radius-sm);
   }
 
@@ -1260,13 +1231,11 @@ const structuredDataList = structuredData
 
   .main-content {
     min-height: 60vh;
-    padding: var(--space-12) 0;
   }
 
   .site-footer {
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid var(--color-hairline);
     padding: var(--space-12) 0 var(--space-6);
-    margin-top: var(--space-16);
     background: var(--bg-surface-dark);
     color: var(--color-on-dark);
   }

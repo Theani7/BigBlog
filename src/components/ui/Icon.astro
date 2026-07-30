@@ -27,6 +27,7 @@ interface IconProps {
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   color?: string;
   strokeWidth?: number;
+  class?: string;
 }
 
 const iconMap: Record<string, any> = {
@@ -75,8 +76,9 @@ const iconMap: Record<string, any> = {
 const {
   name,
   size = 'md',
-  color = 'var(--text-primary)',
+  color = 'currentColor',
   strokeWidth = 1.5,
+  class: className,
 } = Astro.props as IconProps;
 
 const sizeMap = {
@@ -92,7 +94,11 @@ const IconComponent = iconMap[name] ?? iconMap[name.toLowerCase()];
 
 {
   IconComponent && (
-    <span aria-hidden="true">
+    <span
+      aria-hidden="true"
+      class={className}
+      style="display: inline-flex; align-items: center; justify-content: center;"
+    >
       <IconComponent size={sizeMap[size]} color={color} strokeWidth={strokeWidth} />
     </span>
   )
