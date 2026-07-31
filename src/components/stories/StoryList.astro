@@ -1,6 +1,7 @@
 ---
 interface Story {
   title: string;
+  slug?: string;
   excerpt?: string;
   meta1: string; // e.g. "Last edited X days ago" or "Published Jul 28"
   meta2?: string; // e.g. word count or read time
@@ -21,7 +22,7 @@ const { stories, emptyText } = Astro.props;
         <article class="story-card">
           <div class="story-content">
             <h2 class="story-title">
-              <a href="#">{story.title}</a>
+              <a href={story.slug ? `/p/${story.slug}` : '#'}>{story.title}</a>
             </h2>
             {story.excerpt && <p class="story-excerpt">{story.excerpt}</p>}
             <div class="story-meta">

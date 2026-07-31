@@ -32,6 +32,7 @@ const published = dbPublished.map((story) => {
   const plainText = story.content ? story.content.replace(/<[^>]+>/g, '') : 'No content yet';
   return {
     title: story.title,
+    slug: story.slug,
     excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
     meta1: `Published ${new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
     meta2: `${story.views || 0} views • ${story.reads || 0} reads`,

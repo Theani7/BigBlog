@@ -29,6 +29,7 @@ const drafts = dbDrafts.map((draft) => {
   const plainText = draft.content ? draft.content.replace(/<[^>]+>/g, '') : 'No content yet';
   return {
     title: draft.title,
+    slug: draft.slug,
     excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
     meta1: `Last edited ${new Date(draft.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
     meta2: `${plainText.split(/\\s+/).filter(Boolean).length} words`,
