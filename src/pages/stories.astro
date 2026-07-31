@@ -1,0 +1,201 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/dashboard/Sidebar.astro';
+
+// We can extract this to a separate layout later if needed,
+// but for now we'll build the 2-column structure here.
+---
+
+<Layout title="Stories - BigBlog">
+  <div class="stories-layout">
+    <!-- Left Sidebar -->
+    <Sidebar activePage="stories" />
+
+    <!-- Center Content -->
+    <main class="stories-feed">
+      <div class="stories-header">
+        <h1 class="stories-title">Stories</h1>
+        <button class="btn-import">Import a story</button>
+      </div>
+
+      <nav class="stories-tabs">
+        <a href="#" class="stories-tab stories-tab--active">Drafts</a>
+        <a href="#" class="stories-tab">Scheduled</a>
+        <a href="#" class="stories-tab">Published</a>
+        <a href="#" class="stories-tab">Unlisted</a>
+        <div class="stories-tab-divider"></div>
+        <a href="#" class="stories-tab">Submissions</a>
+      </nav>
+
+      <div class="stories-content">
+        <div class="stories-empty-state">
+          <p class="empty-text">No stories in draft.</p>
+          <p class="empty-subtext">
+            Why not <a href="#" class="empty-link">start writing one?</a>
+          </p>
+        </div>
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .stories-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - var(--header-height));
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .stories-feed {
+    padding: var(--space-xxl) 15%; /* Added larger horizontal padding for a premium centered feel */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stories-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .stories-title {
+    font-family: var(--font-sans);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -1px;
+  }
+
+  .btn-import {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    background: transparent;
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-pill);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+
+  .btn-import:hover {
+    background: var(--color-ink);
+    color: var(--bg-canvas);
+  }
+
+  .stories-tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .stories-tab {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    text-decoration: none;
+    padding-bottom: var(--space-md);
+    position: relative;
+    transition: color var(--duration-fast);
+  }
+
+  .stories-tab:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .stories-tab--active {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .stories-tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--color-ink);
+  }
+
+  .stories-tab-divider {
+    height: 16px;
+    width: 1px;
+    background: var(--color-hairline);
+    margin: 0 var(--space-xs);
+  }
+
+  .stories-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: var(--space-32);
+  }
+
+  .stories-empty-state {
+    text-align: center;
+    font-family: var(--font-sans);
+  }
+
+  .empty-text {
+    font-size: var(--text-body-lg);
+    color: var(--color-ink);
+    margin: 0 0 var(--space-xs) 0;
+    font-weight: 500;
+  }
+
+  .empty-subtext {
+    font-size: var(--text-body-lg);
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .empty-link {
+    color: var(--color-ink);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+    transition: color var(--duration-fast);
+  }
+
+  .empty-link:hover {
+    color: var(--color-primary);
+    text-decoration-color: var(--color-primary);
+  }
+
+  @media (max-width: 1024px) {
+    .stories-feed {
+      padding: var(--space-xl) var(--space-2xl);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stories-layout {
+      grid-template-columns: 1fr;
+    }
+    .stories-feed {
+      padding: var(--space-lg);
+    }
+    .stories-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-md);
+    }
+    .stories-tabs {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 1px; /* To show active border */
+    }
+    .stories-tab-divider {
+      display: none;
+    }
+  }
+</style>
