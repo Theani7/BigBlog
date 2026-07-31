@@ -18,7 +18,10 @@ const user = {
     <!-- Center Profile Content -->
     <main class="profile-feed">
       <div class="profile-header-main">
-        <h1 class="profile-title">{user.name}</h1>
+        <div class="profile-header-left">
+          <img src={user.avatar} alt={user.name} class="profile-header-avatar" />
+          <h1 class="profile-title">{user.name}</h1>
+        </div>
         <button class="profile-more-btn" aria-label="More options">
           <svg
             width="24"
@@ -137,6 +140,20 @@ const user = {
     justify-content: space-between;
   }
 
+  .profile-header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .profile-header-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: none; /* Hidden on large screens because it's in the right sidebar */
+  }
+
   .profile-title {
     font-family: var(--font-sans);
     font-size: 42px;
@@ -168,6 +185,7 @@ const user = {
     display: flex;
     gap: var(--space-2xl);
     border-bottom: 1px solid var(--color-hairline);
+    margin-top: var(--space-xl); /* Added gap below profile name */
   }
 
   .profile-tab {
@@ -343,6 +361,9 @@ const user = {
     }
     .profile-sidebar-right {
       display: none;
+    }
+    .profile-header-avatar {
+      display: block; /* Show the avatar here when right sidebar is hidden */
     }
   }
 
