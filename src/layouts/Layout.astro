@@ -528,6 +528,19 @@ const structuredDataList = structuredData
 
           const user = data.user;
           const authLinks = document.querySelector('.auth-links');
+
+          // Update logo to redirect to dashboard when logged in
+          const logo = document.querySelector('.logo');
+          if (logo) logo.href = '/dashboard';
+
+          // Hide public nav links ("Our story", "Write") when logged in
+          const siteNav = document.querySelector('.site-nav');
+          if (siteNav) siteNav.style.display = 'none';
+
+          // Hide mobile nav hamburger menu when logged in
+          const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
+          if (mobileNavToggle) mobileNavToggle.style.display = 'none';
+
           if (!authLinks) return;
 
           const displayName = user.name || user.email.split('@')[0];
