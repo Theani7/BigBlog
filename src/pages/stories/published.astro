@@ -2,21 +2,41 @@
 import StoriesLayout from '../../components/stories/StoriesLayout.astro';
 import StoryList from '../../components/stories/StoryList.astro';
 
-// Mock Published Stories
-const published = [
-  {
-    title: 'The Future of Web Development in 2026',
-    excerpt: 'Web assembly, AI-generated components, and the death of traditional SPAs.',
-    meta1: 'Published Jul 28',
-    meta2: '42K views · 31K reads',
-  },
-  {
-    title: 'Why Astro is winning the framework wars',
-    excerpt: 'Content-driven websites need content-driven frameworks.',
-    meta1: 'Published Jul 22',
-    meta2: '28K views · 19K reads',
-  },
-];
+import { createDatabase, type Env } from '../../db';
+import { Story } from '../../db/schema';
+import { verifyAuthToken } from '../../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) {
+  throw new Error('Environment not configured');
+}
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let userId = null;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  userId = payload?.userId;
+}
+
+if (!userId) {
+  return Astro.redirect('/login?redirect=/stories/published');
+}
+
+const dbPublished = await Story.find({ authorId: userId, status: 'PUBLISHED' }).sort({
+  publishedAt: -1,
+  createdAt: -1,
+});
+
+const published = dbPublished.map((story) => {
+  const plainText = story.content ? story.content.replace(/<[^>]+>/g, '') : 'No content yet';
+  return {
+    title: story.title,
+    excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
+    meta1: `Published ${new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    meta2: `${story.views || 0} views • ${story.reads || 0} reads`,
+  };
+});
 ---
 
 <StoriesLayout activeTab="published">

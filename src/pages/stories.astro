@@ -2,21 +2,38 @@
 import StoriesLayout from '../components/stories/StoriesLayout.astro';
 import StoryList from '../components/stories/StoryList.astro';
 
-// Mock Drafts
-const drafts = [
-  {
-    title: 'Building the Ultimate Design System',
-    excerpt: 'A comprehensive guide to creating tokens, components, and patterns that scale...',
-    meta1: 'Last edited 2 hours ago',
-    meta2: '1,204 words',
-  },
-  {
-    title: 'My Journey Learning Astro',
-    excerpt: 'How I switched from Next.js to Astro and never looked back.',
-    meta1: 'Last edited 3 days ago',
-    meta2: '850 words',
-  },
-];
+import { createDatabase, type Env } from '../db';
+import { Story } from '../db/schema';
+import { verifyAuthToken } from '../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) {
+  throw new Error('Environment not configured');
+}
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let userId = null;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  userId = payload?.userId;
+}
+
+if (!userId) {
+  return Astro.redirect('/login?redirect=/stories');
+}
+
+const dbDrafts = await Story.find({ authorId: userId, status: 'DRAFT' }).sort({ updatedAt: -1 });
+
+const drafts = dbDrafts.map((draft) => {
+  const plainText = draft.content ? draft.content.replace(/<[^>]+>/g, '') : 'No content yet';
+  return {
+    title: draft.title,
+    excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
+    meta1: `Last edited ${new Date(draft.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+    meta2: `${plainText.split(/\\s+/).filter(Boolean).length} words`,
+  };
+});
 ---
 
 <StoriesLayout activeTab="drafts">

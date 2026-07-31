@@ -2,12 +2,38 @@
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
 
-// We can mock the user data for now
+import { createDatabase, type Env } from '../db';
+import { User, Story } from '../db/schema';
+import { verifyAuthToken } from '../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) {
+  throw new Error('Environment not configured');
+}
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let userId = null;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  userId = payload?.userId;
+}
+
+if (!userId) {
+  return Astro.redirect('/login?redirect=/profile');
+}
+
+const dbUser = await User.findById(userId);
 const user = {
-  name: 'Himynameisani',
-  username: '@himynameisani7',
-  avatar: 'https://i.pravatar.cc/150?img=11',
+  name: dbUser?.name || 'Anonymous',
+  username: `@${dbUser?.name?.toLowerCase().replace(/\\s+/g, '') || 'user'}`,
+  avatar: dbUser?.avatar || 'https://i.pravatar.cc/150?img=11',
 };
+
+const publishedStories = await Story.find({ authorId: userId, status: 'PUBLISHED' }).sort({
+  createdAt: -1,
+});
+const storyCount = publishedStories.length;
 ---
 
 <Layout title="Profile - BigBlog">
@@ -57,7 +83,7 @@ const user = {
             </div>
             <h2 class="reading-list-title">Reading list</h2>
             <div class="reading-list-meta">
-              <span>1 story</span>
+              <span>{storyCount} stor{storyCount === 1 ? 'y' : 'ies'}</span>
               <svg
                 class="lock-icon"
                 width="14"

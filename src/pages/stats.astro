@@ -2,44 +2,54 @@
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
 
-// Mock data for the stats page
+import { createDatabase, type Env } from '../db';
+import { Story } from '../db/schema';
+import { verifyAuthToken } from '../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) {
+  throw new Error('Environment not configured');
+}
+
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let userId = null;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  userId = payload?.userId;
+}
+
+if (!userId) {
+  return Astro.redirect('/login?redirect=/stats');
+}
+
+// Fetch real stories
+const stories = await Story.find({ authorId: userId }).sort({ createdAt: -1 });
+
+// Calculate aggregates
+let totalViews = 0;
+let totalReads = 0;
+stories.forEach((story) => {
+  totalViews += story.views || 0;
+  totalReads += story.reads || 0;
+});
+const avgRatio = totalReads > 0 && totalViews > 0 ? Math.round((totalReads / totalViews) * 100) : 0;
+
 const topStats = [
-  { label: 'Total Views', value: '124.5K', trend: '+14%', isPositive: true },
-  { label: 'Total Reads', value: '82.1K', trend: '+8%', isPositive: true },
-  { label: 'Followers', value: '4,209', trend: '+124', isPositive: true },
-  { label: 'Avg. Read Ratio', value: '68%', trend: '-2%', isPositive: false },
+  { label: 'Total Views', value: totalViews.toLocaleString(), trend: '+0%', isPositive: true },
+  { label: 'Total Reads', value: totalReads.toLocaleString(), trend: '+0%', isPositive: true },
+  { label: 'Followers', value: '0', trend: '0', isPositive: true },
+  { label: 'Avg. Read Ratio', value: `${avgRatio}%`, trend: '0%', isPositive: true },
 ];
 
-const postStats = [
-  {
-    title: 'The Future of Web Development in 2026',
-    date: 'Jul 28',
-    views: '42K',
-    reads: '31K',
-    ratio: '74%',
-  },
-  {
-    title: 'Why Astro is winning the framework wars',
-    date: 'Jul 22',
-    views: '28K',
-    reads: '19K',
-    ratio: '68%',
-  },
-  {
-    title: 'Understanding CSS Subgrid once and for all',
-    date: 'Jul 15',
-    views: '15K',
-    reads: '9K',
-    ratio: '60%',
-  },
-  {
-    title: 'Designing premium user interfaces',
-    date: 'Jul 10',
-    views: '39K',
-    reads: '30K',
-    ratio: '77%',
-  },
-];
+const postStats = stories.map((story) => ({
+  title: story.title,
+  date: new Date(story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+  views: (story.views || 0).toLocaleString(),
+  reads: (story.reads || 0).toLocaleString(),
+  ratio: `${story.views > 0 ? Math.round((story.reads / story.views) * 100) : 0}%`,
+}));
 ---
 
 <Layout title="Stats - BigBlog">

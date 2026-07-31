@@ -3,6 +3,7 @@ import mongoose, { Schema } from 'mongoose';
 // Re-export analytics tables
 export * from './analytics';
 export * from './user';
+export * from './story';
 
 // =============================================================================
 // ANONYMOUS SESSIONS

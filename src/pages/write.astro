@@ -80,23 +80,58 @@ import Layout from '../layouts/Layout.astro';
   }
 
   // Handle Save / Publish Logic
-  document.getElementById('save-draft-btn')?.addEventListener('click', () => {
+  document.getElementById('save-draft-btn')?.addEventListener('click', async () => {
     if (!quill) return;
     const title = document.getElementById('post-title').value;
-    const deltaJson = quill.getContents(); // The smart way to save rich text! (Delta JSON)
-    const htmlContent = quill.getSemanticHTML(); // Alternative: Save as raw HTML
+    if (!title) {
+      alert('Please enter a title to save your draft.');
+      return;
+    }
+    const htmlContent = quill.getSemanticHTML();
 
-    console.log('--- SAVING DRAFT ---');
-    console.log('Title:', title);
-    console.log('Delta JSON (Database):', deltaJson);
-    console.log('HTML Output (Render):', htmlContent);
-    alert('Draft saved! Check the console to see the JSON data structure.');
+    try {
+      const res = await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content: htmlContent, status: 'DRAFT' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Draft saved to database successfully!');
+        window.location.href = '/stories';
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Failed to save draft.');
+    }
   });
 
-  document.getElementById('publish-btn')?.addEventListener('click', () => {
+  document.getElementById('publish-btn')?.addEventListener('click', async () => {
     if (!quill) return;
     const title = document.getElementById('post-title').value;
-    alert(`Publishing "${title}"... (See console for payload)`);
+    if (!title) {
+      alert('Please enter a title before publishing.');
+      return;
+    }
+    const htmlContent = quill.getSemanticHTML();
+
+    try {
+      const res = await fetch('/api/stories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content: htmlContent, status: 'PUBLISHED' }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Story published successfully!');
+        window.location.href = '/profile';
+      } else {
+        alert('Error: ' + data.error);
+      }
+    } catch (e) {
+      alert('Failed to publish story.');
+    }
   });
 
   // Run on mount
