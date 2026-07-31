@@ -41,7 +41,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     // Determine role (make first user ADMIN, others READER)
     const count = await User.countDocuments();
-    const role = count === 0 ? 'ADMIN' : 'READER';
+    const role = count === 0 ? 'ADMIN' : 'AUTHOR';
 
     // Hash password and create user
     const passwordHash = await hashPassword(password);

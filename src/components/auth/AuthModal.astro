@@ -427,7 +427,7 @@ import X from 'lucide-astro/X';
 
       const result = await res.json();
       if (result.success) {
-        window.location.reload(); // Reload to update auth state
+        window.location.href = '/dashboard'; // Redirect to dashboard after auth
       } else {
         if (errorMsg) {
           errorMsg.textContent = result.error || 'Authentication failed';

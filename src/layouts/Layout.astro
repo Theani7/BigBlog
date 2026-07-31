@@ -556,6 +556,89 @@ const structuredDataList = structuredData
       })();
     </script>
     <AuthModal />
+    <script is:inline>
+      // Global auth state checker — updates header for logged-in users on all pages
+      (async () => {
+        try {
+          const res = await fetch('/api/auth/me');
+          const data = await res.json();
+          if (!data.success || !data.user) return;
+
+          const user = data.user;
+          const authLinks = document.querySelector('.auth-links');
+          if (!authLinks) return;
+
+          const displayName = user.name || user.email.split('@')[0];
+          const initials = displayName
+            .split(' ')
+            .map((n) => n[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+
+          authLinks.innerHTML = `
+            <a href="/write" class="nav-link" style="display:inline-flex;align-items:center;gap:6px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              Write
+            </a>
+            <button class="global-notification-btn" aria-label="Notifications" style="background:none;border:none;color:var(--color-body);cursor:pointer;padding:6px;border-radius:var(--radius-sm);display:flex;align-items:center;">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+            </button>
+            <div style="position:relative;">
+              <button class="global-avatar-btn" aria-label="User menu" aria-expanded="false" style="background:none;border:none;cursor:pointer;padding:0;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#cc785c,#e8a55a);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-size:0.7rem;font-weight:600;color:white;">${initials}</div>
+              </button>
+              <div class="global-user-dropdown" style="position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--bg-canvas);border:1px solid var(--color-hairline);border-radius:var(--radius-md);box-shadow:0 8px 30px rgba(0,0,0,0.08);opacity:0;visibility:hidden;transform:translateY(-4px);transition:all 0.15s;z-index:600;overflow:hidden;">
+                <div style="padding:var(--space-md);display:flex;flex-direction:column;gap:2px;">
+                  <span style="font-family:var(--font-sans);font-size:var(--text-body-sm);font-weight:500;color:var(--color-ink);">${displayName}</span>
+                  <span style="font-family:var(--font-sans);font-size:var(--text-caption);color:var(--color-muted);">${user.email}</span>
+                  <span style="display:inline-block;font-family:var(--font-mono);font-size:0.65rem;color:var(--color-primary);background:rgba(204,120,92,0.1);padding:2px 6px;border-radius:4px;margin-top:4px;width:fit-content;text-transform:uppercase;letter-spacing:0.5px;">${user.role}</span>
+                </div>
+                <div style="height:1px;background:var(--color-hairline);"></div>
+                <a href="/dashboard" style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;">Dashboard</a>
+                <a href="/write" style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;">Write a story</a>
+                <div style="height:1px;background:var(--color-hairline);"></div>
+                <button class="global-logout-btn" style="display:block;width:100%;text-align:left;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-error);background:none;border:none;cursor:pointer;">Sign out</button>
+              </div>
+            </div>
+          `;
+
+          // Dropdown toggle
+          const avatarBtn = document.querySelector('.global-avatar-btn');
+          const dropdown = document.querySelector('.global-user-dropdown');
+          if (avatarBtn && dropdown) {
+            avatarBtn.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const isOpen = dropdown.style.opacity === '1';
+              dropdown.style.opacity = isOpen ? '0' : '1';
+              dropdown.style.visibility = isOpen ? 'hidden' : 'visible';
+              dropdown.style.transform = isOpen ? 'translateY(-4px)' : 'translateY(0)';
+              avatarBtn.setAttribute('aria-expanded', String(!isOpen));
+            });
+            document.addEventListener('click', () => {
+              dropdown.style.opacity = '0';
+              dropdown.style.visibility = 'hidden';
+              dropdown.style.transform = 'translateY(-4px)';
+              avatarBtn.setAttribute('aria-expanded', 'false');
+            });
+          }
+
+          // Logout
+          document.querySelector('.global-logout-btn')?.addEventListener('click', async () => {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            window.location.href = '/';
+          });
+        } catch (e) {
+          // Silently fail — user is just not logged in
+        }
+      })();
+    </script>
   </body>
 </html>
 
