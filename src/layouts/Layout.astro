@@ -27,6 +27,7 @@ interface LayoutProps {
 }
 
 const props = Astro.props;
+const { breadcrumbs } = props;
 const currentPath = Astro.url.pathname;
 
 const navLinks: Array<{ label: string; href: string }> = [
