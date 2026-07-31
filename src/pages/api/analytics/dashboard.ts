@@ -11,7 +11,7 @@ export const GET: APIRoute = async ({ url }) => {
     const endDate = new Date();
 
     // In a real implementation, you would query the database
-    // For now, return mock data
+    // For now, return empty data structure
     return new Response(
       JSON.stringify({
         period: {

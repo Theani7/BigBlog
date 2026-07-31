@@ -100,7 +100,7 @@ export class AnalyticsRepository {
       { $match: match },
       { $group: { _id: '$event', count: { $sum: 1 } } },
       { $project: { event: '$_id', count: 1, _id: 0 } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
     ]);
   }
 
@@ -136,19 +136,19 @@ export class AnalyticsRepository {
       { $match: match },
       { $group: { _id: '$page', views: { $sum: 1 } } },
       { $project: { page: '$_id', views: 1, _id: 0 } },
-      { $sort: { views: -1 } }
+      { $sort: { views: -1 } },
     ]);
 
     const byDay = await pageViews.aggregate([
       { $match: match },
       {
         $group: {
-          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-          views: { $sum: 1 }
-        }
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          views: { $sum: 1 },
+        },
       },
       { $project: { date: '$_id', views: 1, _id: 0 } },
-      { $sort: { date: 1 } }
+      { $sort: { date: 1 } },
     ]);
 
     return { total, unique, byPage, byDay };
@@ -171,32 +171,36 @@ export class AnalyticsRepository {
 
     // Approximating percentiles with averages for simplicity as exact percentiles are complex in standard MongoDB aggregate without atlas search or specific functions.
     // In a real Mongoose setup you'd either use a specialized tool, calculate it in memory, or use $percentile if MongoDB >= 7.0
-    // We'll calculate simple averages here for the mock, or we can use the $percentile operator assuming MongoDB 7.0+
-    const byMetric = await performanceMetrics.aggregate([
-      { $match: match },
-      {
-        $group: {
-          _id: '$metric',
-          values: { $push: '$value' }
-        }
-      }
-    ]).then(results => results.map(r => {
-      const sorted = r.values.sort((a: number, b: number) => a - b);
-      const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
-      return {
-        metric: r._id,
-        p50: getP(0.5),
-        p75: getP(0.75),
-        p90: getP(0.9),
-        p99: getP(0.99)
-      };
-    }));
+    // We'll calculate simple averages here as a fallback, or we can use the $percentile operator assuming MongoDB 7.0+
+    const byMetric = await performanceMetrics
+      .aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: '$metric',
+            values: { $push: '$value' },
+          },
+        },
+      ])
+      .then((results) =>
+        results.map((r) => {
+          const sorted = r.values.sort((a: number, b: number) => a - b);
+          const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
+          return {
+            metric: r._id,
+            p50: getP(0.5),
+            p75: getP(0.75),
+            p90: getP(0.9),
+            p99: getP(0.99),
+          };
+        })
+      );
 
     const byPage = await performanceMetrics.aggregate([
       { $match: match },
       { $group: { _id: { page: '$page', metric: '$metric' }, avg: { $avg: '$value' } } },
       { $project: { page: '$_id.page', metric: '$_id.metric', avg: 1, _id: 0 } },
-      { $sort: { page: 1 } }
+      { $sort: { page: 1 } },
     ]);
 
     return { byMetric, byPage };
@@ -224,14 +228,14 @@ export class AnalyticsRepository {
     const byLevel = await errorLogs.aggregate([
       { $match: match },
       { $group: { _id: '$level', count: { $sum: 1 } } },
-      { $project: { level: '$_id', count: 1, _id: 0 } }
+      { $project: { level: '$_id', count: 1, _id: 0 } },
     ]);
 
     const byPage = await errorLogs.aggregate([
       { $match: match },
       { $group: { _id: '$page', count: { $sum: 1 } } },
       { $project: { page: { $ifNull: ['$_id', 'unknown'] }, count: 1, _id: 0 } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
     ]);
 
     const recent = await errorLogs.aggregate([
@@ -239,7 +243,7 @@ export class AnalyticsRepository {
       { $group: { _id: '$message', count: { $sum: 1 }, lastSeen: { $max: '$createdAt' } } },
       { $project: { message: '$_id', count: 1, lastSeen: 1, _id: 0 } },
       { $sort: { count: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     return { total, byLevel, byPage, recent };
@@ -266,7 +270,7 @@ export class AnalyticsRepository {
       { $group: { _id: '$query', count: { $sum: 1 } } },
       { $project: { query: '$_id', count: 1, _id: 0 } },
       { $sort: { count: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
     const popular = await searchEvents.aggregate([
@@ -274,10 +278,13 @@ export class AnalyticsRepository {
       { $group: { _id: '$query', count: { $sum: 1 } } },
       { $project: { query: '$_id', count: 1, _id: 0 } },
       { $sort: { count: -1 } },
-      { $limit: 10 }
+      { $limit: 10 },
     ]);
 
-    const withSelection = await searchEvents.countDocuments({ ...match, selectedSlug: { $ne: null } });
+    const withSelection = await searchEvents.countDocuments({
+      ...match,
+      selectedSlug: { $ne: null },
+    });
 
     return { total, noResults, popular, withSelection };
   }
@@ -302,27 +309,32 @@ export class AnalyticsRepository {
   }> {
     const match: any = { createdAt: { $gte: startDate, $lte: endDate } };
 
-    const byEndpoint = await apiLatency.aggregate([
-      { $match: match },
-      {
-        $group: {
-          _id: { endpoint: '$endpoint', method: '$method' },
-          latencies: { $push: '$latencyMs' },
-          count: { $sum: 1 }
-        }
-      }
-    ]).then(results => results.map(r => {
-      const sorted = r.latencies.sort((a: number, b: number) => a - b);
-      const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
-      return {
-        endpoint: r._id.endpoint,
-        method: r._id.method,
-        p50: getP(0.5),
-        p95: getP(0.95),
-        p99: getP(0.99),
-        count: r.count
-      };
-    })).then(results => results.sort((a, b) => b.count - a.count));
+    const byEndpoint = await apiLatency
+      .aggregate([
+        { $match: match },
+        {
+          $group: {
+            _id: { endpoint: '$endpoint', method: '$method' },
+            latencies: { $push: '$latencyMs' },
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .then((results) =>
+        results.map((r) => {
+          const sorted = r.latencies.sort((a: number, b: number) => a - b);
+          const getP = (p: number) => sorted[Math.floor(sorted.length * p)] || 0;
+          return {
+            endpoint: r._id.endpoint,
+            method: r._id.method,
+            p50: getP(0.5),
+            p95: getP(0.95),
+            p99: getP(0.99),
+            count: r.count,
+          };
+        })
+      )
+      .then((results) => results.sort((a, b) => b.count - a.count));
 
     const total = await apiLatency.countDocuments(match);
     const errors = await apiLatency.countDocuments({ ...match, statusCode: { $gte: 400 } });
@@ -354,11 +366,11 @@ export class AnalyticsRepository {
           _id: '$page',
           avgDepth: { $avg: '$maxDepth' },
           avgTime: { $avg: '$timeOnPage' },
-          count: { $sum: 1 }
-        }
+          count: { $sum: 1 },
+        },
       },
       { $project: { page: '$_id', avgDepth: 1, avgTime: 1, count: 1, _id: 0 } },
-      { $sort: { count: -1 } }
+      { $sort: { count: -1 } },
     ]);
 
     return { byPage };

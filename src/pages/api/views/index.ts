@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  // Return mock stats for now - implement with D1 when ready
+  // Return empty data payload
   return new Response(
     JSON.stringify({
       success: true,
