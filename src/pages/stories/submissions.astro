@@ -1,0 +1,11 @@
+---
+import StoriesLayout from '../../components/stories/StoriesLayout.astro';
+import StoryList from '../../components/stories/StoryList.astro';
+
+// Mock Submissions
+const submissions: any[] = [];
+---
+
+<StoriesLayout activeTab="submissions">
+  <StoryList stories={submissions} emptyText="You haven't submitted any stories to publications." />
+</StoriesLayout>

@@ -1,0 +1,18 @@
+---
+import StoriesLayout from '../../components/stories/StoriesLayout.astro';
+import StoryList from '../../components/stories/StoryList.astro';
+
+// Mock Unlisted Stories
+const unlisted = [
+  {
+    title: 'Draft notes on AI capabilities',
+    excerpt: 'Private thoughts and experiments with language models.',
+    meta1: 'Last edited Jul 10',
+    meta2: 'Unlisted link sharing on',
+  },
+];
+---
+
+<StoriesLayout activeTab="unlisted">
+  <StoryList stories={unlisted} emptyText="No unlisted stories." />
+</StoriesLayout>

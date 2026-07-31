@@ -1,0 +1,24 @@
+---
+import StoriesLayout from '../../components/stories/StoriesLayout.astro';
+import StoryList from '../../components/stories/StoryList.astro';
+
+// Mock Published Stories
+const published = [
+  {
+    title: 'The Future of Web Development in 2026',
+    excerpt: 'Web assembly, AI-generated components, and the death of traditional SPAs.',
+    meta1: 'Published Jul 28',
+    meta2: '42K views · 31K reads',
+  },
+  {
+    title: 'Why Astro is winning the framework wars',
+    excerpt: 'Content-driven websites need content-driven frameworks.',
+    meta1: 'Published Jul 22',
+    meta2: '28K views · 19K reads',
+  },
+];
+---
+
+<StoriesLayout activeTab="published">
+  <StoryList stories={published} emptyText="You haven't published any stories yet." />
+</StoriesLayout>

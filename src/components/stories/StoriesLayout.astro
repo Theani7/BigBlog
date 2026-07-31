@@ -1,0 +1,212 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../dashboard/Sidebar.astro';
+
+interface Props {
+  activeTab?: 'drafts' | 'scheduled' | 'published' | 'unlisted' | 'submissions';
+}
+
+const { activeTab = 'drafts' } = Astro.props;
+
+const tabs = [
+  { id: 'drafts', label: 'Drafts', href: '/stories' },
+  { id: 'scheduled', label: 'Scheduled', href: '/stories/scheduled' },
+  { id: 'published', label: 'Published', href: '/stories/published' },
+  { id: 'unlisted', label: 'Unlisted', href: '/stories/unlisted' },
+];
+---
+
+<Layout title="Stories - BigBlog">
+  <div class="stories-layout">
+    <!-- Left Sidebar -->
+    <Sidebar activePage="stories" />
+
+    <!-- Center Content -->
+    <main class="stories-feed">
+      <div class="stories-header">
+        <h1 class="stories-title">Stories</h1>
+        <div class="stories-actions">
+          <button class="btn-import">Import a story</button>
+          <a href="/write" class="btn-write">Write a story</a>
+        </div>
+      </div>
+
+      <nav class="stories-tabs">
+        {
+          tabs.map((tab) => (
+            <a
+              href={tab.href}
+              class:list={['stories-tab', { 'stories-tab--active': activeTab === tab.id }]}
+            >
+              {tab.label}
+            </a>
+          ))
+        }
+        <div class="stories-tab-divider"></div>
+        <a
+          href="/stories/submissions"
+          class:list={['stories-tab', { 'stories-tab--active': activeTab === 'submissions' }]}
+        >
+          Submissions
+        </a>
+      </nav>
+
+      <div class="stories-content">
+        <slot />
+      </div>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .stories-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - var(--header-height));
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .stories-feed {
+    padding: var(--space-xxl) 10%; /* Center the content beautifully */
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stories-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-2xl);
+  }
+
+  .stories-title {
+    font-family: var(--font-sans);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -1px;
+  }
+
+  .stories-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .btn-import {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+    background: transparent;
+    border: 1px solid var(--color-ink);
+    border-radius: var(--radius-pill);
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+
+  .btn-import:hover {
+    background: var(--bg-surface-soft);
+  }
+
+  .btn-write {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--bg-canvas);
+    background: var(--color-primary);
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 8px 20px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--duration-fast);
+  }
+
+  .btn-write:hover {
+    background: var(--color-primary-dark, #1d4ed8);
+    text-decoration: none;
+  }
+
+  .stories-tabs {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .stories-tab {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    text-decoration: none;
+    padding-bottom: var(--space-md);
+    position: relative;
+    transition: color var(--duration-fast);
+  }
+
+  .stories-tab:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .stories-tab--active {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .stories-tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--color-ink);
+  }
+
+  .stories-tab-divider {
+    height: 16px;
+    width: 1px;
+    background: var(--color-hairline);
+    margin: 0 var(--space-xs);
+  }
+
+  .stories-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    margin-top: var(--space-2xl);
+  }
+
+  @media (max-width: 1024px) {
+    .stories-feed {
+      padding: var(--space-xl) var(--space-2xl);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stories-layout {
+      grid-template-columns: 1fr;
+    }
+    .stories-feed {
+      padding: var(--space-lg);
+    }
+    .stories-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-md);
+    }
+    .stories-tabs {
+      overflow-x: auto;
+      white-space: nowrap;
+      padding-bottom: 1px;
+    }
+    .stories-tab-divider {
+      display: none;
+    }
+  }
+</style>

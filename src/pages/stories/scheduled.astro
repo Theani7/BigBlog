@@ -1,0 +1,11 @@
+---
+import StoriesLayout from '../../components/stories/StoriesLayout.astro';
+import StoryList from '../../components/stories/StoryList.astro';
+
+// Mock Scheduled Stories (Empty)
+const scheduled: any[] = [];
+---
+
+<StoriesLayout activeTab="scheduled">
+  <StoryList stories={scheduled} emptyText="No scheduled stories." />
+</StoriesLayout>
