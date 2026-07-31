@@ -1,0 +1,369 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/dashboard/Sidebar.astro';
+
+// We can mock the user data for now
+const user = {
+  name: 'Himynameisani',
+  username: '@himynameisani7',
+  avatar: 'https://i.pravatar.cc/150?img=11',
+};
+---
+
+<Layout title="Profile - BigBlog">
+  <div class="dashboard-layout">
+    <!-- Left Sidebar -->
+    <Sidebar activePage="profile" />
+
+    <!-- Center Profile Content -->
+    <main class="profile-feed">
+      <div class="profile-header-main">
+        <h1 class="profile-title">{user.name}</h1>
+        <button class="profile-more-btn" aria-label="More options">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <circle cx="12" cy="12" r="1"></circle>
+            <circle cx="19" cy="12" r="1"></circle>
+            <circle cx="5" cy="12" r="1"></circle>
+          </svg>
+        </button>
+      </div>
+
+      <nav class="profile-tabs">
+        <a href="#" class="profile-tab profile-tab--active">Home</a>
+        <a href="#" class="profile-tab">Reposts</a>
+        <a href="#" class="profile-tab">Activity</a>
+        <a href="#" class="profile-tab">About</a>
+      </nav>
+
+      <div class="profile-content">
+        <!-- Mock Reading List Card matching the screenshot -->
+        <div class="reading-list-card">
+          <div class="reading-list-info">
+            <div class="reading-list-author">
+              <img src={user.avatar} alt={user.name} class="reading-list-avatar" />
+              <span>{user.name}</span>
+            </div>
+            <h2 class="reading-list-title">Reading list</h2>
+            <div class="reading-list-meta">
+              <span>1 story</span>
+              <svg
+                class="lock-icon"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <button class="reading-list-more" aria-label="More options">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="12" cy="12" r="1"></circle>
+                  <circle cx="19" cy="12" r="1"></circle>
+                  <circle cx="5" cy="12" r="1"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="reading-list-thumbnails">
+            <div
+              class="reading-list-thumb"
+              style="background-image: url('https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=400');"
+            >
+            </div>
+            <div class="reading-list-thumb placeholder"></div>
+            <div class="reading-list-thumb placeholder"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Right Profile Sidebar -->
+    <aside class="profile-sidebar-right">
+      <div class="profile-info-card">
+        <img src={user.avatar} alt={user.name} class="profile-large-avatar" />
+        <h2 class="profile-large-name">{user.name}</h2>
+        <a href="#" class="profile-edit-link">Edit profile</a>
+      </div>
+    </aside>
+  </div>
+</Layout>
+
+<style>
+  .dashboard-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr 340px;
+    min-height: calc(100vh - var(--header-height));
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     CENTER FEED
+     ═══════════════════════════════════════════════════════════════════ */
+  .profile-feed {
+    padding: var(--space-2xl) var(--space-3xl);
+    border-right: 1px solid var(--color-hairline);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .profile-header-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .profile-title {
+    font-family: var(--font-sans);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -1px;
+  }
+
+  .profile-more-btn {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--duration-fast);
+  }
+
+  .profile-more-btn:hover {
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
+  }
+
+  .profile-tabs {
+    display: flex;
+    gap: var(--space-2xl);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .profile-tab {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    text-decoration: none;
+    padding-bottom: var(--space-md);
+    position: relative;
+    transition: color var(--duration-fast);
+  }
+
+  .profile-tab:hover {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .profile-tab--active {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .profile-tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 1px;
+    background: var(--color-ink);
+  }
+
+  /* Reading List Card inside Profile */
+  .profile-content {
+    margin-top: var(--space-lg);
+  }
+
+  .reading-list-card {
+    display: flex;
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    height: 180px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  }
+
+  .reading-list-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    transform: translateY(-2px);
+    border-color: var(--color-primary);
+  }
+
+  .reading-list-info {
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    justify-content: center;
+  }
+
+  .reading-list-author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-body);
+    margin-bottom: var(--space-md);
+  }
+
+  .reading-list-avatar {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+  }
+
+  .reading-list-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-lg);
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-sm) 0;
+    letter-spacing: -0.5px;
+  }
+
+  .reading-list-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    margin-top: auto;
+  }
+
+  .reading-list-more {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: color 0.2s;
+    display: flex;
+  }
+
+  .reading-list-more:hover {
+    color: var(--color-ink);
+  }
+
+  .reading-list-thumbnails {
+    display: flex;
+    width: 300px;
+  }
+
+  .reading-list-thumb {
+    flex: 1;
+    background-size: cover;
+    background-position: center;
+    border-left: 1px solid var(--color-hairline);
+  }
+
+  .reading-list-thumb.placeholder {
+    background-color: var(--bg-surface-soft);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     RIGHT SIDEBAR
+     ═══════════════════════════════════════════════════════════════════ */
+  .profile-sidebar-right {
+    padding: var(--space-2xl) var(--space-xl);
+  }
+
+  .profile-info-card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .profile-large-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    margin-bottom: var(--space-md);
+    object-fit: cover;
+  }
+
+  .profile-large-name {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-sm) 0;
+  }
+
+  .profile-edit-link {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-primary); /* Uses green/primary color */
+    text-decoration: none;
+    transition: opacity 0.2s;
+  }
+
+  .profile-edit-link:hover {
+    opacity: 0.8;
+  }
+
+  @media (max-width: 1024px) {
+    .dashboard-layout {
+      grid-template-columns: 240px 1fr;
+    }
+    .profile-sidebar-right {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-layout {
+      grid-template-columns: 1fr;
+    }
+    .profile-feed {
+      padding: var(--space-lg);
+    }
+    .reading-list-card {
+      flex-direction: column;
+      height: auto;
+    }
+    .reading-list-thumbnails {
+      width: 100%;
+      height: 120px;
+    }
+    .reading-list-thumb {
+      border-left: none;
+      border-top: 1px solid var(--color-hairline);
+    }
+  }
+</style>
