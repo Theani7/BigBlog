@@ -1,0 +1,284 @@
+---
+
+---
+
+<button
+  class="reader-settings-toggle"
+  aria-label="Reading settings"
+  type="button"
+  data-reader-settings-toggle
+>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="3"></circle>
+    <path
+      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+    ></path>
+  </svg>
+</button>
+<div class="reader-settings" data-reader-settings hidden>
+  <div class="reader-settings__panel">
+    <h3 class="reader-settings__title">Reading Settings</h3>
+    <div class="reader-settings__group">
+      <label class="reader-settings__label" for="reader-font-size">Font Size</label>
+      <select id="reader-font-size" class="reader-settings__select" data-reader-pref="fontSize">
+        <option value="small">Small</option>
+        <option value="medium" selected>Medium</option>
+        <option value="large">Large</option>
+      </select>
+    </div>
+    <div class="reader-settings__group">
+      <label class="reader-settings__label" for="reader-spacing">Spacing</label>
+      <select id="reader-spacing" class="reader-settings__select" data-reader-pref="spacing">
+        <option value="compact">Compact</option>
+        <option value="comfortable" selected>Comfortable</option>
+      </select>
+    </div>
+    <div class="reader-settings__group">
+      <label class="reader-settings__label" for="reader-font">Font</label>
+      <select id="reader-font" class="reader-settings__select" data-reader-pref="font">
+        <option value="sans" selected>Sans</option>
+        <option value="serif">Serif</option>
+      </select>
+    </div>
+    <div class="reader-settings__group">
+      <label class="reader-settings__label" for="reader-width">Content Width</label>
+      <select id="reader-width" class="reader-settings__select" data-reader-pref="width">
+        <option value="narrow">Narrow</option>
+        <option value="wide" selected>Wide</option>
+      </select>
+    </div>
+    <button type="button" class="reader-settings__reset" data-reader-reset>Reset to defaults</button
+    >
+  </div>
+</div>
+
+<script is:inline data-astro-rerun>
+  (() => {
+    const settingsToggle = document.querySelector('[data-reader-settings-toggle]');
+    const settingsPanel = document.querySelector('[data-reader-settings]');
+    if (settingsToggle && settingsPanel) {
+      settingsToggle.addEventListener('click', () => {
+        const isOpen = !settingsPanel.hasAttribute('hidden');
+        if (isOpen) {
+          settingsPanel.setAttribute('hidden', '');
+        } else {
+          settingsPanel.removeAttribute('hidden');
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (!settingsPanel.contains(e.target) && e.target !== settingsToggle) {
+          settingsPanel.setAttribute('hidden', '');
+        }
+      });
+    }
+
+    document.querySelectorAll('[data-reader-pref]').forEach((select) => {
+      select.addEventListener('change', () => {
+        const pref = select.dataset.readerPref;
+        const value = select.value;
+        localStorage.setItem(`reader-${pref}`, value);
+        applyReaderPrefs();
+      });
+    });
+
+    const resetBtn = document.querySelector('[data-reader-reset]');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        localStorage.removeItem('reader-fontSize');
+        localStorage.removeItem('reader-spacing');
+        localStorage.removeItem('reader-font');
+        localStorage.removeItem('reader-width');
+        document.querySelectorAll('[data-reader-pref]').forEach((select) => {
+          const pref = select.dataset.readerPref;
+          const defaults = {
+            fontSize: 'medium',
+            spacing: 'comfortable',
+            font: 'sans',
+            width: 'wide',
+          };
+          select.value = defaults[pref] || '';
+        });
+        applyReaderPrefs();
+      });
+    }
+
+    function applyReaderPrefs() {
+      const fontSize = localStorage.getItem('reader-fontSize') || 'medium';
+      const spacing = localStorage.getItem('reader-spacing') || 'comfortable';
+      const font = localStorage.getItem('reader-font') || 'sans';
+      const width = localStorage.getItem('reader-width') || 'wide';
+
+      const fontSizeMap = { small: '0.9375rem', medium: '1rem', large: '1.125rem' };
+      const lineHeightMap = { compact: '1.6', comfortable: '1.75' };
+      const maxWidthMap = { narrow: '56ch', wide: '68ch' };
+
+      document.documentElement.style.setProperty(
+        '--reader-font-size',
+        fontSizeMap[fontSize] || '1rem'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-line-height',
+        lineHeightMap[spacing] || '1.75'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-font',
+        font === 'serif' ? 'var(--font-serif)' : 'var(--font-sans)'
+      );
+      document.documentElement.style.setProperty(
+        '--reader-max-width',
+        maxWidthMap[width] || '68ch'
+      );
+    }
+
+    applyReaderPrefs();
+  })();
+</script>
+
+<style>
+  .reader-settings-toggle {
+    position: fixed;
+    bottom: var(--space-8);
+    right: var(--space-4);
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    color: var(--text-secondary);
+    z-index: var(--z-fixed);
+    transition:
+      color var(--duration-fast) var(--ease-default),
+      border-color var(--duration-fast) var(--ease-default);
+    padding: 0;
+  }
+
+  .reader-settings-toggle:hover {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+
+  .reader-settings-toggle:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+
+  .reader-settings {
+    position: fixed;
+    bottom: calc(var(--space-8) + 3.5rem);
+    right: var(--space-4);
+    z-index: var(--z-dropdown);
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: min(320px, calc(100vw - var(--space-8)));
+    transition:
+      opacity var(--duration-fast) var(--ease-default),
+      transform var(--duration-fast) var(--ease-default),
+      visibility 0s linear;
+  }
+
+  .reader-settings[hidden] {
+    opacity: 0;
+    transform: translateY(10px);
+    visibility: hidden;
+    transition:
+      opacity var(--duration-fast) var(--ease-default),
+      transform var(--duration-fast) var(--ease-default),
+      visibility 0s linear var(--duration-fast);
+  }
+
+  .reader-settings:not([hidden]) {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+
+  .reader-settings__panel {
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .reader-settings__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-base);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+  }
+
+  .reader-settings__group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .reader-settings__label {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    color: var(--text-secondary);
+  }
+
+  .reader-settings__select {
+    width: 100%;
+    padding: var(--space-2) var(--space-3);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    cursor: pointer;
+  }
+
+  .reader-settings__select:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-color: var(--color-primary);
+  }
+
+  .reader-settings__reset {
+    margin-top: var(--space-2);
+    width: 100%;
+    padding: var(--space-2);
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .reader-settings__reset:hover {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+  }
+
+  .reader-settings__reset:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
