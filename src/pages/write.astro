@@ -3,9 +3,12 @@ import Layout from '../layouts/Layout.astro';
 ---
 
 <Layout title="Write a Blog — BigBlog" description="Publish your thoughts to the world.">
+  <!-- Load Quill.js CSS (Bubble theme for a Medium-like popup toolbar) -->
+  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
+
   <div class="write-container" id="editor-container" style="display: none;">
     <div class="write-header">
-      <input type="text" class="write-title-input" placeholder="Title" />
+      <input type="text" class="write-title-input" id="post-title" placeholder="Title" />
       <div class="write-actions">
         <button class="btn btn-secondary" id="save-draft-btn">Save Draft</button>
         <button class="btn btn-primary" id="publish-btn">Publish</button>
@@ -13,7 +16,10 @@ import Layout from '../layouts/Layout.astro';
     </div>
 
     <div class="write-body">
-      <textarea class="write-content-input" placeholder="Tell your story..."></textarea>
+      <!-- Quill Editor Container -->
+      <div id="quill-editor">
+        <p>Tell your story...</p>
+      </div>
     </div>
   </div>
 
@@ -22,27 +28,76 @@ import Layout from '../layouts/Layout.astro';
   </div>
 </Layout>
 
-<script>
+<!-- Load Quill.js -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+
+<script is:inline>
+  // Initialize Quill Editor
+  let quill;
+
   async function checkAuth() {
     try {
       const res = await fetch('/api/auth/me');
       const data = await res.json();
 
       if (!data.success || !data.user) {
-        // Not authenticated, redirect to login
         window.location.href = '/login?redirect=/write';
       } else {
-        // Authenticated, show editor
         const loader = document.getElementById('loading-state');
         const editor = document.getElementById('editor-container');
         if (loader) loader.style.display = 'none';
         if (editor) editor.style.display = 'block';
+
+        // Initialize Quill after making container visible
+        initQuill();
       }
     } catch (err) {
       console.error('Failed to authenticate:', err);
       window.location.href = '/login?redirect=/write';
     }
   }
+
+  function initQuill() {
+    quill = new Quill('#quill-editor', {
+      theme: 'bubble', // 'bubble' gives the beautiful highlight-to-format Medium style popup
+      placeholder: 'Tell your story...',
+      modules: {
+        toolbar: [
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ header: [1, 2, 3, false] }],
+          [{ color: [] }, { background: [] }],
+          ['blockquote', 'code-block'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image', 'video'],
+          ['clean'],
+        ],
+      },
+    });
+
+    // Native Drag and Drop is supported automatically by Quill (inserts as Base64 images).
+    // In a real production app, you would intercept the image drop, upload it to S3/Cloudflare R2,
+    // and replace the Base64 src with the real image URL.
+  }
+
+  // Handle Save / Publish Logic
+  document.getElementById('save-draft-btn')?.addEventListener('click', () => {
+    if (!quill) return;
+    const title = document.getElementById('post-title').value;
+    const deltaJson = quill.getContents(); // The smart way to save rich text! (Delta JSON)
+    const htmlContent = quill.getSemanticHTML(); // Alternative: Save as raw HTML
+
+    console.log('--- SAVING DRAFT ---');
+    console.log('Title:', title);
+    console.log('Delta JSON (Database):', deltaJson);
+    console.log('HTML Output (Render):', htmlContent);
+    alert('Draft saved! Check the console to see the JSON data structure.');
+  });
+
+  document.getElementById('publish-btn')?.addEventListener('click', () => {
+    if (!quill) return;
+    const title = document.getElementById('post-title').value;
+    alert(`Publishing "${title}"... (See console for payload)`);
+  });
 
   // Run on mount
   if (typeof window !== 'undefined') {
@@ -108,25 +163,27 @@ import Layout from '../layouts/Layout.astro';
     min-height: 50vh;
   }
 
-  .write-content-input {
-    flex: 1;
-    width: 100%;
-    min-height: 50vh;
+  /* Override Quill Styles to match BigBlog */
+  :global(.ql-editor) {
     font-family: var(--font-sans);
     font-size: 1.25rem;
     line-height: 1.8;
     color: var(--color-ink);
-    background: transparent;
-    border: none;
-    outline: none;
-    resize: none;
+    padding: 0;
+    min-height: 50vh;
   }
 
-  .write-content-input::placeholder {
+  :global(.ql-editor.ql-blank::before) {
     color: rgba(0, 0, 0, 0.2);
+    font-style: normal;
+    left: 0;
   }
 
-  [data-theme='dark'] .write-content-input::placeholder {
+  :global([data-theme='dark'] .ql-editor.ql-blank::before) {
     color: rgba(255, 255, 255, 0.2);
+  }
+
+  :global(.ql-container.ql-bubble) {
+    border: none !important;
   }
 </style>
