@@ -1,0 +1,494 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Sidebar from '../components/dashboard/Sidebar.astro';
+
+// Mock data for the stats page
+const topStats = [
+  { label: 'Total Views', value: '124.5K', trend: '+14%', isPositive: true },
+  { label: 'Total Reads', value: '82.1K', trend: '+8%', isPositive: true },
+  { label: 'Followers', value: '4,209', trend: '+124', isPositive: true },
+  { label: 'Avg. Read Ratio', value: '68%', trend: '-2%', isPositive: false },
+];
+
+const postStats = [
+  {
+    title: 'The Future of Web Development in 2026',
+    date: 'Jul 28',
+    views: '42K',
+    reads: '31K',
+    ratio: '74%',
+  },
+  {
+    title: 'Why Astro is winning the framework wars',
+    date: 'Jul 22',
+    views: '28K',
+    reads: '19K',
+    ratio: '68%',
+  },
+  {
+    title: 'Understanding CSS Subgrid once and for all',
+    date: 'Jul 15',
+    views: '15K',
+    reads: '9K',
+    ratio: '60%',
+  },
+  {
+    title: 'Designing premium user interfaces',
+    date: 'Jul 10',
+    views: '39K',
+    reads: '30K',
+    ratio: '77%',
+  },
+];
+---
+
+<Layout title="Stats - BigBlog">
+  <div class="stats-layout">
+    <!-- Left Sidebar -->
+    <Sidebar activePage="stats" />
+
+    <!-- Center Content -->
+    <main class="stats-feed">
+      <div class="stats-header">
+        <h1 class="stats-title">Your Stats</h1>
+        <div class="stats-period-selector">
+          <select class="period-select" aria-label="Select time period">
+            <option>Last 30 days</option>
+            <option>Last 7 days</option>
+            <option>This year</option>
+            <option>All time</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Top Level Metrics (Bento Grid) -->
+      <section class="metrics-grid">
+        {
+          topStats.map((stat) => (
+            <div class="metric-card">
+              <h3 class="metric-label">{stat.label}</h3>
+              <div class="metric-value-row">
+                <span class="metric-value">{stat.value}</span>
+                <span class:list={['metric-trend', { 'trend-negative': !stat.isPositive }]}>
+                  {stat.isPositive ? '↗' : '↘'} {stat.trend}
+                </span>
+              </div>
+            </div>
+          ))
+        }
+      </section>
+
+      <!-- Chart Placeholder -->
+      <section class="chart-section">
+        <div class="chart-header">
+          <h2>Views & Reads</h2>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot views"></span> Views</span>
+            <span class="legend-item"><span class="legend-dot reads"></span> Reads</span>
+          </div>
+        </div>
+        <div class="chart-container">
+          <!-- Premium CSS Mock Chart -->
+          <div class="chart-bars">
+            {
+              [40, 65, 30, 80, 50, 90, 70, 100, 60, 85, 45, 75].map((height, i) => (
+                <div class="chart-bar-group">
+                  <div
+                    class="bar views-bar"
+                    style={`height: ${height}%; animation-delay: ${i * 0.05}s`}
+                  />
+                  <div
+                    class="bar reads-bar"
+                    style={`height: ${height * 0.65}%; animation-delay: ${i * 0.05}s`}
+                  />
+                </div>
+              ))
+            }
+          </div>
+          <div class="chart-x-axis">
+            <span>Jul 1</span>
+            <span>Jul 8</span>
+            <span>Jul 15</span>
+            <span>Jul 22</span>
+            <span>Jul 30</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Post Performance Table -->
+      <section class="post-stats-section">
+        <h2>Story Performance</h2>
+        <div class="table-container">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Story</th>
+                <th class="text-right">Views</th>
+                <th class="text-right">Reads</th>
+                <th class="text-right">Read ratio</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                postStats.map((post) => (
+                  <tr class="table-row">
+                    <td>
+                      <div class="post-title-cell">
+                        <span class="post-title">{post.title}</span>
+                        <span class="post-date">Published {post.date}</span>
+                      </div>
+                    </td>
+                    <td class="text-right font-medium">{post.views}</td>
+                    <td class="text-right font-medium">{post.reads}</td>
+                    <td class="text-right text-muted">{post.ratio}</td>
+                  </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<style>
+  .stats-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: calc(100vh - var(--header-height));
+    max-width: 100%;
+    margin: 0 auto;
+  }
+
+  .stats-feed {
+    padding: var(--space-xxl) 10%;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+  }
+
+  /* Header */
+  .stats-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .stats-title {
+    font-family: var(--font-sans);
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -1px;
+  }
+
+  .period-select {
+    appearance: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    padding: 8px 32px 8px 16px;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-ink);
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    transition: border-color var(--duration-fast);
+  }
+
+  .period-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+
+  /* Metrics Grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    transition:
+      transform var(--duration-fast),
+      box-shadow var(--duration-fast);
+  }
+
+  .metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+  }
+
+  .metric-label {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .metric-value-row {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+  }
+
+  .metric-value {
+    font-family: var(--font-sans);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--color-ink);
+    letter-spacing: -0.5px;
+  }
+
+  .metric-trend {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: #10b981; /* Emerald green */
+    background: rgba(16, 185, 129, 0.1);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+  }
+
+  .trend-negative {
+    color: #ef4444; /* Red */
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  /* Chart Section */
+  .chart-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+  }
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
+  }
+
+  .chart-header h2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .chart-legend {
+    display: flex;
+    gap: var(--space-md);
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .legend-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .legend-dot.views {
+    background: var(--color-primary);
+  }
+
+  .legend-dot.reads {
+    background: var(--color-accent-amber);
+  }
+
+  .chart-container {
+    height: 240px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chart-bars {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-hairline);
+    gap: 2%;
+  }
+
+  .chart-bar-group {
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 2px;
+    position: relative;
+    group: hover;
+  }
+
+  .bar {
+    width: 12px;
+    border-radius: 4px 4px 0 0;
+    transform-origin: bottom;
+    animation: barGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+
+  .bar:hover {
+    filter: brightness(1.2);
+  }
+
+  .views-bar {
+    background: var(--color-primary);
+  }
+
+  .reads-bar {
+    background: var(--color-accent-amber);
+  }
+
+  @keyframes barGrow {
+    0% {
+      transform: scaleY(0);
+      opacity: 0;
+    }
+    100% {
+      transform: scaleY(1);
+      opacity: 1;
+    }
+  }
+
+  .chart-x-axis {
+    display: flex;
+    justify-content: space-between;
+    padding-top: var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: 11px;
+    color: var(--color-muted);
+  }
+
+  /* Table Section */
+  .post-stats-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .post-stats-section h2 {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .table-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-family: var(--font-sans);
+  }
+
+  .stats-table th {
+    padding: var(--space-md) var(--space-xl);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-muted);
+    border-bottom: 1px solid var(--color-hairline);
+    background: var(--bg-surface-soft);
+  }
+
+  .stats-table td {
+    padding: var(--space-md) var(--space-xl);
+    border-bottom: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+  }
+
+  .table-row {
+    transition: background var(--duration-fast);
+  }
+
+  .table-row:hover {
+    background: var(--bg-surface-soft);
+  }
+
+  .table-row:last-child td {
+    border-bottom: none;
+  }
+
+  .post-title-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .post-title {
+    font-weight: 600;
+    font-size: var(--text-body-sm);
+  }
+
+  .post-date {
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .text-right {
+    text-align: right;
+  }
+
+  .text-muted {
+    color: var(--color-muted);
+  }
+
+  .font-medium {
+    font-weight: 500;
+  }
+
+  @media (max-width: 1024px) {
+    .stats-feed {
+      padding: var(--space-xl) var(--space-2xl);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .stats-layout {
+      grid-template-columns: 1fr;
+    }
+    .stats-feed {
+      padding: var(--space-lg);
+    }
+    .metrics-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .bar {
+      width: 6px;
+    }
+    .stats-table th:nth-child(4),
+    .stats-table td:nth-child(4) {
+      display: none; /* Hide read ratio on very small screens */
+    }
+  }
+</style>
