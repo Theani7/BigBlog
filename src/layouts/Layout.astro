@@ -292,43 +292,18 @@ const structuredDataList = structuredData
 
     <footer class="site-footer" role="contentinfo">
       <div class="container footer-inner">
-        <div class="footer-top">
-          <h2 class="footer-huge-title">BigBlog.</h2>
-          <p class="footer-tagline">Ideas that shape tomorrow.</p>
-        </div>
-        <div class="footer-grid">
-          <div class="footer-section">
-            <h3 class="footer-heading">Platform</h3>
-            <ul class="footer-links">
-              <li><a href="/about">Our story</a></li>
-              <li><a href="/write">Publish</a></li>
-              <li><a href="#" data-auth-modal="login">Log in</a></li>
-              <li><a href="#" data-auth-modal="signup">Sign up</a></li>
-            </ul>
+        <div class="footer-small-layout">
+          <div class="footer-brand">
+            <span class="footer-brand-name">BigBlog</span>
+            <span class="footer-copyright">&copy; {new Date().getFullYear()}</span>
           </div>
-          <div class="footer-section">
-            <h3 class="footer-heading">Topics</h3>
-            <ul class="footer-links">
-              <li><a href="#">Science</a></li>
-              <li><a href="#">Technology</a></li>
-              <li><a href="#">Cosmos</a></li>
-              <li><a href="#">Medicine</a></li>
-            </ul>
-          </div>
-          <div class="footer-section">
-            <h3 class="footer-heading">Connect</h3>
-            <ul class="footer-links">
-              <li><a href="https://twitter.com/bigblog">Twitter</a></li>
-              <li><a href="https://linkedin.com/company/bigblog">LinkedIn</a></li>
-              <li><a href="https://github.com/BigBlog">GitHub</a></li>
-              <li><a href="/rss.xml">RSS</a></li>
-            </ul>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <p class="footer-copyright">
-            &copy; {new Date().getFullYear()} BigBlog. All rights reserved.
-          </p>
+          <ul class="footer-links-inline">
+            <li><a href="/about">About</a></li>
+            <li><a href="/write">Publish</a></li>
+            <li><a href="#">Help</a></li>
+            <li><a href="#">Terms</a></li>
+            <li><a href="#">Privacy</a></li>
+          </ul>
         </div>
       </div>
     </footer>
@@ -1331,105 +1306,62 @@ const structuredDataList = structuredData
     text-align: center;
   }
 
-  .footer-top {
-    margin-bottom: var(--space-xl);
-    padding-bottom: var(--space-xl);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  .footer-small-layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding-top: var(--space-lg);
   }
 
-  .footer-huge-title {
-    font-family: var(--font-serif);
-    font-size: clamp(3rem, 6vw, 5rem);
-    line-height: 1;
-    letter-spacing: -1.5px;
-    color: var(--color-on-dark);
-    margin: 0;
+  @media (min-width: 768px) {
+    .footer-small-layout {
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 0;
+    }
   }
 
-  .footer-tagline {
+  .footer-brand {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-sm);
+  }
+
+  .footer-brand-name {
     font-family: var(--font-sans);
-    font-size: 1.25rem;
-    color: var(--color-on-dark-soft);
-    margin-top: var(--space-sm);
-  }
-
-  .footer-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--space-xl);
-    margin-bottom: var(--space-xl);
-  }
-
-  .footer-heading {
-    font-family: var(--font-sans);
-    font-size: 0.875rem;
+    font-size: 1rem;
     font-weight: 500;
-    letter-spacing: 1px;
-    text-transform: uppercase;
     color: var(--color-on-dark);
-    margin-bottom: var(--space-md);
+    letter-spacing: -0.3px;
   }
 
-  .footer-links {
+  .footer-copyright {
+    color: var(--color-on-dark-soft);
+    font-size: 0.875rem;
+    font-family: var(--font-sans);
+  }
+
+  .footer-links-inline {
     list-style: none;
     margin: 0;
     padding: 0;
     display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
+    gap: var(--space-md);
     align-items: center;
   }
 
-  .footer-links a {
+  .footer-links-inline a {
     color: var(--color-on-dark-soft);
     text-decoration: none;
-    font-size: 1rem;
-    font-family: var(--font-sans);
-    transition: color var(--duration-fast) var(--ease-default);
-  }
-
-  .footer-links a:hover {
-    color: #ffffff;
-    text-decoration: none;
-  }
-
-  .footer-bottom {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding-top: var(--space-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-
-  .footer-copyright {
-    color: var(--color-on-dark-soft);
     font-size: 0.875rem;
     font-family: var(--font-sans);
-  }
-
-  .footer-socials {
-    display: flex;
-    gap: var(--space-4);
-    flex-wrap: wrap;
-  }
-
-  .footer-social-link {
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
     transition: color var(--duration-fast) var(--ease-default);
   }
 
-  .footer-social-link:hover {
-    color: var(--color-primary);
+  .footer-links-inline a:hover {
+    color: #ffffff;
     text-decoration: none;
-  }
-
-  .footer-copyright {
-    color: var(--color-on-dark-soft);
-    font-size: var(--text-sm);
-    margin: 0;
   }
 
   @media (max-width: 639px) {
