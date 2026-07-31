@@ -6,6 +6,7 @@ import CommandPalette from '../components/navigation/CommandPalette.astro';
 import AuthModal from '../components/auth/AuthModal.astro';
 import Breadcrumb from '../components/navigation/Breadcrumb.astro';
 import ThemeSwitch from '../components/navigation/ThemeSwitch.astro';
+import Footer from '../components/ui/Footer.astro';
 import { siteConfig, seo as defaultSeo, socials } from '@config/site';
 
 interface LayoutProps {
@@ -290,23 +291,7 @@ const structuredDataList = structuredData
       <slot />
     </main>
 
-    <footer class="site-footer" role="contentinfo">
-      <div class="container footer-inner">
-        <div class="footer-small-layout">
-          <div class="footer-brand">
-            <span class="footer-brand-name">BigBlog</span>
-            <span class="footer-copyright">&copy; {new Date().getFullYear()}</span>
-          </div>
-          <ul class="footer-links-inline">
-            <li><a href="/about">About</a></li>
-            <li><a href="/write">Publish</a></li>
-            <li><a href="#">Help</a></li>
-            <li><a href="#">Terms</a></li>
-            <li><a href="#">Privacy</a></li>
-          </ul>
-        </div>
-      </div>
-    </footer>
+    <Footer />
 
     <CommandPalette />
 
@@ -1297,73 +1282,6 @@ const structuredDataList = structuredData
   .main-content {
     min-height: 60vh;
   }
-
-  .site-footer {
-    padding: var(--space-xxl) 0 var(--space-xl);
-    background: var(--bg-inverse);
-    color: var(--color-on-dark);
-    border-top: 1px solid var(--color-hairline);
-    text-align: center;
-  }
-
-  .footer-small-layout {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--space-md);
-    padding-top: var(--space-lg);
-  }
-
-  @media (min-width: 768px) {
-    .footer-small-layout {
-      flex-direction: row;
-      justify-content: space-between;
-      gap: 0;
-    }
-  }
-
-  .footer-brand {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-sm);
-  }
-
-  .footer-brand-name {
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    font-weight: 500;
-    color: var(--color-on-dark);
-    letter-spacing: -0.3px;
-  }
-
-  .footer-copyright {
-    color: var(--color-on-dark-soft);
-    font-size: 0.875rem;
-    font-family: var(--font-sans);
-  }
-
-  .footer-links-inline {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: var(--space-md);
-    align-items: center;
-  }
-
-  .footer-links-inline a {
-    color: var(--color-on-dark-soft);
-    text-decoration: none;
-    font-size: 0.875rem;
-    font-family: var(--font-sans);
-    transition: color var(--duration-fast) var(--ease-default);
-  }
-
-  .footer-links-inline a:hover {
-    color: #ffffff;
-    text-decoration: none;
-  }
-
   @media (max-width: 639px) {
     .search-kbd {
       display: none;
