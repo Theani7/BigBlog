@@ -1,0 +1,361 @@
+---
+import LibraryLayout from '../../components/library/LibraryLayout.astro';
+---
+
+<LibraryLayout
+  title="Your Lists — Library"
+  description="Your created reading lists."
+  activeTab="your-lists"
+>
+  <!-- CTA Banner -->
+  <div class="library-cta-banner" id="library-cta-banner">
+    <button class="cta-close" id="cta-close-btn" aria-label="Dismiss banner">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        ><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg
+      >
+    </button>
+    <div class="cta-text">
+      <h2 class="cta-heading">Create a list to easily organize and share stories</h2>
+      <!-- Triggers NewListModal via JS in LibraryLayout -->
+      <button class="cta-action-btn" id="cta-start-list-btn">Start a list</button>
+    </div>
+    <div class="cta-icon">
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        <line x1="12" y1="8" x2="12" y2="14"></line>
+        <line x1="9" y1="11" x2="15" y2="11"></line>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Reading Lists -->
+  <div class="lists-container" id="lists-container">
+    <!-- Default Reading List -->
+    <div class="list-card">
+      <div class="list-card-info">
+        <div class="list-card-author">
+          <div class="list-card-avatar">
+            <span class="list-user-initials">BB</span>
+          </div>
+          <span class="list-card-author-name list-user-name">User</span>
+        </div>
+        <h3 class="list-card-title">Reading list</h3>
+        <div class="list-card-meta">
+          <span class="list-card-count">0 stories</span>
+          <span class="list-card-lock">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              ><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path
+                d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg
+            >
+          </span>
+          <button class="list-card-more" aria-label="More options">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              ><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle
+                cx="5"
+                cy="12"
+                r="1"></circle></svg
+            >
+          </button>
+        </div>
+      </div>
+      <div class="list-card-thumbnails">
+        <div class="list-card-thumb list-card-thumb--placeholder">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            opacity="0.3"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg
+          >
+        </div>
+        <div class="list-card-thumb list-card-thumb--placeholder"></div>
+        <div class="list-card-thumb list-card-thumb--placeholder"></div>
+      </div>
+    </div>
+  </div>
+</LibraryLayout>
+
+<script>
+  document.getElementById('cta-close-btn')?.addEventListener('click', () => {
+    const banner = document.getElementById('library-cta-banner');
+    if (banner) {
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-8px)';
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+    }
+  });
+</script>
+
+<style>
+  /* CTA Banner */
+  .library-cta-banner {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, #2d6a4f, #40916c);
+    border-radius: var(--radius-md);
+    padding: var(--space-xl) var(--space-xxl);
+    margin-bottom: var(--space-xl);
+    overflow: hidden;
+    transition:
+      opacity 0.3s,
+      transform 0.3s;
+  }
+
+  .cta-close {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+    transition: color var(--duration-fast);
+  }
+
+  .cta-close:hover {
+    color: white;
+  }
+
+  .cta-text {
+    flex: 1;
+  }
+
+  .cta-heading {
+    font-family: var(--font-serif);
+    font-size: clamp(1.25rem, 2.5vw, 1.6rem);
+    font-weight: 400;
+    color: white;
+    line-height: 1.3;
+    margin-bottom: var(--space-md);
+    max-width: 340px;
+  }
+
+  .cta-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: var(--radius-pill);
+    background: rgba(0, 0, 0, 0.25);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background var(--duration-fast);
+  }
+
+  .cta-action-btn:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  .cta-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+    flex-shrink: 0;
+    margin-left: var(--space-xl);
+  }
+
+  /* Premium Grid Layout for Cards */
+  .lists-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-lg);
+  }
+
+  .list-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    background: var(--bg-surface);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+    position: relative;
+    cursor: pointer;
+  }
+
+  .list-card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    transform: translateY(-4px);
+    border-color: var(--color-primary);
+  }
+
+  .list-card-thumbnails {
+    display: flex;
+    width: 100%;
+    height: 160px;
+    background: var(--bg-surface-soft);
+  }
+
+  .list-card-thumb {
+    flex: 1;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    border-right: 1px solid var(--color-hairline);
+  }
+
+  .list-card-thumb:last-child {
+    border-right: none;
+  }
+
+  .list-card-thumb--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-surface-soft);
+  }
+
+  .list-card-info {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    flex: 1;
+  }
+
+  .list-card-author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xs);
+  }
+
+  .list-card-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-accent-amber));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .list-card-author-name {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-body);
+  }
+
+  .list-card-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 700;
+    color: var(--color-ink);
+    margin: 0;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
+  }
+
+  .list-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: auto;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-hairline);
+  }
+
+  .list-card-count {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-muted);
+    background: var(--bg-surface-soft);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+  }
+
+  .list-card-lock {
+    color: var(--color-muted);
+    display: flex;
+    align-items: center;
+  }
+
+  .list-card-more {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--duration-fast);
+  }
+
+  .list-card-more:hover {
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
+  }
+
+  @media (max-width: 768px) {
+    .library-cta-banner {
+      flex-direction: column;
+      text-align: center;
+      padding: var(--space-lg);
+    }
+    .cta-icon {
+      margin-left: 0;
+      margin-top: var(--space-md);
+    }
+  }
+</style>

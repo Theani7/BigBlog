@@ -1,0 +1,16 @@
+---
+import LibraryLayout from '../../components/library/LibraryLayout.astro';
+import EmptyState from '../../components/library/EmptyState.astro';
+---
+
+<LibraryLayout
+  title="Saved Lists — Library"
+  description="Lists you've saved from other users."
+  activeTab="saved-lists"
+>
+  <EmptyState
+    title="No saved lists yet"
+    description="Save lists from other writers to revisit them later."
+    icon="saved"
+  />
+</LibraryLayout>

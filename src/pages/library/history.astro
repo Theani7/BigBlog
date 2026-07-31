@@ -1,0 +1,16 @@
+---
+import LibraryLayout from '../../components/library/LibraryLayout.astro';
+import EmptyState from '../../components/library/EmptyState.astro';
+---
+
+<LibraryLayout
+  title="Reading History — Library"
+  description="Stories you have recently read."
+  activeTab="reading-history"
+>
+  <EmptyState
+    title="No reading history"
+    description="Articles you read will appear here so you can find them again."
+    icon="history"
+  />
+</LibraryLayout>

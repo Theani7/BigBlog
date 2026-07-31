@@ -644,10 +644,11 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
     });
   });
 
-  // Init
-  if (typeof window !== 'undefined') {
-    initDashboard();
-  }
+  document.addEventListener('astro:page-load', () => {
+    if (document.getElementById('dashboard-loading')) {
+      initDashboard();
+    }
+  });
 </script>
 
 <style>
@@ -691,7 +692,7 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
     display: grid;
     grid-template-columns: 240px 1fr 340px;
     min-height: calc(100vh - var(--header-height));
-    max-width: 1320px;
+    max-width: 100%;
     margin: 0 auto;
   }
 

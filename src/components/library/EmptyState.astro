@@ -1,0 +1,130 @@
+---
+interface Props {
+  title: string;
+  description: string;
+  icon: 'saved' | 'highlights' | 'history' | 'responses';
+}
+
+const { title, description, icon } = Astro.props;
+---
+
+<div class="empty-state">
+  {
+    icon === 'saved' && (
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="empty-state-icon"
+      >
+        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+      </svg>
+    )
+  }
+  {
+    icon === 'highlights' && (
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="empty-state-icon"
+      >
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    )
+  }
+  {
+    icon === 'history' && (
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="empty-state-icon"
+      >
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    )
+  }
+  {
+    icon === 'responses' && (
+      <svg
+        width="48"
+        height="48"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="empty-state-icon"
+      >
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+      </svg>
+    )
+  }
+
+  <h3 class="empty-state-title">{title}</h3>
+  <p class="empty-state-desc">{description}</p>
+</div>
+
+<style>
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--space-xxl) 0;
+    min-height: 300px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .empty-state-icon {
+    color: var(--color-muted-soft);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-family: var(--font-serif);
+    font-size: var(--text-title-lg);
+    font-weight: 500;
+    color: var(--color-ink);
+    margin-bottom: var(--space-xs);
+  }
+
+  .empty-state-desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    max-width: 320px;
+  }
+</style>
