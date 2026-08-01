@@ -1,0 +1,49 @@
+---
+export interface Props {
+  // Add props if needed
+}
+---
+
+<div class="write-toolbar">
+  <div class="toolbar-left" style="display: flex; align-items: center; gap: 12px;">
+    <span class="draft-status" id="draft-status">Draft in progress</span>
+    <span class="toolbar-divider" style="color: var(--color-hairline); font-size: 14px;">|</span>
+    <span class="word-count" id="word-count" style="color: var(--color-muted); font-size: 13px;"
+      >0 words &bull; 0 min read</span
+    >
+  </div>
+  <div class="toolbar-right">
+    <button class="btn btn-secondary btn-sm" id="save-draft-btn">Save Draft</button>
+    <button class="btn btn-primary btn-sm" id="publish-btn">Publish</button>
+  </div>
+</div>
+
+<style>
+  .write-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-surface-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    position: sticky;
+    top: 64px; /* Below the main site header */
+    z-index: 10;
+  }
+
+  .draft-status {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-muted-soft);
+  }
+
+  .toolbar-right {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .btn-sm {
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+  }
+</style>
