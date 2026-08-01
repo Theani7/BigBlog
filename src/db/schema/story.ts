@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export type StoryStatus = 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'UNLISTED';
+export type StoryCategory = 'Technology' | 'Design' | 'Business' | 'Culture' | 'Life' | 'Other';
 
 export interface IStory extends Document {
   title: string;
@@ -11,6 +12,8 @@ export interface IStory extends Document {
   views: number;
   reads: number;
   readRatio: number;
+  category?: StoryCategory;
+  tags: string[];
   publishedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +32,11 @@ const storySchema = new Schema<IStory>({
   views: { type: Number, default: 0 },
   reads: { type: Number, default: 0 },
   readRatio: { type: Number, default: 0 },
+  category: {
+    type: String,
+    enum: ['Technology', 'Design', 'Business', 'Culture', 'Life', 'Other'],
+  },
+  tags: [{ type: String }],
   publishedAt: { type: Date },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },

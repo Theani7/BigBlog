@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const body = await request.json();
-    const { title, content, status } = body;
+    const { title, content, status, category, tags } = body;
 
     if (!title) {
       return new Response(JSON.stringify({ success: false, error: 'Title is required' }), {
@@ -61,6 +61,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       title,
       content,
       slug,
+      category,
+      tags: Array.isArray(tags) ? tags : [],
       authorId: payload.userId,
       status: status || 'DRAFT',
       publishedAt: status === 'PUBLISHED' ? new Date() : undefined,

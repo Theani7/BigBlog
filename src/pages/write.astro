@@ -27,6 +27,29 @@ import Layout from '../layouts/Layout.astro';
         spellcheck="false"
       />
 
+      <div class="write-meta">
+        <select class="write-category" id="post-category" aria-label="Category">
+          <option value="" disabled selected>Select Category</option>
+          <option value="Technology">Technology</option>
+          <option value="Design">Design</option>
+          <option value="Business">Business</option>
+          <option value="Culture">Culture</option>
+          <option value="Life">Life</option>
+          <option value="Other">Other</option>
+        </select>
+        <div class="write-tags-container">
+          <span class="tag-icon">#</span>
+          <input
+            type="text"
+            class="write-tags"
+            id="post-tags"
+            placeholder="Add tags (comma separated)"
+            aria-label="Tags"
+            autocomplete="off"
+          />
+        </div>
+      </div>
+
       <div class="write-body">
         <!-- Quill Editor Container -->
         <div id="quill-editor"></div>
@@ -107,21 +130,37 @@ import Layout from '../layouts/Layout.astro';
     const saveBtn = document.getElementById('save-draft-btn');
     const publishBtn = document.getElementById('publish-btn');
     const titleInput = document.getElementById('post-title');
+    const categorySelect = document.getElementById('post-category');
+    const tagsInput = document.getElementById('post-tags');
+
+    const getPostData = (status) => {
+      const title = titleInput.value;
+      const htmlContent = quill.getSemanticHTML();
+      const category = categorySelect.value || undefined;
+      const tagsString = tagsInput.value.trim();
+      const tags = tagsString
+        ? tagsString
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : [];
+
+      return { title, content: htmlContent, status, category, tags };
+    };
 
     saveBtn?.addEventListener('click', async () => {
       if (!quill) return;
-      const title = titleInput.value;
-      if (!title) {
+      if (!titleInput.value) {
         alert('Please enter a title to save your draft.');
         return;
       }
-      const htmlContent = quill.getSemanticHTML();
+      const dataPayload = getPostData('DRAFT');
 
       try {
         const res = await fetch('/api/stories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content: htmlContent, status: 'DRAFT' }),
+          body: JSON.stringify(dataPayload),
         });
         const data = await res.json();
         if (data.success) {
@@ -137,18 +176,17 @@ import Layout from '../layouts/Layout.astro';
 
     publishBtn?.addEventListener('click', async () => {
       if (!quill) return;
-      const title = titleInput.value;
-      if (!title) {
+      if (!titleInput.value) {
         alert('Please enter a title before publishing.');
         return;
       }
-      const htmlContent = quill.getSemanticHTML();
+      const dataPayload = getPostData('PUBLISHED');
 
       try {
         const res = await fetch('/api/stories', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content: htmlContent, status: 'PUBLISHED' }),
+          body: JSON.stringify(dataPayload),
         });
         const data = await res.json();
         if (data.success) {
@@ -233,7 +271,7 @@ import Layout from '../layouts/Layout.astro';
     letter-spacing: -1.5px;
     line-height: 1.05;
     padding: 0;
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-md);
   }
 
   .write-title-input::placeholder {
@@ -243,6 +281,71 @@ import Layout from '../layouts/Layout.astro';
 
   [data-theme='dark'] .write-title-input::placeholder {
     color: rgba(255, 255, 255, 0.2);
+  }
+
+  .write-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-bottom: var(--space-2xl);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-hairline);
+    align-items: center;
+  }
+
+  .write-category {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-ink);
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-hairline);
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+  }
+
+  .write-category:focus {
+    border-color: var(--color-primary-active);
+  }
+
+  .write-tags-container {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    min-width: 250px;
+    background: var(--color-surface-soft);
+    border: 1px solid var(--color-hairline);
+    border-radius: 4px;
+    padding: 0 0.75rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .write-tags-container:focus-within {
+    border-color: var(--color-primary-active);
+  }
+
+  .tag-icon {
+    color: var(--color-muted-soft);
+    margin-right: 0.5rem;
+    font-family: var(--font-sans);
+    font-size: 14px;
+  }
+
+  .write-tags {
+    flex-grow: 1;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-ink);
+    background: transparent;
+    border: none;
+    padding: 0.375rem 0;
+    outline: none;
+  }
+
+  .write-tags::placeholder {
+    color: var(--color-muted-soft);
   }
 
   .write-body {
