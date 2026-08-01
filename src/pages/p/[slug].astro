@@ -957,7 +957,12 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
       window.setTimeout(() => commentStatus.setAttribute('hidden', ''), 4000);
     }
 
-    async function toggle(endpoint: string, body: Record<string, string>, btn: HTMLButtonElement) {
+    async function toggle(
+      endpoint: string,
+      body: Record<string, string>,
+      btn: HTMLButtonElement,
+      countEl?: HTMLElement | null
+    ) {
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
@@ -974,11 +979,8 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
           btn.classList.toggle('is-active', active);
           btn.setAttribute('aria-pressed', String(active));
         }
-        if (likeCount && data.data?.count !== undefined) {
-          likeCount.textContent = String(data.data.count);
-        }
-        if (repostCount && data.data?.count !== undefined) {
-          repostCount.textContent = String(data.data.count);
+        if (countEl && data.data?.count !== undefined) {
+          countEl.textContent = String(data.data.count);
         }
         return data.data;
       } catch (error) {
@@ -1121,9 +1123,11 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     // ---------------------------------------------------------
     // LIKE / BOOKMARK / REPOST
     // ---------------------------------------------------------
-    likeBtn?.addEventListener('click', () => toggle('/api/likes', { slug }, likeBtn));
+    likeBtn?.addEventListener('click', () => toggle('/api/likes', { slug }, likeBtn, likeCount));
     bookmarkBtn?.addEventListener('click', () => toggle('/api/bookmarks', { slug }, bookmarkBtn));
-    repostBtn?.addEventListener('click', () => toggle(REPOST_API, { slug }, repostBtn));
+    repostBtn?.addEventListener('click', () =>
+      toggle(REPOST_API, { slug }, repostBtn, repostCount)
+    );
 
     // ---------------------------------------------------------
     // COMMENTS
