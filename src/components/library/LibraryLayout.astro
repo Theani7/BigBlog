@@ -109,6 +109,20 @@ const { title, description, activeTab } = Astro.props;
 
       document.querySelectorAll('.list-user-initials').forEach((el) => (el.textContent = initials));
       document.querySelectorAll('.list-user-name').forEach((el) => (el.textContent = displayName));
+
+      const countEl = document.querySelector('.list-card-count');
+      if (countEl) {
+        try {
+          const res = await fetch('/api/bookmarks');
+          const data = await res.json();
+          if (data.success) {
+            const n = data.data?.bookmarks?.length ?? 0;
+            countEl.textContent = `${n} ${n === 1 ? 'story' : 'stories'}`;
+          }
+        } catch (err) {
+          console.error('Failed to load bookmark count:', err);
+        }
+      }
     } catch (err) {
       console.error('Library auth check failed:', err);
       window.location.href = '/';

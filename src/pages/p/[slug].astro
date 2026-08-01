@@ -41,6 +41,7 @@ const publishDate = new Date(story.publishedAt || story.createdAt).toLocaleDateS
 ---
 
 <Layout title={`${story.title} - BigBlog`} description={plainText.substring(0, 150) + '...'}>
+  <meta name="story-slug" content={story.slug} />
   <!-- Load Quill CSS to maintain identical formatting from the editor -->
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
 
@@ -66,7 +67,7 @@ const publishDate = new Date(story.publishedAt || story.createdAt).toLocaleDateS
         </div>
 
         <div class="post-actions">
-          <button class="action-btn" aria-label="Like story">
+          <button class="action-btn" id="like-btn" aria-label="Like story" aria-pressed="false">
             <svg
               width="24"
               height="24"
@@ -81,7 +82,13 @@ const publishDate = new Date(story.publishedAt || story.createdAt).toLocaleDateS
               ></path></svg
             >
           </button>
-          <button class="action-btn" aria-label="Bookmark story">
+          <span class="like-count" id="like-count">0</span>
+          <button
+            class="action-btn"
+            id="bookmark-btn"
+            aria-label="Bookmark story"
+            aria-pressed="false"
+          >
             <svg
               width="24"
               height="24"
@@ -236,4 +243,70 @@ const publishDate = new Date(story.publishedAt || story.createdAt).toLocaleDateS
     font-style: italic;
     color: var(--color-muted);
   }
+
+  .like-count {
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    color: var(--color-muted);
+    min-width: 1.5rem;
+    text-align: left;
+  }
+
+  .action-btn.is-active {
+    color: var(--color-primary);
+  }
+
+  .action-btn.is-active svg {
+    fill: var(--color-primary);
+  }
 </style>
+
+<script>
+  const slug = document.querySelector<HTMLMetaElement>('meta[name="story-slug"]')?.content || '';
+  const likeBtn = document.getElementById('like-btn') as HTMLButtonElement | null;
+  const bookmarkBtn = document.getElementById('bookmark-btn') as HTMLButtonElement | null;
+  const likeCount = document.getElementById('like-count');
+
+  async function toggle(endpoint: string, btn: HTMLButtonElement) {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    });
+    const data = await res.json();
+    if (!data.success) return;
+    const active = data.data?.liked ?? data.data?.bookmarked;
+    btn.classList.toggle('is-active', active);
+    btn.setAttribute('aria-pressed', String(active));
+    if (likeCount && data.data?.count !== undefined) {
+      likeCount.textContent = String(data.data.count);
+    }
+  }
+
+  async function initState() {
+    try {
+      const [likesRes, bookmarksRes] = await Promise.all([
+        fetch(`/api/likes?slug=${encodeURIComponent(slug)}`),
+        fetch(`/api/bookmarks?slug=${encodeURIComponent(slug)}`),
+      ]);
+      const likesData = await likesRes.json();
+      const bookmarksData = await bookmarksRes.json();
+      if (likesData.success) {
+        likeBtn?.classList.toggle('is-active', likesData.data.liked);
+        likeBtn?.setAttribute('aria-pressed', String(likesData.data.liked));
+        if (likeCount) likeCount.textContent = String(likesData.data.count);
+      }
+      if (bookmarksData.success) {
+        bookmarkBtn?.classList.toggle('is-active', bookmarksData.data.bookmarked);
+        bookmarkBtn?.setAttribute('aria-pressed', String(bookmarksData.data.bookmarked));
+      }
+    } catch (error) {
+      console.error('Failed to load like/bookmark state:', error);
+    }
+  }
+
+  likeBtn?.addEventListener('click', () => toggle('/api/likes', likeBtn));
+  bookmarkBtn?.addEventListener('click', () => toggle('/api/bookmarks', bookmarkBtn));
+
+  initState();
+</script>

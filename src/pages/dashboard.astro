@@ -1,6 +1,49 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
+import { createDatabase, type Env } from '../db';
+import { Story } from '../db/schema';
+
+const env = (Astro.locals as { env: Env }).env;
+let publishedStories: any[] = [];
+if (env) {
+  try {
+    await createDatabase(env);
+    publishedStories = await Story.find({ status: 'PUBLISHED' })
+      .populate('authorId', 'name avatar')
+      .sort({ publishedAt: -1 });
+  } catch (error) {
+    console.error('Failed to load published stories for dashboard feed:', error);
+  }
+}
+const gradientPairs: Array<[string, string]> = [
+  ['#cc785c', '#e8a55a'],
+  ['#5db8a6', '#3d8b7a'],
+  ['#6366f1', '#8b5cf6'],
+  ['#f59e0b', '#d97706'],
+];
+const fallbackCovers = [
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=400&q=80',
+];
+const storyInitials = (name: string) =>
+  name
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+const storyDate = (story: any) =>
+  new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+const storyExcerpt = (story: any) => {
+  const text = story.content ? story.content.replace(/<[^>]+>/g, '').trim() : '';
+  return text.length > 140 ? text.substring(0, 140) + '...' : text || 'No excerpt available';
+};
 ---
 
 <Layout title="Dashboard — BigBlog" description="Your personalized feed and writing dashboard.">
@@ -27,343 +70,70 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
 
       <!-- Feed Content -->
       <div class="feed-content" id="feed-content">
-        <!-- Article Card 1 -->
-        <article class="feed-card">
-          <div class="feed-card-body">
-            <div class="feed-card-author">
-              <div
-                class="feed-card-avatar"
-                style="background: linear-gradient(135deg, #cc785c, #e8a55a);"
-              >
-                <span>LG</span>
-              </div>
-              <div class="feed-card-author-info">
-                <span class="feed-card-author-name">Leo Godin</span>
-                <span class="feed-card-date">Jul 28</span>
-              </div>
-            </div>
-            <div class="feed-card-content-row">
-              <div class="feed-card-text">
-                <h2 class="feed-card-title">The Future of AI is Not What You Think</h2>
-                <p class="feed-card-excerpt">
-                  Exploring the nuances of artificial intelligence beyond the hype — what developers
-                  and researchers actually see on the horizon.
-                </p>
-                <div class="feed-card-footer">
-                  <div class="feed-card-meta">
-                    <span class="feed-card-star">⭐</span>
-                    <span class="feed-card-stat">6.1K</span>
-                    <span class="feed-card-stat">💬 193</span>
-                    <span class="feed-card-stat">🔄 147</span>
+        {
+          publishedStories.map((story, index) => (
+            <article class="feed-card">
+              <div class="feed-card-body">
+                <div class="feed-card-author">
+                  <div
+                    class="feed-card-avatar"
+                    style={`background: linear-gradient(135deg, ${
+                      gradientPairs[index % gradientPairs.length][0]
+                    }, ${gradientPairs[index % gradientPairs.length][1]});`}
+                  >
+                    <span>{storyInitials(story.authorId?.name || 'Anonymous')}</span>
                   </div>
-                  <div class="feed-card-actions">
-                    <button class="feed-card-action" aria-label="Dismiss">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path
-                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                        ></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="Save">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="More">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"
-                        ></circle><circle cx="5" cy="12" r="1"></circle></svg
-                      >
-                    </button>
+                  <div class="feed-card-author-info">
+                    <span class="feed-card-author-name">{story.authorId?.name || 'Anonymous'}</span>
+                    <span class="feed-card-date">{storyDate(story)}</span>
                   </div>
                 </div>
-              </div>
-              <div class="feed-card-thumbnail">
-                <img
-                  src="https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=400&q=80"
-                  alt="AI visualization"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- Article Card 2 -->
-        <article class="feed-card">
-          <div class="feed-card-body">
-            <div class="feed-card-author">
-              <div
-                class="feed-card-avatar"
-                style="background: linear-gradient(135deg, #5db8a6, #3d8b7a);"
-              >
-                <span>DP</span>
-              </div>
-              <div class="feed-card-author-info">
-                <span class="feed-card-source">In <strong>Books Are Our Superpower</strong> by</span
-                >
-                <span class="feed-card-author-name">Desiree Peralta</span>
-                <span class="feed-card-verified">✓</span>
-                <span class="feed-card-date">· Jul 25</span>
-              </div>
-            </div>
-            <div class="feed-card-content-row">
-              <div class="feed-card-text">
-                <h2 class="feed-card-title">Building Resilient Distributed Systems</h2>
-                <p class="feed-card-excerpt">
-                  Lessons learned from scaling microservices at a major tech company — the patterns
-                  that saved us.
-                </p>
-                <div class="feed-card-footer">
-                  <div class="feed-card-meta">
-                    <span class="feed-card-star">⭐</span>
-                    <span class="feed-card-stat">12.1K</span>
-                    <span class="feed-card-stat">💬 676</span>
-                    <span class="feed-card-stat">🔄 580</span>
+                <div class="feed-card-content-row">
+                  <div class="feed-card-text">
+                    <h2 class="feed-card-title">
+                      <a href={`/p/${story.slug}`} class="feed-card-title-link">
+                        {story.title}
+                      </a>
+                    </h2>
+                    <p class="feed-card-excerpt">{storyExcerpt(story)}</p>
+                    <div class="feed-card-footer">
+                      <div class="feed-card-meta">
+                        <span class="feed-card-stat">{story.views || 0} views</span>
+                        <span class="feed-card-stat">·</span>
+                        <span class="feed-card-stat">{story.reads || 0} reads</span>
+                      </div>
+                      <div class="feed-card-actions">
+                        <button class="feed-card-action" aria-label="Save">
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                          >
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div class="feed-card-actions">
-                    <button class="feed-card-action" aria-label="Dismiss">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path
-                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                        ></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="Save">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="More">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"
-                        ></circle><circle cx="5" cy="12" r="1"></circle></svg
-                      >
-                    </button>
-                  </div>
+                  <a
+                    href={`/p/${story.slug}`}
+                    class="feed-card-thumbnail"
+                    aria-label={`Read ${story.title}`}
+                  >
+                    <img
+                      src={fallbackCovers[index % fallbackCovers.length]}
+                      alt={story.title}
+                      loading="lazy"
+                    />
+                  </a>
                 </div>
               </div>
-              <div class="feed-card-thumbnail">
-                <img
-                  src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80"
-                  alt="Server infrastructure"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- Article Card 3 -->
-        <article class="feed-card">
-          <div class="feed-card-body">
-            <div class="feed-card-note">
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.5"
-                ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
-                ></path><polyline points="14 2 14 8 20 8"></polyline></svg
-              >
-              <span>Because you follow <strong>Technology</strong></span>
-            </div>
-            <div class="feed-card-author">
-              <div
-                class="feed-card-avatar"
-                style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"
-              >
-                <span>ML</span>
-              </div>
-              <div class="feed-card-author-info">
-                <span class="feed-card-source">In <strong>The Daily Draft</strong> by</span>
-                <span class="feed-card-author-name">Matt Lillywhite</span>
-                <span class="feed-card-date">· Jul 22</span>
-              </div>
-            </div>
-            <div class="feed-card-content-row">
-              <div class="feed-card-text">
-                <h2 class="feed-card-title">
-                  I'll Instantly Know A Writer Used ChatGPT When I See This
-                </h2>
-                <p class="feed-card-excerpt">
-                  It's pretty damn obvious now that I know what to look for.
-                </p>
-                <div class="feed-card-footer">
-                  <div class="feed-card-meta">
-                    <span class="feed-card-star">⭐</span>
-                    <span class="feed-card-stat">17.1K</span>
-                    <span class="feed-card-stat">💬 721</span>
-                    <span class="feed-card-stat">🔄 201</span>
-                  </div>
-                  <div class="feed-card-actions">
-                    <button class="feed-card-action" aria-label="Dismiss">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path
-                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                        ></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="Save">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="More">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"
-                        ></circle><circle cx="5" cy="12" r="1"></circle></svg
-                      >
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="feed-card-thumbnail">
-                <img
-                  src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80"
-                  alt="Writer at desk"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <!-- Article Card 4 -->
-        <article class="feed-card">
-          <div class="feed-card-body">
-            <div class="feed-card-author">
-              <div
-                class="feed-card-avatar"
-                style="background: linear-gradient(135deg, #f59e0b, #d97706);"
-              >
-                <span>AS</span>
-              </div>
-              <div class="feed-card-author-info">
-                <span class="feed-card-author-name">Anna Saraiva</span>
-                <span class="feed-card-date">Jul 20</span>
-              </div>
-            </div>
-            <div class="feed-card-content-row">
-              <div class="feed-card-text">
-                <h2 class="feed-card-title">The Psychology of Clean Code</h2>
-                <p class="feed-card-excerpt">
-                  Why readable code matters more than clever code — insights from cognitive science
-                  applied to software engineering.
-                </p>
-                <div class="feed-card-footer">
-                  <div class="feed-card-meta">
-                    <span class="feed-card-star">⭐</span>
-                    <span class="feed-card-stat">8.4K</span>
-                    <span class="feed-card-stat">💬 312</span>
-                    <span class="feed-card-stat">🔄 89</span>
-                  </div>
-                  <div class="feed-card-actions">
-                    <button class="feed-card-action" aria-label="Dismiss">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path
-                          d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"
-                        ></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="Save">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg
-                      >
-                    </button>
-                    <button class="feed-card-action" aria-label="More">
-                      <svg
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        ><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"
-                        ></circle><circle cx="5" cy="12" r="1"></circle></svg
-                      >
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div class="feed-card-thumbnail">
-                <img
-                  src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=400&q=80"
-                  alt="Code on screen"
-                  loading="lazy"
-                />
-              </div>
-            </div>
-          </div>
-        </article>
+            </article>
+          ))
+        }
       </div>
     </main>
 
@@ -988,6 +758,18 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
 
   .feed-card-title:hover {
     color: var(--color-primary);
+  }
+
+  .feed-card-title-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .feed-card-title-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
   }
 
   .feed-card-excerpt {

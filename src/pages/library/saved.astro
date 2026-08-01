@@ -1,16 +1,193 @@
 ---
 import LibraryLayout from '../../components/library/LibraryLayout.astro';
 import EmptyState from '../../components/library/EmptyState.astro';
+import { createDatabase, type Env } from '../../db';
+import { articleBookmarks, Story } from '../../db/schema';
+
+const env = (Astro.locals as { env: Env }).env;
+let savedStories: any[] = [];
+if (env) {
+  try {
+    await createDatabase(env);
+    const sessionId = Astro.cookies.get('bb_session')?.value;
+    if (sessionId) {
+      const bookmarks = await articleBookmarks.find({ sessionId }).sort({ createdAt: -1 }).lean();
+      if (bookmarks.length) {
+        const slugs = bookmarks.map((b: any) => b.articleSlug);
+        const stories = await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
+          .populate('authorId', 'name avatar')
+          .lean();
+        const storyBySlug = new Map(stories.map((s: any) => [s.slug, s]));
+        savedStories = bookmarks
+          .map((b: any) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
+          .filter((s: any) => s.title);
+      }
+    }
+  } catch (error) {
+    console.error('Failed to load saved stories:', error);
+  }
+}
+const formatSavedAt = (date: Date) =>
+  new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 ---
 
 <LibraryLayout
-  title="Saved Lists — Library"
-  description="Lists you've saved from other users."
+  title="Saved Stories — Library"
+  description="Stories you've bookmarked."
   activeTab="saved-lists"
 >
-  <EmptyState
-    title="No saved lists yet"
-    description="Save lists from other writers to revisit them later."
-    icon="saved"
-  />
+  {
+    savedStories.length > 0 ? (
+      <div class="saved-list">
+        {savedStories.map((story) => (
+          <article class="saved-card" data-slug={story.slug}>
+            <div class="saved-card-content">
+              <h2 class="saved-card-title">
+                <a href={`/p/${story.slug}`}>{story.title}</a>
+              </h2>
+              <p class="saved-card-excerpt">
+                {story.content
+                  ? story.content
+                      .replace(/<[^>]+>/g, '')
+                      .trim()
+                      .substring(0, 160) + '...'
+                  : 'No excerpt available'}
+              </p>
+              <div class="saved-card-meta">
+                <span>{story.authorId?.name || 'Anonymous'}</span>
+                <span class="meta-divider">·</span>
+                <span>Saved {formatSavedAt(story.savedAt)}</span>
+              </div>
+            </div>
+            <button
+              class="saved-remove"
+              data-remove-slug={story.slug}
+              aria-label={`Remove ${story.title} from saved`}
+            >
+              Remove
+            </button>
+          </article>
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title="No saved stories yet"
+        description="Bookmark stories while reading to revisit them here."
+        icon="saved"
+      />
+    )
+  }
 </LibraryLayout>
+
+<script>
+  document.querySelectorAll('[data-remove-slug]').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const slug = btn.getAttribute('data-remove-slug');
+      if (!slug) return;
+      try {
+        const res = await fetch('/api/bookmarks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ slug }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          const card = document.querySelector(`.saved-card[data-slug="${slug}"]`);
+          card?.remove();
+        }
+      } catch (error) {
+        console.error('Failed to remove bookmark:', error);
+      }
+    });
+  });
+</script>
+
+<style>
+  .saved-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .saved-card {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-xl) 0;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .saved-card:first-child {
+    padding-top: 0;
+  }
+
+  .saved-card-content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .saved-card-title {
+    font-family: var(--font-serif);
+    font-size: var(--text-title-md);
+    font-weight: 700;
+    margin: 0 0 var(--space-xs) 0;
+    line-height: 1.3;
+  }
+
+  .saved-card-title a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .saved-card-title a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+
+  .saved-card-excerpt {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    margin: 0 0 var(--space-sm) 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .saved-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .meta-divider {
+    opacity: 0.6;
+  }
+
+  .saved-remove {
+    flex-shrink: 0;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-muted);
+    background: none;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-pill);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all var(--duration-fast);
+    white-space: nowrap;
+  }
+
+  .saved-remove:hover {
+    color: var(--color-error);
+    border-color: var(--color-error);
+    background: rgba(198, 69, 69, 0.05);
+  }
+</style>

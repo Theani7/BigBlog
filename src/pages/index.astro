@@ -2,10 +2,41 @@
 import Layout from '../layouts/Layout.astro';
 import { canonicalUrl } from '../lib/canonical';
 import { homepageSchemas } from '../lib/schema';
+import { createDatabase, type Env } from '../db';
+import { Story } from '../db/schema';
 
 const pageTitle = 'Home';
 const pageDescription = 'A place to read, write, and deepen your understanding';
 const structuredData = homepageSchemas();
+
+const env = (Astro.locals as { env: Env }).env;
+let publishedStories: any[] = [];
+if (env) {
+  try {
+    await createDatabase(env);
+    publishedStories = await Story.find({ status: 'PUBLISHED' })
+      .populate('authorId', 'name avatar')
+      .sort({ publishedAt: -1 });
+  } catch (error) {
+    console.error('Failed to load published stories for homepage:', error);
+  }
+}
+const featuredStory = publishedStories[0] ?? null;
+const secondaryStories = publishedStories.slice(1, 3);
+const fallbackCover =
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80';
+const fallbackCoverSecondary =
+  'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
+const formatStoryDate = (story: any) =>
+  new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+const storyExcerpt = (story: any) => {
+  const text = story.content ? story.content.replace(/<[^>]+>/g, '').trim() : '';
+  return text.length > 120 ? text.substring(0, 120) + '...' : text || 'No excerpt available';
+};
 ---
 
 <Layout
@@ -41,69 +72,53 @@ const structuredData = homepageSchemas();
       </div>
 
       <div class="editorial-grid">
-        <!-- Main Featured Article -->
-        <article class="card-featured">
-          <a href="#" class="card-link-overlay" aria-label="Read The Architecture of Tomorrow"></a>
-          <div class="card-image-wrapper">
-            <img
-              src="https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80"
-              alt="Tech circuit board"
-            />
-          </div>
-          <div class="card-content">
-            <div class="card-meta">
-              <span class="card-tag">Technology</span>
-              <span class="card-date">Oct 12, 2026</span>
-            </div>
-            <h3 class="card-title">The Architecture of Tomorrow</h3>
-            <p class="card-excerpt">
-              How quantum computing and advanced neural networks are reshaping the physical
-              infrastructure of our world, from server farms to city grids.
-            </p>
-            <div class="card-author">By Dr. Elena Rostova</div>
-          </div>
-        </article>
+        {
+          featuredStory ? (
+            <article class="card-featured">
+              <a
+                href={`/p/${featuredStory.slug}`}
+                class="card-link-overlay"
+                aria-label={`Read ${featuredStory.title}`}
+              />
+              <div class="card-image-wrapper">
+                <img src={fallbackCover} alt={featuredStory.title} />
+              </div>
+              <div class="card-content">
+                <div class="card-meta">
+                  <span class="card-tag">Featured</span>
+                  <span class="card-date">{formatStoryDate(featuredStory)}</span>
+                </div>
+                <h3 class="card-title">{featuredStory.title}</h3>
+                <p class="card-excerpt">{storyExcerpt(featuredStory)}</p>
+                <div class="card-author">By {featuredStory.authorId?.name || 'Anonymous'}</div>
+              </div>
+            </article>
+          ) : null
+        }
 
         <!-- Secondary Articles -->
         <div class="secondary-articles">
-          <article class="card-secondary">
-            <a href="#" class="card-link-overlay" aria-label="Read Mapping the Human Connectome"
-            ></a>
-            <div class="card-image-wrapper">
-              <img
-                src="https://images.unsplash.com/photo-1559757175-5700dd521baf?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Brain mapping"
-              />
-            </div>
-            <div class="card-content">
-              <div class="card-meta">
-                <span class="card-tag">Science</span>
-              </div>
-              <h3 class="card-title">Mapping the Human Connectome</h3>
-              <p class="card-excerpt">
-                A new initiative aims to chart every neural connection in the human brain.
-              </p>
-            </div>
-          </article>
-
-          <article class="card-secondary">
-            <a href="#" class="card-link-overlay" aria-label="Read The Search for Exoplanets"></a>
-            <div class="card-image-wrapper">
-              <img
-                src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Space cosmos"
-              />
-            </div>
-            <div class="card-content">
-              <div class="card-meta">
-                <span class="card-tag">Cosmos</span>
-              </div>
-              <h3 class="card-title">The Search for Habitable Exoplanets</h3>
-              <p class="card-excerpt">
-                Recent discoveries by the James Webb telescope hint at water-rich atmospheres.
-              </p>
-            </div>
-          </article>
+          {
+            secondaryStories.map((story) => (
+              <article class="card-secondary">
+                <a
+                  href={`/p/${story.slug}`}
+                  class="card-link-overlay"
+                  aria-label={`Read ${story.title}`}
+                />
+                <div class="card-image-wrapper">
+                  <img src={fallbackCoverSecondary} alt={story.title} />
+                </div>
+                <div class="card-content">
+                  <div class="card-meta">
+                    <span class="card-tag">Latest</span>
+                  </div>
+                  <h3 class="card-title">{story.title}</h3>
+                  <p class="card-excerpt">{storyExcerpt(story)}</p>
+                </div>
+              </article>
+            ))
+          }
         </div>
       </div>
     </div>
