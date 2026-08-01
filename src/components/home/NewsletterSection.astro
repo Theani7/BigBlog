@@ -1,0 +1,77 @@
+---
+
+---
+
+<section class="newsletter-band" aria-label="Newsletter">
+  <div class="container newsletter-inner">
+    <p class="section-eyebrow section-eyebrow--on-dark">Newsletter</p>
+    <h2 class="section-heading section-heading--on-dark">Stay in the loop.</h2>
+    <p class="newsletter-desc">
+      Get the latest posts delivered to your inbox. Join 1,000+ developers who read BigBlog every
+      week.
+    </p>
+    <form class="newsletter-form" onsubmit="event.preventDefault();">
+      <label for="newsletter-email" class="sr-only">Email address</label>
+      <input
+        id="newsletter-email"
+        type="email"
+        placeholder="your@email.com"
+        required
+        class="newsletter-input"
+        aria-label="Email address"
+      />
+      <button type="submit" class="btn btn-primary">Subscribe</button>
+    </form>
+  </div>
+</section>
+
+<style>
+  .newsletter-band {
+    padding: var(--space-xxl) 0;
+    background: var(--bg-surface-dark);
+  }
+
+  .newsletter-inner {
+    max-width: 32rem;
+    margin: 0 auto;
+    text-align: center;
+  }
+
+  .newsletter-desc {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--color-on-dark-soft);
+    margin: 0 0 var(--space-xl);
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: var(--space-sm);
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .newsletter-input {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    padding: 10px 14px;
+    height: 40px;
+    border: 1px solid var(--bg-surface-dark-elevated);
+    border-radius: var(--radius-md);
+    background: var(--bg-surface-dark-elevated);
+    color: var(--color-on-dark);
+    min-width: 240px;
+    flex: 1;
+  }
+
+  .newsletter-input::placeholder {
+    color: var(--color-on-dark-soft);
+  }
+
+  .newsletter-input:focus {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+</style>
