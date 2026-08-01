@@ -42,6 +42,41 @@ import Layout from '../layouts/Layout.astro';
       </div>
 
       <div class="write-body">
+        <div id="floating-action-menu" class="floating-action-menu">
+          <button
+            id="floating-toggle-btn"
+            class="floating-toggle-btn"
+            aria-label="Add content"
+            type="button"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              ><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"
+              ></line></svg
+            >
+          </button>
+          <div id="floating-actions" class="floating-actions">
+            <button id="floating-image-btn" aria-label="Add image" type="button">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                ><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle
+                  cx="8.5"
+                  cy="8.5"
+                  r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg
+              >
+            </button>
+          </div>
+        </div>
         <!-- Quill Editor Container -->
         <div id="quill-editor"></div>
       </div>
@@ -114,6 +149,68 @@ import Layout from '../layouts/Layout.astro';
       // Enable Markdown shortcuts
       new window.QuillMarkdown(quill, {
         ignoreTags: ['strikethrough', 'image', 'video'], // Ignore some complex or buggy tags if needed
+      });
+
+      // Medium-style Floating Action Menu
+      const floatMenu = document.getElementById('floating-action-menu');
+      const floatToggleBtn = document.getElementById('floating-toggle-btn');
+      const floatActions = document.getElementById('floating-actions');
+      const floatImgBtn = document.getElementById('floating-image-btn');
+
+      let currentRange = null;
+
+      const hideFloatMenu = () => {
+        if (floatMenu) floatMenu.style.display = 'none';
+        if (floatActions) floatActions.style.display = 'none';
+        if (floatToggleBtn) floatToggleBtn.classList.remove('open');
+      };
+
+      quill.on('editor-change', (eventName) => {
+        if (eventName === 'selection-change' || eventName === 'text-change') {
+          const range = quill.getSelection();
+          if (range && range.length === 0) {
+            const [line] = quill.getLine(range.index);
+            // Quill empty line usually has length 1 (a newline)
+            if (line && line.length() === 1 && !line.domNode.closest('.ql-code-block')) {
+              const bounds = quill.getBounds(range.index);
+              if (bounds && floatMenu) {
+                floatMenu.style.display = 'flex';
+                // Center vertically on the line (subtracting half button height)
+                floatMenu.style.top = `${bounds.top + bounds.height / 2 - 16}px`;
+                currentRange = range;
+              }
+            } else {
+              hideFloatMenu();
+            }
+          } else {
+            hideFloatMenu();
+          }
+        }
+      });
+
+      floatToggleBtn?.addEventListener('click', () => {
+        const isOpen = floatToggleBtn.classList.toggle('open');
+        floatActions.style.display = isOpen ? 'flex' : 'none';
+      });
+
+      floatImgBtn?.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.setAttribute('type', 'file');
+        input.setAttribute('accept', 'image/*');
+        input.click();
+
+        input.onchange = () => {
+          const file = input.files[0];
+          if (file && currentRange) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              quill.insertEmbed(currentRange.index, 'image', e.target.result);
+              quill.setSelection(currentRange.index + 1);
+              hideFloatMenu();
+            };
+            reader.readAsDataURL(file);
+          }
+        };
       });
     }
 
@@ -398,9 +495,80 @@ import Layout from '../layouts/Layout.astro';
   }
 
   .write-body {
+    position: relative;
     flex-grow: 1;
     display: flex;
     flex-direction: column;
+  }
+
+  /* Floating Action Menu */
+  .floating-action-menu {
+    position: absolute;
+    left: -48px;
+    z-index: 50;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    transition: top 0.1s ease;
+  }
+
+  .floating-toggle-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    color: var(--color-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .floating-toggle-btn:hover {
+    border-color: var(--color-ink);
+    color: var(--color-ink);
+  }
+
+  .floating-toggle-btn.open {
+    transform: rotate(45deg);
+  }
+
+  .floating-actions {
+    display: none;
+    gap: 8px;
+  }
+
+  .floating-actions button {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas);
+    color: var(--color-ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition:
+      background 0.2s ease,
+      color 0.2s ease,
+      border-color 0.2s ease;
+  }
+
+  .floating-actions button:hover {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+  }
+
+  @media (max-width: 768px) {
+    .floating-action-menu {
+      left: -12px;
+    }
   }
 
   /* Override Quill Styles to match BigBlog */
