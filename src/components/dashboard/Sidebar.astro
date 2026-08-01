@@ -10,7 +10,7 @@ interface Props {
 const { activePage = 'home' } = Astro.props;
 ---
 
-<aside class="sidebar" id="sidebar">
+<aside class="sidebar" id="sidebar" transition:persist="sidebar">
   <nav class="sidebar-nav" aria-label="Dashboard navigation">
     <ul class="sidebar-links">
       <li>
