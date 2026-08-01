@@ -1,7 +1,7 @@
 :root {
   /* ── Brand & Accent ── */
-  --color-primary: #1e1033;
-  --color-primary-active: #160b26;
+  --color-primary: #cc785c;
+  --color-primary-active: #a9583e;
   --color-primary-disabled: #d9d4e4;
   --color-accent-teal: #5db8a6;
   --color-accent-amber: #e8a55a;
@@ -37,7 +37,7 @@
   --bg-secondary: var(--bg-surface-card);
   --bg-tertiary: var(--bg-surface-soft);
   --bg-inverse: var(--bg-surface-dark);
-  
+
   --text-primary: var(--color-ink);
   --text-secondary: var(--color-body);
   --text-tertiary: var(--color-muted);
@@ -84,16 +84,18 @@
   --space-32: var(--space-section);
 
   /* ── Shadow ── */
-  --shadow-sm: 0 1px 3px rgba(20,20,19,0.08);
-  --shadow-md: 0 1px 3px rgba(20,20,19,0.08);
-  --shadow-lg: 0 1px 3px rgba(20,20,19,0.08);
-  --shadow-xl: 0 1px 3px rgba(20,20,19,0.08);
+  --shadow-sm: 0 1px 3px rgba(20, 20, 19, 0.08);
+  --shadow-md: 0 1px 3px rgba(20, 20, 19, 0.08);
+  --shadow-lg: 0 1px 3px rgba(20, 20, 19, 0.08);
+  --shadow-xl: 0 1px 3px rgba(20, 20, 19, 0.08);
   --shadow-none: none;
 
   /* ── Typography ── */
-  --font-sans: 'StyreneB', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-sans:
+    'StyreneB', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', monospace;
-  --font-serif: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', 'EB Garamond', 'Times New Roman', serif;
+  --font-serif:
+    'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', 'EB Garamond', 'Times New Roman', serif;
 
   --text-display-xl: 64px;
   --text-display-lg: 48px;
@@ -107,7 +109,7 @@
   --text-caption: 13px;
   --text-caption-uppercase: 12px;
   --text-code: 14px;
-  
+
   --text-xs: var(--text-caption);
   --text-sm: var(--text-body-sm);
   --text-base: var(--text-body-md);
@@ -167,4 +169,3 @@
   --duration-slow: 400ms;
   --ease-default: cubic-bezier(0.4, 0, 0.2, 1);
 }
-

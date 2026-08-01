@@ -1,0 +1,110 @@
+.read-layout {
+  display: flex;
+  flex-direction: row;
+  max-width: 100%;
+  margin: 0 auto;
+  align-items: flex-start; /* Ensures children define their own heights naturally */
+}
+@media (max-width: 768px) {
+  .read-layout {
+    flex-direction: column;
+  }
+}
+
+.post-container {
+  max-width: 720px;
+  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0; /* Prevents flex blowout */
+  margin: 0 auto;
+  padding: var(--space-section) var(--space-lg);
+  background-color: var(--bg-canvas);
+  display: block; /* Remove flex column to avoid internal height restriction bugs */
+}
+
+/* Content Formatting */
+.post-content {
+  font-family: var(--font-sans);
+  font-size: var(--text-body-md);
+  line-height: var(--leading-normal);
+  color: var(--color-body);
+  padding: 0;
+}
+
+.post-content :global(.ql-editor) {
+  height: auto !important;
+  min-height: 200px;
+  overflow-y: visible !important;
+}
+
+.post-content :global(h1),
+.post-content :global(h2),
+.post-content :global(h3) {
+  font-family: var(--font-serif);
+  font-weight: 400;
+  letter-spacing: -0.5px;
+  margin-top: 2em;
+  margin-bottom: 0.75em;
+  color: var(--color-ink);
+}
+
+.post-content :global(h1) {
+  font-size: var(--text-display-md);
+}
+.post-content :global(h2) {
+  font-size: var(--text-display-sm);
+}
+.post-content :global(h3) {
+  font-size: var(--text-title-lg);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.post-content :global(p) {
+  margin-bottom: 1.55em;
+}
+
+.post-content :global(img) {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  margin: var(--space-xl) 0;
+}
+
+.post-content :global(blockquote) {
+  border-left: 2px solid var(--color-ink);
+  padding-left: var(--space-lg);
+  margin-left: 0;
+  font-style: italic;
+  color: var(--color-body-strong);
+  font-family: var(--font-serif);
+  font-size: var(--text-title-md);
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: var(--space-sm) var(--space-lg);
+  background: var(--bg-surface-dark);
+  color: var(--color-on-dark);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-sm);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+  z-index: var(--z-toast);
+  transition:
+    opacity var(--duration-normal) var(--ease-default),
+    transform var(--duration-normal) var(--ease-default);
+}
+
+.toast[hidden] {
+  display: block;
+  opacity: 0;
+  transform: translateX(-50%) translateY(1rem);
+  pointer-events: none;
+}
