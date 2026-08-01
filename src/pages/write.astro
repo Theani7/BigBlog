@@ -28,8 +28,11 @@ import Layout from '../layouts/Layout.astro';
   </div>
 </Layout>
 
-<!-- Load Quill.js -->
+<!-- Load Quill.js and Markdown extension -->
 <script is:inline src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+<script
+  is:inline
+  src="https://cdn.jsdelivr.net/npm/quilljs-markdown@latest/dist/quilljs-markdown.js"></script>
 
 <script is:inline>
   // Initialize Quill Editor
@@ -77,6 +80,11 @@ import Layout from '../layouts/Layout.astro';
     // Native Drag and Drop is supported automatically by Quill (inserts as Base64 images).
     // In a real production app, you would intercept the image drop, upload it to S3/Cloudflare R2,
     // and replace the Base64 src with the real image URL.
+
+    // Enable Markdown shortcuts
+    new window.QuillMarkdown(quill, {
+      ignoreTags: ['strikethrough', 'image', 'video'], // Ignore some complex or buggy tags if needed
+    });
   }
 
   // Handle Save / Publish Logic
