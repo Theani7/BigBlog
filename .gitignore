@@ -5,6 +5,7 @@ node_modules/
 dist/
 .vercel/
 .astro/
+tsconfig.tsbuildinfo
 
 # environment
 .env
