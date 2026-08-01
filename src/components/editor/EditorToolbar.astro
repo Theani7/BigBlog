@@ -5,9 +5,9 @@ export interface Props {
 ---
 
 <div class="write-toolbar">
-  <div class="toolbar-left" style="display: flex; align-items: center; gap: 12px;">
+  <div class="toolbar-left" style="display: flex; align-items: center; gap: 16px;">
     <span class="draft-status" id="draft-status">Draft in progress</span>
-    <span class="toolbar-divider" style="color: var(--color-hairline); font-size: 14px;">|</span>
+    <span class="toolbar-divider" style="color: var(--border-color); font-size: 14px;">|</span>
     <span class="word-count" id="word-count" style="color: var(--color-muted); font-size: 13px;"
       >0 words &bull; 0 min read</span
     >
@@ -23,12 +23,19 @@ export interface Props {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-sm) var(--space-md);
-    background-color: var(--color-surface-soft);
-    border-bottom: 1px solid var(--color-hairline);
+    padding: var(--space-md) var(--space-xl);
+    background: rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
     position: sticky;
     top: 64px; /* Below the main site header */
     z-index: 10;
+  }
+
+  [data-theme='dark'] .write-toolbar {
+    background: rgba(18, 18, 18, 0.75);
   }
 
   .draft-status {

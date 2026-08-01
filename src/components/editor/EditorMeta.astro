@@ -111,21 +111,26 @@ export interface Props {
   }
 
   .add-cover-btn {
-    background: transparent;
-    border: none;
-    color: var(--color-muted-soft);
+    background: var(--bg-surface-soft);
+    border: 1px dashed var(--border-color);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
     font-family: var(--font-sans);
     font-size: 14px;
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     cursor: pointer;
-    padding: 8px 0;
-    transition: color 0.2s ease;
+    padding: var(--space-xl) var(--space-md);
+    width: 100%;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   .add-cover-btn:hover {
-    color: var(--color-ink);
+    background: var(--bg-tertiary);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
   }
 
   #cover-image-preview {
@@ -189,32 +194,46 @@ export interface Props {
 
   :global(.tag-chip) {
     background: var(--bg-surface-soft);
-    color: var(--color-ink);
-    padding: 4px 12px;
-    border-radius: 16px;
-    font-size: 14px;
+    color: var(--text-primary);
+    padding: 6px 14px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 500;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     font-family: var(--font-sans);
-    border: 1px solid var(--color-hairline);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  :global(.tag-chip:hover) {
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   }
 
   :global(.tag-chip button) {
-    background: none;
+    background: var(--bg-tertiary);
     border: none;
-    color: var(--color-muted-soft);
+    color: var(--text-tertiary);
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
     cursor: pointer;
     padding: 0;
-    font-size: 16px;
+    font-size: 14px;
     line-height: 1;
     display: flex;
     align-items: center;
-    transition: color 0.2s ease;
+    justify-content: center;
+    transition: all 0.2s ease;
   }
 
   :global(.tag-chip button:hover) {
-    color: var(--color-error);
+    background: var(--color-error);
+    color: white;
   }
 
   .write-tags-input {
