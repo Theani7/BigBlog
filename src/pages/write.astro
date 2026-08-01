@@ -6,19 +6,32 @@ import Layout from '../layouts/Layout.astro';
   <!-- Load Quill.js CSS (Bubble theme for a Medium-like popup toolbar) -->
   <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
 
-  <div class="write-container" id="editor-container" style="display: none;">
-    <div class="write-header">
-      <input type="text" class="write-title-input" id="post-title" placeholder="Title" />
-      <div class="write-actions">
-        <button class="btn btn-secondary" id="save-draft-btn">Save Draft</button>
-        <button class="btn btn-primary" id="publish-btn">Publish</button>
+  <div class="write-layout">
+    <div class="write-toolbar">
+      <div class="toolbar-left">
+        <span class="draft-status" id="draft-status">Draft in progress</span>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-secondary btn-sm" id="save-draft-btn">Save Draft</button>
+        <button class="btn btn-primary btn-sm" id="publish-btn">Publish</button>
       </div>
     </div>
 
-    <div class="write-body">
-      <!-- Quill Editor Container -->
-      <div id="quill-editor">
-        <p>Tell your story...</p>
+    <div class="write-container" id="editor-container" style="display: none;">
+      <input
+        type="text"
+        class="write-title-input"
+        id="post-title"
+        placeholder="Title"
+        autocomplete="off"
+        spellcheck="false"
+      />
+
+      <div class="write-body">
+        <!-- Quill Editor Container -->
+        <div id="quill-editor">
+          <p>Tell your story...</p>
+        </div>
       </div>
     </div>
   </div>
@@ -158,68 +171,100 @@ import Layout from '../layouts/Layout.astro';
     color: var(--color-muted);
   }
 
-  .write-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: var(--space-xl) var(--space-md);
+  .write-layout {
+    background-color: var(--color-canvas);
     min-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
   }
 
-  .write-header {
+  .write-toolbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xl);
-    flex-wrap: wrap;
-    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background-color: var(--color-surface-soft);
+    border-bottom: 1px solid var(--color-hairline);
+    position: sticky;
+    top: 64px; /* Below the main site header */
+    z-index: 10;
+  }
+
+  .draft-status {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    color: var(--color-muted-soft);
+  }
+
+  .toolbar-right {
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .btn-sm {
+    padding: 0.375rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  .write-container {
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+    padding: var(--space-2xl) var(--space-md) var(--space-3xl);
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   .write-title-input {
-    flex: 1;
-    min-width: 200px;
+    width: 100%;
     font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 4vw, 3.5rem);
+    font-size: clamp(2.5rem, 5vw, 4rem);
     border: none;
     background: transparent;
     color: var(--color-ink);
     outline: none;
-    letter-spacing: -1px;
-    line-height: 1.1;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+    padding: 0;
+    margin-bottom: var(--space-lg);
   }
 
   .write-title-input::placeholder {
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--color-muted-soft);
+    opacity: 0.5;
   }
 
   [data-theme='dark'] .write-title-input::placeholder {
     color: rgba(255, 255, 255, 0.2);
   }
 
-  .write-actions {
-    display: flex;
-    gap: var(--space-sm);
-  }
-
   .write-body {
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    min-height: 50vh;
   }
 
   /* Override Quill Styles to match BigBlog */
   :global(.ql-editor) {
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    line-height: 1.8;
-    color: var(--color-ink);
+    font-family: var(--font-serif);
+    font-size: 1.375rem;
+    line-height: 1.6;
+    color: var(--color-body-strong);
     padding: 0;
-    min-height: 50vh;
+    flex-grow: 1;
+  }
+
+  :global(.ql-editor p) {
+    margin-bottom: 1.5em;
   }
 
   :global(.ql-editor.ql-blank::before) {
-    color: rgba(0, 0, 0, 0.2);
+    color: var(--color-muted-soft);
+    opacity: 0.7;
     font-style: normal;
     left: 0;
+    font-family: var(--font-serif);
   }
 
   :global([data-theme='dark'] .ql-editor.ql-blank::before) {
@@ -228,5 +273,18 @@ import Layout from '../layouts/Layout.astro';
 
   :global(.ql-container.ql-bubble) {
     border: none !important;
+  }
+
+  /* Quill Tooltip styling for a premium feel */
+  :global(.ql-bubble .ql-tooltip) {
+    background-color: var(--color-surface-dark) !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    padding: 8px 12px !important;
+  }
+
+  :global(.ql-bubble .ql-tooltip-arrow) {
+    border-bottom-color: var(--color-surface-dark) !important;
+    border-top-color: var(--color-surface-dark) !important;
   }
 </style>
