@@ -339,6 +339,12 @@ import X from 'lucide-astro/X';
   });
 
   // Open/Close logic
+  document.querySelectorAll('[data-auth-modal]').forEach((trigger) => {
+    trigger.addEventListener('click', (e) => {
+      e.preventDefault();
+    });
+  });
+
   window.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     // Check if clicked element has data-auth-modal or if its parent has it

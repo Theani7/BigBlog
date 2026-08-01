@@ -84,6 +84,7 @@ export const articleBookmarks =
 const commentsSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  userId: { type: Schema.Types.ObjectId, ref: 'User' },
   parentId: { type: Schema.Types.ObjectId, ref: 'Comment' },
   content: { type: String, required: true },
   authorName: { type: String, required: true },
@@ -148,6 +149,40 @@ commentReportsSchema.index({ status: 1 });
 
 export const commentReports =
   mongoose.models.CommentReport || mongoose.model<any>('CommentReport', commentReportsSchema);
+
+// =============================================================================
+// STORY REPOSTS
+// =============================================================================
+const storyRepostsSchema = new Schema({
+  articleSlug: { type: String, required: true },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  userId: { type: Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+storyRepostsSchema.index({ articleSlug: 1 });
+storyRepostsSchema.index({ sessionId: 1 });
+storyRepostsSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
+
+export const storyReposts =
+  mongoose.models.StoryRepost || mongoose.model<any>('StoryRepost', storyRepostsSchema);
+
+// =============================================================================
+// AUTHOR FOLLOWS
+// =============================================================================
+const authorFollowsSchema = new Schema({
+  authorId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
+  sessionId: { type: String, required: true, ref: 'AnonymousSession' },
+  userId: { type: Schema.Types.ObjectId, ref: 'User' },
+  createdAt: { type: Date, default: Date.now },
+});
+
+authorFollowsSchema.index({ authorId: 1 });
+authorFollowsSchema.index({ sessionId: 1 });
+authorFollowsSchema.index({ authorId: 1, sessionId: 1 }, { unique: true });
+
+export const authorFollows =
+  mongoose.models.AuthorFollow || mongoose.model<any>('AuthorFollow', authorFollowsSchema);
 
 // =============================================================================
 // NEWSLETTER SUBSCRIBERS

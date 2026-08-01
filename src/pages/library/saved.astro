@@ -41,30 +41,42 @@ const formatSavedAt = (date: Date) =>
       <div class="saved-list">
         {savedStories.map((story) => (
           <article class="saved-card" data-slug={story.slug}>
-            <div class="saved-card-content">
-              <h2 class="saved-card-title">
-                <a href={`/p/${story.slug}`}>{story.title}</a>
-              </h2>
-              <p class="saved-card-excerpt">
-                {story.content
-                  ? story.content
-                      .replace(/<[^>]+>/g, '')
-                      .trim()
-                      .substring(0, 160) + '...'
-                  : 'No excerpt available'}
-              </p>
-              <div class="saved-card-meta">
-                <span>{story.authorId?.name || 'Anonymous'}</span>
-                <span class="meta-divider">·</span>
-                <span>Saved {formatSavedAt(story.savedAt)}</span>
+            <a class="saved-card-link" href={`/p/${story.slug}`}>
+              <div class="saved-card-content">
+                <h2 class="saved-card-title">{story.title}</h2>
+                <p class="saved-card-excerpt">
+                  {story.content
+                    ? story.content
+                        .replace(/<[^>]+>/g, '')
+                        .trim()
+                        .substring(0, 160) + '...'
+                    : 'No excerpt available'}
+                </p>
+                <div class="saved-card-meta">
+                  <span>{story.authorId?.name || 'Anonymous'}</span>
+                  <span class="meta-divider">·</span>
+                  <span>Saved {formatSavedAt(story.savedAt)}</span>
+                </div>
               </div>
-            </div>
+            </a>
             <button
               class="saved-remove"
               data-remove-slug={story.slug}
               aria-label={`Remove ${story.title} from saved`}
+              title="Remove from saved"
             >
-              Remove
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+              </svg>
             </button>
           </article>
         ))}
@@ -80,50 +92,202 @@ const formatSavedAt = (date: Date) =>
 </LibraryLayout>
 
 <script>
+  const UNDO_MS = 5000;
+
+  async function toggleBookmark(slug) {
+    const res = await fetch('/api/bookmarks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug }),
+    });
+    const data = await res.json();
+    return data.success;
+  }
+
+  async function updateCount() {
+    const countEl = document.querySelector('.list-card-count');
+    if (!countEl) return;
+    try {
+      const res = await fetch('/api/bookmarks');
+      const data = await res.json();
+      if (data.success) {
+        const n = data.data?.bookmarks?.length ?? 0;
+        countEl.textContent = `${n} ${n === 1 ? 'story' : 'stories'}`;
+      }
+    } catch (err) {
+      console.error('Failed to load bookmark count:', err);
+    }
+  }
+
+  function finalizeRemoval(card) {
+    card.classList.add('saved-card--removing');
+    setTimeout(() => card.remove(), 200);
+    updateCount();
+    const empty = document.querySelector('.empty-state');
+    if (empty && document.querySelectorAll('.saved-card').length === 1) {
+      setTimeout(() => empty.classList.add('empty-state--visible'), 250);
+    }
+  }
+
   document.querySelectorAll('[data-remove-slug]').forEach((btn) => {
+    const slug = btn.getAttribute('data-remove-slug');
+    const card = btn.closest('.saved-card');
+    if (!slug || !card) return;
+
+    let undoTimeout = null;
+    let undoBar = null;
+
+    const clearUndo = () => {
+      if (undoTimeout) clearTimeout(undoTimeout);
+      undoTimeout = null;
+      undoBar?.remove();
+      undoBar = null;
+      card.classList.remove('saved-card--removed');
+      btn.style.display = '';
+      btn.disabled = false;
+    };
+
     btn.addEventListener('click', async () => {
-      const slug = btn.getAttribute('data-remove-slug');
-      if (!slug) return;
+      if (btn.disabled) return;
+      btn.disabled = true;
+
+      let ok = false;
       try {
-        const res = await fetch('/api/bookmarks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ slug }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          const card = document.querySelector(`.saved-card[data-slug="${slug}"]`);
-          card?.remove();
-        }
+        ok = await toggleBookmark(slug);
       } catch (error) {
         console.error('Failed to remove bookmark:', error);
       }
+      if (!ok) {
+        btn.disabled = false;
+        return;
+      }
+
+      card.classList.add('saved-card--removed');
+      btn.style.display = 'none';
+
+      undoBar = document.createElement('div');
+      undoBar.className = 'saved-undo';
+      undoBar.innerHTML = `
+        <span class="saved-undo-label">Removed</span>
+        <button type="button" class="saved-undo-btn">Undo</button>
+      `;
+      card.appendChild(undoBar);
+
+      undoBar.querySelector('.saved-undo-btn').addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const undoBtn = undoBar.querySelector('.saved-undo-btn');
+        undoBtn.disabled = true;
+        let restored = false;
+        try {
+          restored = await toggleBookmark(slug);
+        } catch (error) {
+          console.error('Failed to undo bookmark removal:', error);
+        }
+        if (restored) {
+          clearUndo();
+          updateCount();
+        } else {
+          if (undoTimeout) clearTimeout(undoTimeout);
+          finalizeRemoval(card);
+        }
+      });
+
+      undoTimeout = setTimeout(() => finalizeRemoval(card), UNDO_MS);
     });
   });
 </script>
 
 <style>
   .saved-list {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  @media (min-width: 768px) {
+    .saved-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .saved-card {
+    position: relative;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    background: var(--bg-surface, var(--color-surface, #fff));
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    transition:
+      transform var(--duration-fast) var(--ease-default),
+      box-shadow var(--duration-fast) var(--ease-default),
+      opacity var(--duration-normal) var(--ease-default);
+  }
+
+  .saved-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.06);
+  }
+
+  .saved-card--removing {
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+  }
+
+  .saved-card--removed {
+    opacity: 0.55;
+    filter: grayscale(0.3);
+    pointer-events: none;
+  }
+
+  .saved-undo {
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: var(--space-lg);
-    padding: var(--space-xl) 0;
-    border-bottom: 1px solid var(--color-hairline);
+    gap: var(--space-md);
+    margin-top: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    background: rgba(198, 69, 69, 0.06);
+    border: 1px solid rgba(198, 69, 69, 0.2);
+    border-radius: var(--radius-md);
   }
 
-  .saved-card:first-child {
-    padding-top: 0;
+  .saved-undo-label {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-error);
   }
 
-  .saved-card-content {
-    flex: 1;
-    min-width: 0;
+  .saved-undo-btn {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--color-error);
+    background: none;
+    border: 1px solid rgba(198, 69, 69, 0.35);
+    border-radius: var(--radius-pill);
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-default);
+  }
+
+  .saved-undo-btn:hover {
+    background: var(--color-error);
+    color: #fff;
+  }
+
+  .saved-undo-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+
+  .saved-card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
   }
 
   .saved-card-title {
@@ -132,18 +296,12 @@ const formatSavedAt = (date: Date) =>
     font-weight: 700;
     margin: 0 0 var(--space-xs) 0;
     line-height: 1.3;
-  }
-
-  .saved-card-title a {
     color: var(--color-ink);
-    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-default);
   }
 
-  .saved-card-title a:hover {
+  .saved-card:hover .saved-card-title {
     color: var(--color-primary);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
   }
 
   .saved-card-excerpt {
@@ -171,23 +329,43 @@ const formatSavedAt = (date: Date) =>
   }
 
   .saved-remove {
+    position: absolute;
+    top: var(--space-sm);
+    right: var(--space-sm);
     flex-shrink: 0;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    font-weight: 500;
-    color: var(--color-muted);
-    background: none;
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-pill);
-    padding: 6px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    color: var(--color-primary);
+    background: rgba(30, 16, 51, 0.1);
+    border: 1px solid rgba(30, 16, 51, 0.25);
+    border-radius: var(--radius-full);
     cursor: pointer;
-    transition: all var(--duration-fast);
-    white-space: nowrap;
+    transition: all var(--duration-fast) var(--ease-default);
   }
 
   .saved-remove:hover {
     color: var(--color-error);
+    background: rgba(198, 69, 69, 0.1);
     border-color: var(--color-error);
-    background: rgba(198, 69, 69, 0.05);
+    transform: scale(1.06);
+  }
+
+  .saved-remove:disabled {
+    opacity: 0.5;
+    cursor: default;
+    transform: none;
+  }
+
+  .empty-state {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  .empty-state--visible {
+    opacity: 1;
+    transform: translateY(0);
   }
 </style>
