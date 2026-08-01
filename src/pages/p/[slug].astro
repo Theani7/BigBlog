@@ -176,85 +176,24 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
               >
             </button>
             <div class="share-menu" id="share-menu" role="menu" hidden>
-              <button type="button" role="menuitem" data-share-copy>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-                  ></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-                  ></path></svg
-                >
-                Copy link
-              </button>
-              <button type="button" role="menuitem" data-share-native hidden>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"
-                  ></circle><circle cx="18" cy="19" r="3"></circle><path d="m8.59 13.51 6.83 3.98"
-                  ></path><path d="m15.41 6.51-6.82 3.98"></path></svg
-                >
-                Share…
-              </button>
-              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-twitter>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                  ><path
-                    d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-                  ></path></svg
-                >
-                Post on X
-              </a>
-              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-linkedin>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                  ><path
-                    d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"
-                  ></path></svg
-                >
-                Share on LinkedIn
-              </a>
-              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-facebook>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"
-                  ><path
-                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"
-                  ></path></svg
-                >
-                Share on Facebook
-              </a>
-              <a role="menuitem" data-share-email>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  ><path
-                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                  ></path><polyline points="22,6 12,13 2,6"></polyline></svg
-                >
-                Email
-              </a>
+              <button type="button" role="menuitem" data-share-copy>Copy link</button>
+              <button type="button" role="menuitem" data-share-native hidden>Share…</button>
+              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-twitter
+                >Post on X</a
+              >
+              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-linkedin
+                >Share on LinkedIn</a
+              >
+              <a role="menuitem" target="_blank" rel="noopener noreferrer" data-share-facebook
+                >Share on Facebook</a
+              >
+              <a role="menuitem" data-share-email>Email</a>
             </div>
           </div>
         </div>
       </div>
     </header>
 
-    <!-- Content rendered exactly as saved from Quill -->
     <div class="post-content ql-editor">
       <Fragment set:html={story.content} />
     </div>
@@ -283,8 +222,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
         <p class="gate-text">
           Sign in to share your thoughts, reply to readers, and react to comments.
         </p>
-        <button type="button" class="comment-gate-btn" data-auth-modal="login"
-          >Sign in to comment</button
+        <button type="button" class="btn-primary" data-auth-modal="login">Sign in to comment</button
         >
       </div>
 
@@ -294,14 +232,14 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
         </div>
         <textarea
           id="comment-content"
-          class="comment-content"
+          class="comment-content text-input"
           placeholder="Share your thoughts on this story…"
           maxlength="5000"
           rows="4"
           required></textarea>
         <div class="comment-form-actions">
           <span class="comment-error" id="comment-error" role="alert" hidden></span>
-          <button type="submit" class="comment-submit" id="comment-submit">Respond</button>
+          <button type="submit" class="btn-primary" id="comment-submit">Respond</button>
         </div>
       </form>
 
@@ -318,20 +256,25 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
 
 <style>
   .post-container {
-    max-width: 720px;
+    max-width: 720px; /* Claude editorial width (~68ch for readability) */
     margin: 0 auto;
-    padding: var(--space-2xl) var(--space-md);
+    padding: var(--space-section) var(--space-lg);
     min-height: calc(100vh - 64px);
+    background-color: var(--bg-canvas); /* Ensures tinted cream canvas */
+  }
+
+  .post-header {
+    margin-bottom: var(--space-xl);
   }
 
   .post-title {
     font-family: var(--font-serif);
-    font-size: clamp(2.5rem, 5vw, 3.5rem);
-    font-weight: 700;
-    line-height: 1.1;
+    font-size: var(--text-display-lg);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    letter-spacing: -1px;
     color: var(--color-ink);
-    margin-bottom: var(--space-xl);
-    letter-spacing: -0.02em;
+    margin-bottom: var(--space-lg);
   }
 
   .post-meta {
@@ -340,7 +283,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     justify-content: space-between;
     padding-bottom: var(--space-lg);
     border-bottom: 1px solid var(--color-hairline);
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-xl);
     gap: var(--space-md);
     flex-wrap: wrap;
   }
@@ -354,14 +297,14 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
   .author-avatar {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     object-fit: cover;
   }
 
   .author-details {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: var(--space-xxs);
   }
 
   .author-line {
@@ -372,32 +315,32 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
 
   .author-name {
     font-family: var(--font-sans);
-    font-size: var(--text-base);
+    font-size: var(--text-body-md);
     font-weight: 500;
     color: var(--color-ink);
   }
 
   .follow-btn {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-caption);
     font-weight: 500;
-    color: var(--color-primary);
+    color: var(--color-ink);
     background: transparent;
-    border: 1px solid var(--color-primary);
-    border-radius: var(--radius-full);
-    padding: 2px 12px;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    padding: 4px 12px;
     cursor: pointer;
     transition: all var(--duration-fast);
   }
 
   .follow-btn:hover {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: var(--bg-surface-soft);
   }
 
   .follow-btn.is-following {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+    background: var(--bg-surface-soft);
+    color: var(--color-ink);
+    border-color: var(--color-hairline);
   }
 
   .post-stats {
@@ -405,7 +348,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     align-items: center;
     gap: var(--space-xs);
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-caption);
     color: var(--color-muted);
   }
 
@@ -428,8 +371,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 50%;
-    transition: all var(--duration-fast);
+    border-radius: var(--radius-full);
+    transition:
+      background var(--duration-fast),
+      color var(--duration-fast);
   }
 
   .action-btn:hover {
@@ -437,9 +382,16 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     background: var(--bg-surface-soft);
   }
 
+  .action-btn.is-active {
+    color: var(--color-primary);
+  }
+  .action-btn.is-active svg {
+    fill: var(--color-primary);
+  }
+
   .count {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-body-sm);
     color: var(--color-muted);
     min-width: 1.5rem;
     text-align: left;
@@ -455,12 +407,12 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     top: calc(100% + 8px);
     right: 0;
     min-width: 220px;
-    background: var(--bg-canvas, #ffffff);
+    background: var(--bg-canvas);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-md);
     padding: var(--space-xs);
-    z-index: 50;
+    z-index: var(--z-dropdown);
     display: flex;
     flex-direction: column;
   }
@@ -480,7 +432,7 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     border: none;
     border-radius: var(--radius-sm);
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-body-sm);
     color: var(--color-ink);
     cursor: pointer;
     text-decoration: none;
@@ -495,76 +447,83 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
 
   /* Content Formatting */
   .post-content {
-    font-family: var(--reader-font, var(--font-serif));
-    font-size: var(--reader-font-size, 1.25rem);
-    line-height: var(--reader-line-height, 1.8);
-    color: var(--color-ink);
-    padding: 0; /* Override Quill padding */
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    line-height: var(--leading-normal);
+    color: var(--color-body);
+    padding: 0;
   }
 
   .post-content :global(h1),
   .post-content :global(h2),
   .post-content :global(h3) {
-    font-family: var(--font-sans);
-    font-weight: 600;
-    margin-top: 1.5em;
-    margin-bottom: 0.5em;
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.5px;
+    margin-top: 2em;
+    margin-bottom: 0.75em;
     color: var(--color-ink);
   }
 
+  .post-content :global(h1) {
+    font-size: var(--text-display-md);
+  }
+  .post-content :global(h2) {
+    font-size: var(--text-display-sm);
+  }
+  .post-content :global(h3) {
+    font-size: var(--text-title-lg);
+    font-family: var(--font-sans);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
   .post-content :global(p) {
-    margin-bottom: 1.5em;
+    margin-bottom: 1.55em;
   }
 
   .post-content :global(img) {
     max-width: 100%;
     height: auto;
-    border-radius: var(--radius-md);
-    margin: var(--space-lg) 0;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border-radius: var(--radius-lg);
+    margin: var(--space-xl) 0;
   }
 
   .post-content :global(blockquote) {
-    border-left: 4px solid var(--color-ink);
-    padding-left: var(--space-md);
+    border-left: 2px solid var(--color-ink);
+    padding-left: var(--space-lg);
     margin-left: 0;
     font-style: italic;
-    color: var(--color-muted);
-  }
-
-  .action-btn.is-active {
-    color: var(--color-primary);
-  }
-
-  .action-btn.is-active svg {
-    fill: var(--color-primary);
+    color: var(--color-body-strong);
+    font-family: var(--font-serif);
+    font-size: var(--text-title-md);
   }
 
   /* Comments */
   .comments-section {
-    margin-top: var(--space-3xl);
+    margin-top: var(--space-section);
     border-top: 1px solid var(--color-hairline);
-    padding-top: var(--space-2xl);
+    padding-top: var(--space-xl);
   }
 
   .comments-title {
-    font-family: var(--font-sans);
-    font-size: var(--text-xl);
-    font-weight: 600;
+    font-family: var(--font-serif);
+    font-size: var(--text-display-sm);
+    font-weight: 400;
+    letter-spacing: -0.3px;
     color: var(--color-ink);
-    margin-bottom: var(--space-lg);
+    margin-bottom: var(--space-xl);
   }
 
   .comments-title span {
     color: var(--color-muted);
-    font-weight: 400;
   }
 
   .comment-form {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-xl);
   }
 
   .comment-form[hidden],
@@ -577,86 +536,91 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
-    padding: var(--space-3xl) var(--space-lg);
+    padding: var(--space-xl);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-2xl);
+    margin-bottom: var(--space-xl);
     text-align: center;
-    background: var(--bg-surface-soft, rgba(30, 16, 51, 0.04));
+    background: var(--bg-surface-soft);
   }
 
   .gate-icon {
     width: 48px;
     height: 48px;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(30, 16, 51, 0.08);
-    color: var(--color-primary);
+    color: var(--color-ink);
     margin-bottom: var(--space-xs);
   }
 
   .gate-title {
     font-family: var(--font-sans);
-    font-size: var(--text-lg);
-    font-weight: 600;
+    font-size: var(--text-title-md);
+    font-weight: 500;
     color: var(--color-ink);
     margin: 0;
   }
 
   .gate-text {
     font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: 1.6;
+    font-size: var(--text-body-md);
+    line-height: var(--leading-normal);
     color: var(--color-muted);
-    margin: 0 0 var(--space-sm);
+    margin: 0 0 var(--space-md);
     max-width: 360px;
   }
 
-  .comment-gate-btn {
+  .btn-primary {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-button);
     font-weight: 500;
-    padding: 10px 24px;
+    padding: 12px 20px;
+    height: 40px;
     border: none;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-md);
     background: var(--color-primary);
     color: var(--color-on-primary);
     cursor: pointer;
-    transition: opacity var(--duration-fast);
+    transition: background var(--duration-fast);
   }
 
-  .comment-gate-btn:hover {
-    opacity: 0.85;
+  .btn-primary:hover {
+    background: var(--color-primary-active);
+  }
+
+  .btn-primary:disabled {
+    background: var(--color-primary-disabled);
+    color: var(--color-muted);
+    cursor: not-allowed;
   }
 
   .comment-as {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-body-sm);
     color: var(--color-muted);
   }
 
   .comment-as strong {
     color: var(--color-ink);
-    font-weight: 600;
+    font-weight: 500;
   }
 
-  .comment-content:focus {
-    outline: none;
-    border-color: var(--color-primary);
-  }
-
-  .comment-content {
+  .text-input {
     font-family: var(--font-sans);
-    font-size: var(--text-base);
-    padding: 12px 14px;
+    font-size: var(--text-body-md);
+    padding: 10px 14px;
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
     background: var(--bg-canvas);
     color: var(--color-ink);
     resize: vertical;
     min-height: 96px;
+  }
+
+  .text-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
   }
 
   .comment-form-actions {
@@ -668,38 +632,16 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
 
   .comment-error {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-body-sm);
     color: var(--color-error);
     flex: 1;
     text-align: left;
   }
 
-  .comment-submit {
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: 500;
-    padding: 8px 20px;
-    border: none;
-    border-radius: var(--radius-full);
-    background: var(--color-primary);
-    color: var(--color-on-primary);
-    cursor: pointer;
-    transition: opacity var(--duration-fast);
-  }
-
-  .comment-submit:hover {
-    opacity: 0.85;
-  }
-
-  .comment-submit:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
   .comment-status {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-primary);
+    font-size: var(--text-body-sm);
+    color: var(--color-success);
     padding: var(--space-sm) 0;
     margin-bottom: var(--space-md);
   }
@@ -708,72 +650,128 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     display: none;
   }
 
-  .comment-list {
+  /* Overriding old comment list styles injected by JS */
+  :global(.comment-list) {
     display: flex;
     flex-direction: column;
     gap: var(--space-xl);
   }
 
-  .comment-item {
+  :global(.comment-item) {
     display: flex;
     flex-direction: column;
     gap: var(--space-sm);
   }
 
-  .comment-item.is-reply {
+  :global(.comment-item.is-reply) {
     padding-left: var(--space-lg);
-    border-left: 2px solid var(--color-hairline);
+    border-left: 1px solid var(--color-hairline);
   }
 
-  .comment-head {
+  :global(.comment-head) {
     display: flex;
     align-items: center;
     gap: var(--space-sm);
   }
 
-  .comment-avatar {
+  :global(.comment-avatar) {
     width: 32px;
     height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #1e1033, #5f4b8b);
-    color: #fff;
+    border-radius: var(--radius-full);
+    background: var(--bg-surface-card);
+    color: var(--color-ink);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: 600;
+    font-size: var(--text-caption);
+    font-weight: 500;
     flex-shrink: 0;
   }
 
-  .comment-author {
+  :global(.comment-author) {
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    font-weight: 600;
+    font-size: var(--text-body-sm);
+    font-weight: 500;
     color: var(--color-ink);
   }
 
-  .comment-time {
+  :global(.comment-time) {
     font-family: var(--font-sans);
     font-size: var(--text-caption);
     color: var(--color-muted);
   }
 
-  .comment-edited {
+  :global(.comment-edited) {
     font-family: var(--font-sans);
     font-size: var(--text-caption);
     color: var(--color-muted);
     font-style: italic;
   }
 
-  .comment-menu {
+  :global(.comment-body) {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    line-height: var(--leading-normal);
+    color: var(--color-body);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  :global(.comment-foot) {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  :global(.reaction-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-pill);
+    padding: 2px 10px;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+
+  :global(.reaction-btn:hover) {
+    border-color: var(--color-muted);
+  }
+
+  :global(.reaction-btn.is-active) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+    background: var(--bg-surface-soft);
+  }
+
+  :global(.comment-reply-btn) {
+    background: none;
+    border: none;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    transition: color var(--duration-fast);
+  }
+
+  :global(.comment-reply-btn:hover) {
+    color: var(--color-ink);
+  }
+
+  :global(.comment-menu) {
     margin-left: auto;
     display: flex;
     align-items: center;
     gap: 4px;
   }
 
-  .comment-menu-btn {
+  :global(.comment-menu-btn) {
     background: none;
     border: none;
     color: var(--color-muted);
@@ -787,271 +785,75 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
       background var(--duration-fast);
   }
 
-  .comment-menu-btn:hover {
+  :global(.comment-menu-btn:hover) {
     color: var(--color-ink);
     background: var(--bg-surface-soft);
   }
 
-  .report-menu {
-    position: relative;
-    display: inline-flex;
-  }
-
-  .report-options {
-    position: absolute;
-    top: calc(100% + 4px);
-    right: 0;
-    background: var(--bg-canvas);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-md);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-    padding: var(--space-xs);
-    z-index: 50;
-    min-width: 160px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .report-options[hidden] {
-    display: none;
-  }
-
-  .report-options button {
-    background: none;
-    border: none;
-    text-align: left;
-    padding: 8px 12px;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-ink);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    transition: background var(--duration-fast);
-  }
-
-  .report-options button:hover {
-    background: var(--bg-surface-soft);
-  }
-
-  .comment-body {
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    line-height: 1.6;
-    color: var(--color-ink);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-
-  .comment-edit-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-  }
-
-  .comment-edit-form textarea {
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    padding: 10px 12px;
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-md);
-    background: var(--bg-canvas);
-    color: var(--color-ink);
-    resize: vertical;
-  }
-
-  .comment-edit-actions {
-    display: flex;
-    gap: var(--space-sm);
-    justify-content: flex-end;
-  }
-
-  .comment-edit-actions button {
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    padding: 6px 16px;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    border: 1px solid var(--color-hairline);
-    background: transparent;
-    color: var(--color-ink);
-    transition: all var(--duration-fast);
-  }
-
-  .comment-edit-actions button.save {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--color-on-primary);
-  }
-
-  .comment-foot {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .reaction-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    background: none;
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-full);
-    padding: 2px 10px;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-muted);
-    cursor: pointer;
-    transition: all var(--duration-fast);
-  }
-
-  .reaction-btn:hover {
-    border-color: var(--color-muted);
-  }
-
-  .reaction-btn.is-active {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background: rgba(30, 16, 51, 0.06);
-  }
-
-  .comment-reply-btn {
-    background: none;
-    border: none;
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    color: var(--color-muted);
-    cursor: pointer;
-    padding: 2px 4px;
-    transition: color var(--duration-fast);
-  }
-
-  .comment-reply-btn:hover {
-    color: var(--color-ink);
-  }
-
-  .reply-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-sm);
-    margin-top: var(--space-sm);
-  }
-
-  .reply-form textarea {
-    font-family: var(--font-sans);
-    font-size: var(--text-base);
-    padding: 10px 12px;
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-md);
-    background: var(--bg-canvas);
-    color: var(--color-ink);
-    resize: vertical;
-    min-height: 64px;
-  }
-
-  .reply-form-actions {
-    display: flex;
-    gap: var(--space-sm);
-    justify-content: flex-end;
-  }
-
-  .reply-form-actions button {
-    font-family: var(--font-sans);
-    font-size: var(--text-sm);
-    padding: 6px 16px;
-    border-radius: var(--radius-full);
-    cursor: pointer;
-    border: 1px solid var(--color-hairline);
-    background: transparent;
-    color: var(--color-ink);
-    transition: all var(--duration-fast);
-  }
-
-  .reply-form-actions button.submit {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: var(--color-on-primary);
-  }
-
-  .comment-replies {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
-    margin-top: var(--space-sm);
-  }
-
-  .comment-empty {
+  :global(.comment-empty) {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
     text-align: center;
-    padding: var(--space-3xl) var(--space-lg);
+    padding: var(--space-xl);
     border-top: 1px solid var(--color-hairline);
     border-bottom: 1px solid var(--color-hairline);
   }
 
-  .comment-empty-accent {
-    width: 44px;
-    height: 3px;
-    border-radius: 3px;
-    background: var(--color-primary);
-    margin-bottom: var(--space-sm);
-  }
-
-  .comment-empty-title {
-    font-family: var(--font-serif);
-    font-size: clamp(1.5rem, 3.5vw, 1.875rem);
-    font-weight: 600;
-    letter-spacing: -0.015em;
+  :global(.comment-empty-title) {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-md);
+    font-weight: 500;
     color: var(--color-ink);
     margin: 0;
   }
 
-  .comment-empty-text {
+  :global(.comment-empty-text) {
     font-family: var(--font-sans);
-    font-size: var(--text-base);
+    font-size: var(--text-body-md);
     color: var(--color-muted);
     margin: 0;
     max-width: 340px;
-    line-height: 1.6;
+    line-height: var(--leading-normal);
   }
 
-  .comment-empty-cta {
-    margin-top: var(--space-md);
+  :global(.comment-empty-cta) {
+    margin-top: var(--space-sm);
     font-family: var(--font-sans);
-    font-size: var(--text-sm);
+    font-size: var(--text-body-sm);
     font-weight: 500;
-    padding: 8px 22px;
-    border-radius: var(--radius-full);
-    border: 1px solid var(--color-primary);
+    padding: 8px 20px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-hairline);
     background: transparent;
-    color: var(--color-primary);
+    color: var(--color-ink);
     cursor: pointer;
-    transition: all var(--duration-fast);
+    transition: background var(--duration-fast);
   }
 
-  .comment-empty-cta:hover {
-    background: var(--color-primary);
-    color: var(--color-on-primary);
+  :global(.comment-empty-cta:hover) {
+    background: var(--bg-surface-soft);
   }
 
   /* Toast */
   .toast {
     position: fixed;
-    bottom: var(--space-8);
+    bottom: var(--space-xl);
     left: 50%;
     transform: translateX(-50%);
-    padding: var(--space-3) var(--space-6);
-    background: var(--bg-primary, #111827);
-    color: var(--text-primary, #fff);
-    border-radius: var(--radius-full);
-    font-size: var(--text-sm);
+    padding: var(--space-sm) var(--space-lg);
+    background: var(--bg-surface-dark);
+    color: var(--color-on-dark);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body-sm);
+    font-family: var(--font-sans);
     font-weight: 500;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.18);
-    z-index: 100;
+    box-shadow: var(--shadow-sm);
+    z-index: var(--z-toast);
     transition:
-      opacity 0.25s ease,
-      transform 0.25s ease;
+      opacity var(--duration-normal) var(--ease-default),
+      transform var(--duration-normal) var(--ease-default);
   }
 
   .toast[hidden] {
@@ -1060,729 +862,4 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     transform: translateX(-50%) translateY(1rem);
     pointer-events: none;
   }
-
-  @media (prefers-reduced-motion: reduce) {
-    .toast,
-    .share-menu,
-    .report-options {
-      transition: none;
-    }
-  }
 </style>
-
-<script>
-  const slug = document.querySelector<HTMLMetaElement>('meta[name="story-slug"]')?.content || '';
-  const authorId =
-    document.querySelector<HTMLMetaElement>('meta[name="story-author"]')?.content || '';
-  const currentUrl = window.location.href;
-
-  const likeBtn = document.getElementById('like-btn') as HTMLButtonElement | null;
-  const bookmarkBtn = document.getElementById('bookmark-btn') as HTMLButtonElement | null;
-  const repostBtn = document.getElementById('repost-btn') as HTMLButtonElement | null;
-  const followBtn = document.getElementById('follow-btn') as HTMLButtonElement | null;
-  const shareBtn = document.getElementById('share-btn') as HTMLButtonElement | null;
-  const shareMenu = document.getElementById('share-menu') as HTMLElement | null;
-  const commentsBtn = document.getElementById('comments-btn') as HTMLButtonElement | null;
-
-  const likeCount = document.getElementById('like-count');
-  const repostCount = document.getElementById('repost-count');
-  const commentCount = document.getElementById('comment-count');
-  const commentsTitleCount = document.getElementById('comments-title-count');
-  const followerCount = document.getElementById('follower-count');
-
-  const commentList = document.getElementById('comment-list');
-  const commentForm = document.getElementById('comment-form') as HTMLFormElement | null;
-  const commentAuthGate = document.getElementById('comment-auth-gate') as HTMLElement | null;
-  const commentAs = document.getElementById('comment-as') as HTMLElement | null;
-  const commentAsName = document.getElementById('comment-as-name') as HTMLElement | null;
-  const commentContent = document.getElementById('comment-content') as HTMLTextAreaElement | null;
-  const commentError = document.getElementById('comment-error') as HTMLElement | null;
-  const commentStatus = document.getElementById('comment-status') as HTMLElement | null;
-  const commentSubmit = document.getElementById('comment-submit') as HTMLButtonElement | null;
-
-  const toast = document.getElementById('page-toast') as HTMLElement | null;
-  const toastText = document.getElementById('page-toast-text') as HTMLElement | null;
-
-  const COMMENTS_API = '/api/comments';
-  const REPOST_API = '/api/reposts';
-  const FOLLOW_API = '/api/follows';
-
-  let totalComments = 0;
-  let currentUser: { id: string; name?: string; email?: string } | null = null;
-  let toastTimer: number | undefined;
-
-  function isLoggedIn(): boolean {
-    return currentUser !== null;
-  }
-
-  function showToast(message: string) {
-    if (!toast || !toastText) return;
-    toastText.textContent = message;
-    toast.removeAttribute('hidden');
-    clearTimeout(toastTimer);
-    toastTimer = window.setTimeout(() => toast.setAttribute('hidden', ''), 2500);
-  }
-
-  function showCommentStatus(message: string) {
-    if (!commentStatus) return;
-    commentStatus.textContent = message;
-    commentStatus.removeAttribute('hidden');
-    window.setTimeout(() => commentStatus.setAttribute('hidden', ''), 4000);
-  }
-
-  async function toggle(endpoint: string, body: Record<string, string>, btn: HTMLButtonElement) {
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        showToast(data.error || 'Something went wrong');
-        return;
-      }
-      const active = data.data?.liked ?? data.data?.bookmarked ?? data.data?.reposted;
-      if (active !== undefined) {
-        btn.classList.toggle('is-active', active);
-        btn.setAttribute('aria-pressed', String(active));
-      }
-      if (likeCount && data.data?.count !== undefined) {
-        likeCount.textContent = String(data.data.count);
-      }
-      if (repostCount && data.data?.count !== undefined) {
-        repostCount.textContent = String(data.data.count);
-      }
-      return data.data;
-    } catch (error) {
-      showToast('Network error, please try again');
-      console.error(error);
-      return null;
-    }
-  }
-
-  // ---------------------------------------------------------
-  // AUTH + FOLLOW
-  // ---------------------------------------------------------
-  async function checkAuth() {
-    try {
-      const meRes = await fetch('/api/auth/me');
-      const meData = await meRes.json();
-      if (meData.success && meData.user) {
-        currentUser = {
-          id: meData.user.id,
-          name: meData.user.name,
-          email: meData.user.email,
-        };
-      }
-    } catch {
-      currentUser = null;
-    }
-    applyAuthState();
-  }
-
-  function applyAuthState() {
-    if (commentForm) commentForm.hidden = !isLoggedIn();
-    if (commentAuthGate) commentAuthGate.hidden = isLoggedIn();
-    if (commentAsName) commentAsName.textContent = currentUser?.name || '';
-    if (commentAs) commentAs.hidden = !isLoggedIn();
-    if (followBtn && authorId) {
-      followBtn.hidden = isLoggedIn() && currentUser!.id === authorId;
-    }
-  }
-
-  async function initFollow() {
-    if (!followBtn || !authorId) return;
-    try {
-      const res = await fetch(`${FOLLOW_API}?authorId=${encodeURIComponent(authorId)}`);
-      const data = await res.json();
-      if (!data.success) return;
-      setFollowState(data.data.following, data.data.count);
-    } catch (error) {
-      console.error('Failed to load follow state:', error);
-    }
-  }
-
-  function setFollowState(following: boolean, count: number) {
-    if (!followBtn) return;
-    followBtn.classList.toggle('is-following', following);
-    followBtn.setAttribute('aria-pressed', String(following));
-    followBtn.textContent = following ? 'Following' : 'Follow';
-    if (followerCount) {
-      followerCount.textContent = `${count} ${count === 1 ? 'follower' : 'followers'}`;
-    }
-  }
-
-  followBtn?.addEventListener('click', async () => {
-    if (!authorId) return;
-    const data = await toggle(FOLLOW_API, { authorId }, followBtn);
-    if (data && typeof data.count === 'number' && typeof data.following === 'boolean') {
-      setFollowState(data.following, data.count);
-      showToast(data.following ? 'Following author' : 'Unfollowed author');
-    }
-  });
-
-  // ---------------------------------------------------------
-  // SHARE
-  // ---------------------------------------------------------
-  function buildShareLinks() {
-    const encodedUrl = encodeURIComponent(currentUrl);
-    const encodedTitle = encodeURIComponent(document.title || 'Check this out');
-
-    const twitter = document.querySelector<HTMLAnchorElement>('[data-share-twitter]');
-    if (twitter)
-      twitter.href = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-    const linkedin = document.querySelector<HTMLAnchorElement>('[data-share-linkedin]');
-    if (linkedin)
-      linkedin.href = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-    const facebook = document.querySelector<HTMLAnchorElement>('[data-share-facebook]');
-    if (facebook) facebook.href = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-    const email = document.querySelector<HTMLAnchorElement>('[data-share-email]');
-    if (email) email.href = `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
-  }
-
-  shareBtn?.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (!shareMenu) return;
-    const isOpen = !shareMenu.hasAttribute('hidden');
-    shareMenu.toggleAttribute('hidden', isOpen);
-    shareBtn.setAttribute('aria-expanded', String(!isOpen));
-  });
-
-  shareMenu?.addEventListener('click', (e) => {
-    const target = e.target as HTMLElement;
-    const copyBtn = target.closest('[data-share-copy]');
-    if (copyBtn) {
-      navigator.clipboard
-        .writeText(currentUrl)
-        .then(() => showToast('Link copied to clipboard'))
-        .catch(() => showToast('Failed to copy link'));
-      shareMenu.setAttribute('hidden', '');
-      shareBtn?.setAttribute('aria-expanded', 'false');
-      return;
-    }
-    const nativeBtn = target.closest('[data-share-native]');
-    if (nativeBtn && 'share' in navigator) {
-      navigator.share({ title: document.title, url: currentUrl }).catch(() => {});
-      shareMenu.setAttribute('hidden', '');
-      shareBtn?.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (shareMenu && !shareMenu.hasAttribute('hidden')) {
-      const inside = shareMenu.contains(e.target as Node) || shareBtn?.contains(e.target as Node);
-      if (!inside) {
-        shareMenu.setAttribute('hidden', '');
-        shareBtn?.setAttribute('aria-expanded', 'false');
-      }
-    }
-  });
-
-  if (typeof navigator !== 'undefined' && 'share' in navigator) {
-    const nativeItem = document.querySelector<HTMLElement>('[data-share-native]');
-    if (nativeItem) nativeItem.hidden = false;
-  }
-
-  // ---------------------------------------------------------
-  // LIKE / BOOKMARK / REPOST
-  // ---------------------------------------------------------
-  likeBtn?.addEventListener('click', () => toggle('/api/likes', { slug }, likeBtn));
-  bookmarkBtn?.addEventListener('click', () => toggle('/api/bookmarks', { slug }, bookmarkBtn));
-  repostBtn?.addEventListener('click', () => toggle(REPOST_API, { slug }, repostBtn));
-
-  // ---------------------------------------------------------
-  // COMMENTS
-  // ---------------------------------------------------------
-  type CommentData = {
-    id: string;
-    articleSlug: string;
-    content: string;
-    authorName: string;
-    parentId: string | null;
-    status: string;
-    isEdited: boolean;
-    createdAt: string;
-    isMine: boolean;
-    reactionCounts: Record<string, number>;
-    myReactions: string[];
-  };
-
-  function escapeHtml(value: string): string {
-    return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function formatDate(value: string): string {
-    const date = new Date(value);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-
-  function initials(name: string): string {
-    return (
-      name
-        .split(/\s+/)
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2) || '?'
-    );
-  }
-
-  function setCommentsCount(count: number) {
-    totalComments = count;
-    if (commentCount) commentCount.textContent = String(count);
-    if (commentsTitleCount) commentsTitleCount.textContent = `(${count})`;
-  }
-
-  function buildCommentHtml(comment: CommentData, isReply = false): string {
-    const reactions = Object.entries(comment.reactionCounts)
-      .map(
-        ([emoji, count]) =>
-          `<button type="button" class="reaction-btn${comment.myReactions.includes(emoji) ? ' is-active' : ''}" data-comment-id="${comment.id}" data-emoji="${emoji}" aria-pressed="${comment.myReactions.includes(emoji)}">${emoji} <span class="reaction-count">${count}</span></button>`
-      )
-      .join('');
-
-    const ownControls = comment.isMine
-      ? `
-        <button type="button" class="comment-menu-btn" data-edit-comment="${comment.id}" aria-label="Edit comment" title="Edit">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-        </button>
-        <button type="button" class="comment-menu-btn" data-delete-comment="${comment.id}" aria-label="Delete comment" title="Delete">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-        </button>
-      `
-      : '';
-
-    return `
-      <div class="comment-item${isReply ? ' is-reply' : ''}" data-comment-id="${comment.id}">
-        <div class="comment-head">
-          <span class="comment-avatar">${initials(comment.authorName)}</span>
-          <div style="display:flex;align-items:center;gap:6px;min-width:0;">
-            <span class="comment-author">${escapeHtml(comment.authorName)}</span>
-            <span class="comment-time">${formatDate(comment.createdAt)}</span>
-            ${comment.isEdited ? '<span class="comment-edited">· edited</span>' : ''}
-          </div>
-          <div class="comment-menu">
-            ${ownControls}
-            <div class="report-menu">
-              <button type="button" class="comment-menu-btn" data-report-comment="${comment.id}" aria-label="Report comment" title="Report">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" x2="4" y1="22" y2="15"></line></svg>
-              </button>
-              <div class="report-options" hidden>
-                <button type="button" data-report-reason="spam">Spam</button>
-                <button type="button" data-report-reason="abuse">Abuse</button>
-                <button type="button" data-report-reason="off-topic">Off-topic</button>
-                <button type="button" data-report-reason="other">Other</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="comment-body">${escapeHtml(comment.content)}</div>
-        <div class="comment-foot">
-          ${reactions || '<span class="comment-time">No reactions yet</span>'}
-          <button type="button" class="comment-reply-btn" data-reply-comment="${comment.id}">Reply</button>
-        </div>
-        <div class="comment-replies"></div>
-      </div>
-    `;
-  }
-
-  function findCommentEl(commentId: string): HTMLElement | null {
-    return document.querySelector<HTMLElement>(`.comment-item[data-comment-id="${commentId}"]`);
-  }
-
-  function renderComments(commentsList: CommentData[]) {
-    if (!commentList) return;
-    if (commentsList.length === 0) {
-      commentList.innerHTML = `
-        <div class="comment-empty">
-          <span class="comment-empty-accent" aria-hidden="true"></span>
-          <h4 class="comment-empty-title">No responses yet</h4>
-          <p class="comment-empty-text">Start the conversation — share what this story made you think.</p>
-          ${isLoggedIn() ? '<button type="button" class="comment-empty-cta" data-focus-comment>Write a response</button>' : ''}
-        </div>`;
-      return;
-    }
-
-    const roots = commentsList.filter((c) => !c.parentId);
-    const byParent = new Map<string, CommentData[]>();
-    for (const c of commentsList) {
-      if (!c.parentId) continue;
-      const list = byParent.get(c.parentId) || [];
-      list.push(c);
-      byParent.set(c.parentId, list);
-    }
-
-    commentList.innerHTML = roots
-      .map((root) => {
-        const replies = (byParent.get(root.id) || [])
-          .map((r) => buildCommentHtml(r, true))
-          .join('');
-        return `${buildCommentHtml(root)}${replies ? `<div class="comment-replies">${replies}</div>` : ''}`;
-      })
-      .join('');
-  }
-
-  async function loadComments() {
-    try {
-      const res = await fetch(`${COMMENTS_API}?slug=${encodeURIComponent(slug)}`);
-      const data = await res.json();
-      if (!data.success) return;
-      renderComments(data.data.comments || []);
-      setCommentsCount(data.data.count || 0);
-    } catch (error) {
-      console.error('Failed to load comments:', error);
-      if (commentList) {
-        commentList.innerHTML = '<div class="comment-empty">Failed to load responses.</div>';
-      }
-    }
-  }
-
-  function clearCommentForm() {
-    if (commentContent) commentContent.value = '';
-    if (commentError) commentError.hidden = true;
-    if (commentSubmit) commentSubmit.disabled = false;
-  }
-
-  async function submitComment(
-    parentId: string | null = null,
-    formEl?: HTMLElement
-  ): Promise<boolean> {
-    if (!isLoggedIn()) {
-      showToast('Please sign in to comment');
-      return false;
-    }
-
-    const contentValue =
-      (formEl?.querySelector('textarea.reply-content') as HTMLTextAreaElement | null)?.value ||
-      commentContent?.value ||
-      '';
-
-    if (!contentValue.trim()) {
-      showToast('Please write a comment');
-      return false;
-    }
-
-    const payload: Record<string, string | null> = {
-      action: 'create',
-      articleSlug: slug,
-      content: contentValue,
-    };
-    if (parentId) payload.parentId = parentId;
-
-    try {
-      const res = await fetch(`${COMMENTS_API}?action=create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      if (!data.success) {
-        showToast(data.error || 'Failed to post comment');
-        return false;
-      }
-
-      if (data.message) showCommentStatus(data.message);
-
-      if (data.data.status === 'approved') {
-        if (parentId) {
-          const parentEl = findCommentEl(parentId)?.querySelector('.comment-replies');
-          if (parentEl) {
-            parentEl.insertAdjacentHTML('beforeend', buildCommentHtml(data.data, true));
-            parentEl.style.display = '';
-          }
-        } else {
-          const emptyEl = commentList?.querySelector('.comment-empty');
-          if (emptyEl && commentList) commentList.innerHTML = '';
-          commentList?.insertAdjacentHTML('afterbegin', buildCommentHtml(data.data));
-        }
-        setCommentsCount(totalComments + 1);
-      }
-
-      if (formEl && parentId) formEl.remove();
-      else clearCommentForm();
-      return true;
-    } catch (error) {
-      showToast('Network error, please try again');
-      console.error(error);
-      return false;
-    }
-  }
-
-  commentForm?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    submitComment();
-  });
-
-  commentList?.addEventListener('click', async (e) => {
-    const target = e.target as HTMLElement;
-
-    const focusBtn = target.closest<HTMLButtonElement>('[data-focus-comment]');
-    if (focusBtn) {
-      commentContent?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      commentContent?.focus();
-      return;
-    }
-
-    const replyBtn = target.closest<HTMLButtonElement>('[data-reply-comment]');
-    if (replyBtn) {
-      if (!isLoggedIn()) {
-        showToast('Please sign in to reply');
-        return;
-      }
-      const commentEl = replyBtn.closest<HTMLElement>('.comment-item');
-      const repliesEl = commentEl?.querySelector<HTMLElement>('.comment-replies');
-      if (!commentEl || !repliesEl) return;
-
-      const existing = commentEl.querySelector<HTMLElement>('.reply-form');
-      if (existing) {
-        existing.remove();
-        return;
-      }
-
-      const form = document.createElement('div');
-      form.className = 'reply-form';
-      form.innerHTML = `
-        <textarea class="reply-content" placeholder="Write a reply…" maxlength="5000" rows="2"></textarea>
-        <div class="reply-form-actions">
-          <button type="button" class="cancel">Cancel</button>
-          <button type="button" class="submit">Reply</button>
-        </div>
-      `;
-      repliesEl.prepend(form);
-      const textarea = form.querySelector<HTMLTextAreaElement>('textarea.reply-content');
-      textarea?.focus();
-
-      form
-        .querySelector<HTMLButtonElement>('button.cancel')
-        ?.addEventListener('click', () => form.remove());
-      form.querySelector<HTMLButtonElement>('button.submit')?.addEventListener('click', () => {
-        submitComment(replyBtn.dataset.replyComment || null, form);
-      });
-      return;
-    }
-
-    const editBtn = target.closest<HTMLButtonElement>('[data-edit-comment]');
-    if (editBtn) {
-      const commentEl = editBtn.closest<HTMLElement>('.comment-item');
-      if (!commentEl) return;
-      const bodyEl = commentEl.querySelector<HTMLElement>('.comment-body');
-      if (!bodyEl) return;
-
-      const existingForm = commentEl.querySelector<HTMLElement>('.comment-edit-form');
-      if (existingForm) {
-        existingForm.remove();
-        return;
-      }
-
-      const form = document.createElement('div');
-      form.className = 'comment-edit-form';
-      form.innerHTML = `
-        <textarea maxlength="5000" rows="3"></textarea>
-        <div class="comment-edit-actions">
-          <button type="button" class="cancel">Cancel</button>
-          <button type="button" class="save">Save</button>
-        </div>
-      `;
-      form.querySelector<HTMLTextAreaElement>('textarea')!.value = bodyEl.textContent || '';
-      bodyEl.replaceWith(form);
-      form.querySelector<HTMLTextAreaElement>('textarea')?.focus();
-
-      const cancel = () => {
-        const textarea = form.querySelector<HTMLTextAreaElement>('textarea');
-        const div = document.createElement('div');
-        div.className = 'comment-body';
-        div.textContent = textarea?.value || '';
-        form.replaceWith(div);
-      };
-
-      form.querySelector<HTMLButtonElement>('button.cancel')?.addEventListener('click', cancel);
-      form.querySelector<HTMLButtonElement>('button.save')?.addEventListener('click', async () => {
-        const textarea = form.querySelector<HTMLTextAreaElement>('textarea');
-        const content = textarea?.value || '';
-        if (!content.trim()) return;
-        try {
-          const res = await fetch(`${COMMENTS_API}?action=edit`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'edit',
-              commentId: editBtn.dataset.editComment,
-              content,
-            }),
-          });
-          const data = await res.json();
-          if (!data.success) {
-            showToast(data.error || 'Failed to edit comment');
-            return;
-          }
-          const div = document.createElement('div');
-          div.className = 'comment-body';
-          div.textContent = content;
-          form.replaceWith(div);
-          const editedTag = commentEl.querySelector<HTMLElement>('.comment-edited');
-          if (editedTag) editedTag.textContent = '· edited';
-          showToast('Comment updated');
-        } catch (error) {
-          showToast('Network error, please try again');
-          console.error(error);
-        }
-      });
-      return;
-    }
-
-    const deleteBtn = target.closest<HTMLButtonElement>('[data-delete-comment]');
-    if (deleteBtn) {
-      const commentEl = deleteBtn.closest<HTMLElement>('.comment-item');
-      if (!commentEl) return;
-      const commentId = deleteBtn.dataset.deleteComment;
-      if (!confirm('Delete this comment?')) return;
-      try {
-        const res = await fetch(`${COMMENTS_API}?action=delete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'delete', commentId }),
-        });
-        const data = await res.json();
-        if (!data.success) {
-          showToast(data.error || 'Failed to delete comment');
-          return;
-        }
-        commentEl.remove();
-        setCommentsCount(Math.max(0, totalComments - 1));
-        showToast('Comment deleted');
-      } catch (error) {
-        showToast('Network error, please try again');
-        console.error(error);
-      }
-      return;
-    }
-
-    const reactionBtn = target.closest<HTMLButtonElement>('[data-emoji]');
-    if (reactionBtn) {
-      const commentId = reactionBtn.dataset.commentId;
-      const emoji = reactionBtn.dataset.emoji;
-      if (!commentId || !emoji) return;
-      try {
-        const res = await fetch(`${COMMENTS_API}?action=react`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'react', commentId, emoji }),
-        });
-        const data = await res.json();
-        if (!data.success) {
-          showToast(data.error || 'Failed to react');
-          return;
-        }
-        reactionBtn.classList.toggle('is-active', data.data.added);
-        reactionBtn.setAttribute('aria-pressed', String(data.data.added));
-        const countEl = reactionBtn.querySelector('.reaction-count');
-        if (countEl) countEl.textContent = String(data.data.count);
-      } catch (error) {
-        showToast('Network error, please try again');
-        console.error(error);
-      }
-      return;
-    }
-
-    const reportBtn = target.closest<HTMLButtonElement>('[data-report-comment]');
-    if (reportBtn) {
-      const optionsEl = reportBtn.parentElement?.querySelector<HTMLElement>('.report-options');
-      if (optionsEl) optionsEl.toggleAttribute('hidden');
-      return;
-    }
-
-    const reportReason = target.closest<HTMLButtonElement>('[data-report-reason]');
-    if (reportReason) {
-      const menuEl = reportReason.closest<HTMLElement>('.report-options');
-      const commentId =
-        menuEl?.parentElement?.parentElement?.parentElement?.closest<HTMLElement>('.comment-item')
-          ?.dataset.commentId;
-      const commentEl = reportReason.closest<HTMLElement>('.comment-item');
-      const id = commentEl?.dataset.commentId || commentId;
-      if (!id) return;
-      try {
-        const res = await fetch(`${COMMENTS_API}?action=report`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'report',
-            commentId: id,
-            reason: reportReason.dataset.reportReason,
-          }),
-        });
-        const data = await res.json();
-        showToast(
-          data.success ? data.message || 'Report submitted' : data.error || 'Failed to report'
-        );
-        menuEl?.setAttribute('hidden', '');
-      } catch (error) {
-        showToast('Network error, please try again');
-        console.error(error);
-      }
-      return;
-    }
-  });
-
-  // ---------------------------------------------------------
-  // INIT
-  // ---------------------------------------------------------
-  async function initState() {
-    try {
-      const [likesRes, bookmarksRes, repostsRes, followsRes, commentsRes] = await Promise.all([
-        fetch(`/api/likes?slug=${encodeURIComponent(slug)}`),
-        fetch(`/api/bookmarks?slug=${encodeURIComponent(slug)}`),
-        fetch(`${REPOST_API}?slug=${encodeURIComponent(slug)}`),
-        authorId ? fetch(`${FOLLOW_API}?authorId=${encodeURIComponent(authorId)}`) : null,
-        fetch(`${COMMENTS_API}?slug=${encodeURIComponent(slug)}&count=1`),
-      ]);
-      const [likesData, bookmarksData, repostsData, followsData, commentsData] = await Promise.all([
-        likesRes.json(),
-        bookmarksRes.json(),
-        repostsRes.json(),
-        followsRes ? followsRes.json() : Promise.resolve({ success: false }),
-        commentsRes.json(),
-      ]);
-
-      if (likesData.success) {
-        likeBtn?.classList.toggle('is-active', likesData.data.liked);
-        likeBtn?.setAttribute('aria-pressed', String(likesData.data.liked));
-        if (likeCount) likeCount.textContent = String(likesData.data.count);
-      }
-      if (bookmarksData.success) {
-        bookmarkBtn?.classList.toggle('is-active', bookmarksData.data.bookmarked);
-        bookmarkBtn?.setAttribute('aria-pressed', String(bookmarksData.data.bookmarked));
-      }
-      if (repostsData.success) {
-        repostBtn?.classList.toggle('is-active', repostsData.data.reposted);
-        repostBtn?.setAttribute('aria-pressed', String(repostsData.data.reposted));
-        if (repostCount) repostCount.textContent = String(repostsData.data.count);
-      }
-      if (followsData.success) {
-        setFollowState(followsData.data.following, followsData.data.count);
-      }
-      if (commentsData.success) {
-        setCommentsCount(commentsData.data.count || 0);
-      }
-    } catch (error) {
-      console.error('Failed to load story state:', error);
-    }
-  }
-
-  commentsBtn?.addEventListener('click', () => {
-    document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
-  });
-
-  buildShareLinks();
-  (async () => {
-    await checkAuth();
-    initFollow();
-    loadComments();
-    initState();
-  })();
-</script>
