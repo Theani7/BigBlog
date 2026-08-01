@@ -8,9 +8,13 @@ import Layout from '../layouts/Layout.astro';
 
   <div class="write-layout">
     <div class="write-toolbar">
-      <div class="toolbar-left">
+      <div class="toolbar-left" style="display: flex; align-items: center; gap: 12px;">
         <span class="draft-status" id="draft-status">Draft in progress</span>
-        <span class="word-count" id="word-count">0 words &bull; 0 min read</span>
+        <span class="toolbar-divider" style="color: var(--color-hairline); font-size: 14px;">|</span
+        >
+        <span class="word-count" id="word-count" style="color: var(--color-muted); font-size: 13px;"
+          >0 words &bull; 0 min read</span
+        >
       </div>
       <div class="toolbar-right">
         <button class="btn btn-secondary btn-sm" id="save-draft-btn">Save Draft</button>
@@ -630,7 +634,7 @@ import Layout from '../layouts/Layout.astro';
     outline: none;
     line-height: 1.3;
     padding: 0;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-md);
   }
 
   .write-subtitle-input::placeholder {
@@ -640,27 +644,25 @@ import Layout from '../layouts/Layout.astro';
 
   /* Cover Image Styling */
   .cover-image-container {
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     position: relative;
     border-radius: var(--radius-lg);
     overflow: hidden;
-    background: var(--bg-surface-soft);
-    min-height: 48px;
     display: flex;
     align-items: center;
   }
 
   .add-cover-btn {
-    background: none;
+    background: transparent;
     border: none;
-    color: var(--color-muted);
+    color: var(--color-muted-soft);
     font-family: var(--font-sans);
     font-size: 14px;
     display: flex;
     align-items: center;
     gap: 8px;
     cursor: pointer;
-    padding: 12px 16px;
+    padding: 8px 0;
     transition: color 0.2s ease;
   }
 
@@ -844,8 +846,8 @@ import Layout from '../layouts/Layout.astro';
   .write-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-md);
-    margin-bottom: var(--space-2xl);
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xl);
     padding-bottom: var(--space-md);
     border-bottom: 1px solid var(--color-hairline);
     align-items: flex-start;
