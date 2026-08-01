@@ -16,6 +16,12 @@ dist/
 *.swp
 *.swo
 
+# AI Agents
+.gemini/
+.cursor/
+.windsurf/
+.claude/
+
 # OS
 .DS_Store
 Thumbs.db
