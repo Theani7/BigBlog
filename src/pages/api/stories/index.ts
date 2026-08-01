@@ -57,12 +57,24 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       counter++;
     }
 
+    function normalizeTag(tag: string) {
+      let t = tag.toLowerCase().trim();
+      if (t.endsWith('s') && !t.endsWith('ss') && t.length > 3 && t !== 'news') {
+        t = t.slice(0, -1);
+      }
+      return t;
+    }
+
+    const normalizedTags = Array.isArray(tags) ? tags.map(normalizeTag).filter(Boolean) : [];
+    // Remove duplicates
+    const uniqueTags = [...new Set(normalizedTags)];
+
     const story = new Story({
       title,
       content,
       slug,
       category,
-      tags: Array.isArray(tags) ? tags : [],
+      tags: uniqueTags,
       authorId: payload.userId,
       status: status || 'DRAFT',
       publishedAt: status === 'PUBLISHED' ? new Date() : undefined,
