@@ -51,114 +51,122 @@ import Layout from '../layouts/Layout.astro';
   // Initialize Quill Editor
   let quill;
 
-  async function checkAuth() {
-    try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
+  document.addEventListener('astro:page-load', () => {
+    const editorContainer = document.getElementById('quill-editor');
+    if (!editorContainer) return; // Not on the write page
 
-      if (!data.success || !data.user) {
+    // Reset quill instance
+    quill = null;
+
+    async function checkAuth() {
+      try {
+        const res = await fetch('/api/auth/me');
+        const data = await res.json();
+
+        if (!data.success || !data.user) {
+          window.location.href = '/login?redirect=/write';
+        } else {
+          const loader = document.getElementById('loading-state');
+          const editorWrap = document.getElementById('editor-container');
+          if (loader) loader.style.display = 'none';
+          if (editorWrap) editorWrap.style.display = 'flex'; // Use flex to match our CSS
+
+          // Check if Quill is already initialized in this container to prevent double initialization
+          if (!document.querySelector('.ql-toolbar')) {
+            initQuill();
+          }
+        }
+      } catch (err) {
+        console.error('Failed to authenticate:', err);
         window.location.href = '/login?redirect=/write';
-      } else {
-        const loader = document.getElementById('loading-state');
-        const editor = document.getElementById('editor-container');
-        if (loader) loader.style.display = 'none';
-        if (editor) editor.style.display = 'block';
-
-        // Initialize Quill after making container visible
-        initQuill();
       }
-    } catch (err) {
-      console.error('Failed to authenticate:', err);
-      window.location.href = '/login?redirect=/write';
     }
-  }
 
-  function initQuill() {
-    quill = new Quill('#quill-editor', {
-      theme: 'bubble', // 'bubble' gives the beautiful highlight-to-format Medium style popup
-      placeholder: 'Tell your story...',
-      modules: {
-        toolbar: [
-          ['bold', 'italic', 'underline', 'strike'],
-          [{ header: [1, 2, 3, false] }],
-          [{ color: [] }, { background: [] }],
-          ['blockquote', 'code-block'],
-          [{ list: 'ordered' }, { list: 'bullet' }],
-          ['link', 'image', 'video'],
-          ['clean'],
-        ],
-      },
+    function initQuill() {
+      quill = new Quill('#quill-editor', {
+        theme: 'bubble', // 'bubble' gives the beautiful highlight-to-format Medium style popup
+        placeholder: 'Tell your story...',
+        modules: {
+          toolbar: [
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ header: [1, 2, 3, false] }],
+            [{ color: [] }, { background: [] }],
+            ['blockquote', 'code-block'],
+            [{ list: 'ordered' }, { list: 'bullet' }],
+            ['link', 'image', 'video'],
+            ['clean'],
+          ],
+        },
+      });
+
+      // Enable Markdown shortcuts
+      new window.QuillMarkdown(quill, {
+        ignoreTags: ['strikethrough', 'image', 'video'], // Ignore some complex or buggy tags if needed
+      });
+    }
+
+    // Attach Event Listeners to fresh DOM elements
+    const saveBtn = document.getElementById('save-draft-btn');
+    const publishBtn = document.getElementById('publish-btn');
+    const titleInput = document.getElementById('post-title');
+
+    saveBtn?.addEventListener('click', async () => {
+      if (!quill) return;
+      const title = titleInput.value;
+      if (!title) {
+        alert('Please enter a title to save your draft.');
+        return;
+      }
+      const htmlContent = quill.getSemanticHTML();
+
+      try {
+        const res = await fetch('/api/stories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content: htmlContent, status: 'DRAFT' }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Draft saved to database successfully!');
+          window.location.href = '/stories';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (e) {
+        alert('Failed to save draft.');
+      }
     });
 
-    // Native Drag and Drop is supported automatically by Quill (inserts as Base64 images).
-    // In a real production app, you would intercept the image drop, upload it to S3/Cloudflare R2,
-    // and replace the Base64 src with the real image URL.
+    publishBtn?.addEventListener('click', async () => {
+      if (!quill) return;
+      const title = titleInput.value;
+      if (!title) {
+        alert('Please enter a title before publishing.');
+        return;
+      }
+      const htmlContent = quill.getSemanticHTML();
 
-    // Enable Markdown shortcuts
-    new window.QuillMarkdown(quill, {
-      ignoreTags: ['strikethrough', 'image', 'video'], // Ignore some complex or buggy tags if needed
+      try {
+        const res = await fetch('/api/stories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content: htmlContent, status: 'PUBLISHED' }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert('Story published successfully!');
+          window.location.href = '/profile';
+        } else {
+          alert('Error: ' + data.error);
+        }
+      } catch (e) {
+        alert('Failed to publish story.');
+      }
     });
-  }
 
-  // Handle Save / Publish Logic
-  document.getElementById('save-draft-btn')?.addEventListener('click', async () => {
-    if (!quill) return;
-    const title = document.getElementById('post-title').value;
-    if (!title) {
-      alert('Please enter a title to save your draft.');
-      return;
-    }
-    const htmlContent = quill.getSemanticHTML();
-
-    try {
-      const res = await fetch('/api/stories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: htmlContent, status: 'DRAFT' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Draft saved to database successfully!');
-        window.location.href = '/stories';
-      } else {
-        alert('Error: ' + data.error);
-      }
-    } catch (e) {
-      alert('Failed to save draft.');
-    }
-  });
-
-  document.getElementById('publish-btn')?.addEventListener('click', async () => {
-    if (!quill) return;
-    const title = document.getElementById('post-title').value;
-    if (!title) {
-      alert('Please enter a title before publishing.');
-      return;
-    }
-    const htmlContent = quill.getSemanticHTML();
-
-    try {
-      const res = await fetch('/api/stories', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: htmlContent, status: 'PUBLISHED' }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert('Story published successfully!');
-        window.location.href = '/profile';
-      } else {
-        alert('Error: ' + data.error);
-      }
-    } catch (e) {
-      alert('Failed to publish story.');
-    }
-  });
-
-  // Run on mount
-  if (typeof window !== 'undefined') {
+    // Run auth check which will initialize Quill
     checkAuth();
-  }
+  });
 </script>
 
 <style>
