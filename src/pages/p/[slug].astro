@@ -898,7 +898,9 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
   let _shareMenuListenerAttached = false;
 
   document.addEventListener('astro:page-load', () => {
-    const slug = document.querySelector<HTMLMetaElement>('meta[name="story-slug"]')?.content || '';
+    const slugMeta = document.querySelector<HTMLMetaElement>('meta[name="story-slug"]');
+    if (!slugMeta) return;
+    const slug = slugMeta.content || '';
     const authorId =
       document.querySelector<HTMLMetaElement>('meta[name="story-author"]')?.content || '';
     const currentUrl = window.location.href;
