@@ -1,0 +1,140 @@
+---
+export interface Props {
+  title: string;
+  author: any;
+  authorId: string;
+  publishDate: string;
+  readTime: number;
+}
+const { title, author, authorId, publishDate, readTime } = Astro.props;
+---
+
+<header class="post-header">
+  <h1 class="post-title">{title}</h1>
+  <div class="post-meta">
+    <div class="author-info">
+      <img
+        src={author?.avatar || 'https://i.pravatar.cc/150?img=11'}
+        alt={author?.name || 'Anonymous'}
+        class="author-avatar"
+      />
+      <div class="author-details">
+        <div class="author-line">
+          <span class="author-name">{author?.name || 'Anonymous'}</span>
+          <button
+            class="follow-btn"
+            id="follow-btn"
+            data-author-id={authorId}
+            aria-pressed="false"
+            hidden
+          >
+            Follow
+          </button>
+        </div>
+        <div class="post-stats">
+          <span class="post-date">{publishDate}</span>
+          <span class="meta-separator">·</span>
+          <span class="read-time">{readTime} min read</span>
+          <span class="meta-separator">·</span>
+          <span class="follower-count" id="follower-count">0 followers</span>
+        </div>
+      </div>
+    </div>
+    <slot />
+  </div>
+</header>
+
+<style>
+  .post-header {
+    margin-bottom: var(--space-xl);
+  }
+
+  .post-title {
+    font-family: var(--font-serif);
+    font-size: var(--text-display-lg);
+    font-weight: 400;
+    line-height: var(--leading-tight);
+    letter-spacing: -1px;
+    color: var(--color-ink);
+    margin-bottom: var(--space-lg);
+  }
+
+  .post-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-hairline);
+    margin-bottom: var(--space-xl);
+    gap: var(--space-md);
+    flex-wrap: wrap;
+  }
+
+  .author-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .author-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+  }
+
+  .author-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xxs);
+  }
+
+  .author-line {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .author-name {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .follow-btn {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-ink);
+    background: transparent;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: all var(--duration-fast);
+  }
+
+  .follow-btn:hover {
+    background: var(--bg-surface-soft);
+  }
+
+  .follow-btn.is-following {
+    background: var(--bg-surface-soft);
+    color: var(--color-ink);
+    border-color: var(--color-hairline);
+  }
+
+  .post-stats {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .meta-separator {
+    padding: 0 4px;
+  }
+</style>
