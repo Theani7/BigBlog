@@ -204,9 +204,33 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
         <Fragment set:html={story.content} />
       </div>
 
+      <!-- Comments drawer overlay -->
+      <div class="comments-overlay" id="comments-overlay" aria-hidden="true"></div>
+
       <!-- Comments section -->
-      <section class="comments-section" id="comments-section" aria-label="Comments">
-        <h2 class="comments-title">Responses <span id="comments-title-count">0</span></h2>
+      <section
+        class="comments-section"
+        id="comments-section"
+        aria-label="Comments"
+        aria-hidden="true"
+      >
+        <div class="comments-header">
+          <h2 class="comments-title">Responses <span id="comments-title-count">0</span></h2>
+          <button class="comments-close-btn" id="comments-close-btn" aria-label="Close responses">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              ><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"
+              ></line></svg
+            >
+          </button>
+        </div>
 
         <div class="comment-auth-gate" id="comment-auth-gate" hidden>
           <div class="gate-icon" aria-hidden="true">
@@ -522,10 +546,51 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
   }
 
   /* Comments */
+  .comments-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 99;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-default);
+    backdrop-filter: blur(2px);
+  }
+
+  .comments-overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
   .comments-section {
-    margin-top: var(--space-section);
-    border-top: 1px solid var(--color-hairline);
-    padding-top: var(--space-xl);
+    position: fixed;
+    top: 0;
+    right: -420px;
+    width: 400px;
+    max-width: 100vw;
+    height: 100vh;
+    background: var(--bg-surface);
+    z-index: 100;
+    overflow-y: auto;
+    padding: var(--space-xl) var(--space-xl);
+    box-shadow: -8px 0 32px rgba(0, 0, 0, 0.1);
+    transition: transform var(--duration-normal) var(--ease-spring);
+    margin-top: 0;
+    border-top: none;
+  }
+
+  .comments-section.is-open {
+    transform: translateX(-420px);
+  }
+
+  .comments-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-xl);
   }
 
   .comments-title {
@@ -534,7 +599,27 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     font-weight: 400;
     letter-spacing: -0.3px;
     color: var(--color-ink);
-    margin-bottom: var(--space-xl);
+    margin: 0;
+  }
+
+  .comments-close-btn {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      background var(--duration-fast),
+      color var(--duration-fast);
+  }
+
+  .comments-close-btn:hover {
+    background: var(--bg-surface-soft);
+    color: var(--color-ink);
   }
 
   .comments-title span {
@@ -1590,9 +1675,27 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     }
   }
 
-  commentsBtn?.addEventListener('click', () => {
-    document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
-  });
+  const commentsSection = document.getElementById('comments-section');
+  const commentsOverlay = document.getElementById('comments-overlay');
+  const commentsCloseBtn = document.getElementById('comments-close-btn');
+
+  function openComments() {
+    commentsSection?.classList.add('is-open');
+    commentsOverlay?.classList.add('is-visible');
+    commentsSection?.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeComments() {
+    commentsSection?.classList.remove('is-open');
+    commentsOverlay?.classList.remove('is-visible');
+    commentsSection?.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  commentsBtn?.addEventListener('click', openComments);
+  commentsCloseBtn?.addEventListener('click', closeComments);
+  commentsOverlay?.addEventListener('click', closeComments);
 
   buildShareLinks();
   (async () => {
