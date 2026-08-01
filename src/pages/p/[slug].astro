@@ -266,9 +266,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
   .read-layout {
     display: grid;
     grid-template-columns: 240px 1fr;
-    min-height: calc(100vh - var(--header-height));
     max-width: 100%;
     margin: 0 auto;
+    min-height: calc(100vh - var(--header-height, 64px));
+    align-items: stretch;
   }
   @media (max-width: 768px) {
     .read-layout {
@@ -281,8 +282,10 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     width: 100%; /* Claude editorial width (~68ch for readability) */
     margin: 0 auto;
     padding: var(--space-section) var(--space-lg);
-    min-height: calc(100vh - 64px);
     background-color: var(--bg-canvas); /* Ensures tinted cream canvas */
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
   }
 
   .post-header {
@@ -474,6 +477,13 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
     line-height: var(--leading-normal);
     color: var(--color-body);
     padding: 0;
+    flex: 1 0 auto;
+  }
+
+  .post-content :global(.ql-editor) {
+    height: auto !important;
+    min-height: 200px;
+    overflow-y: visible !important;
   }
 
   .post-content :global(h1),
