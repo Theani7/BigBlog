@@ -27,3 +27,6 @@ npm-debug.log*
 # misc
 *.tgz
 coverage/
+# Test artifacts
+playwright-report/
+test-results/
