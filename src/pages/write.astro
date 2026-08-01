@@ -603,14 +603,41 @@ import Layout from '../layouts/Layout.astro';
 
   /* Quill Tooltip styling for a premium feel */
   :global(.ql-bubble .ql-tooltip) {
-    background-color: var(--color-surface-dark) !important;
+    background-color: var(--bg-surface-dark) !important;
     border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-    padding: 8px 12px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+    padding: 6px 12px !important;
   }
 
   :global(.ql-bubble .ql-tooltip-arrow) {
-    border-bottom-color: var(--color-surface-dark) !important;
-    border-top-color: var(--color-surface-dark) !important;
+    border-bottom-color: var(--bg-surface-dark) !important;
+    border-top-color: var(--bg-surface-dark) !important;
+  }
+
+  /* Fix SVG Icon Colors */
+  :global(.ql-bubble .ql-stroke) {
+    stroke: var(--color-on-dark-soft) !important;
+  }
+  :global(.ql-bubble .ql-fill) {
+    fill: var(--color-on-dark-soft) !important;
+  }
+  :global(.ql-bubble button:hover .ql-stroke),
+  :global(.ql-bubble button.ql-active .ql-stroke),
+  :global(.ql-bubble .ql-picker-label:hover .ql-stroke),
+  :global(.ql-bubble .ql-picker-label.ql-active .ql-stroke) {
+    stroke: var(--color-on-dark) !important;
+  }
+  :global(.ql-bubble button:hover .ql-fill),
+  :global(.ql-bubble button.ql-active .ql-fill),
+  :global(.ql-bubble .ql-picker-label:hover .ql-fill),
+  :global(.ql-bubble .ql-picker-label.ql-active .ql-fill) {
+    fill: var(--color-on-dark) !important;
+  }
+  :global(.ql-bubble .ql-picker-label) {
+    color: var(--color-on-dark-soft) !important;
+  }
+  :global(.ql-bubble .ql-picker-label:hover),
+  :global(.ql-bubble .ql-picker-label.ql-active) {
+    color: var(--color-on-dark) !important;
   }
 </style>
