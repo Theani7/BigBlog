@@ -5,6 +5,9 @@ export type StoryCategory = 'Technology' | 'Design' | 'Business' | 'Culture' | '
 
 export interface IStory extends Document {
   title: string;
+  subtitle?: string;
+  excerpt?: string;
+  coverImage?: string;
   content: string;
   slug: string;
   authorId: mongoose.Types.ObjectId;
@@ -21,6 +24,9 @@ export interface IStory extends Document {
 
 const storySchema = new Schema<IStory>({
   title: { type: String, required: true },
+  subtitle: { type: String },
+  excerpt: { type: String },
+  coverImage: { type: String },
   content: { type: String, default: '' },
   slug: { type: String, required: true, unique: true },
   authorId: { type: Schema.Types.ObjectId, ref: 'User', required: true },

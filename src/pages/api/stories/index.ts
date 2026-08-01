@@ -32,7 +32,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const body = await request.json();
-    const { title, content, status, category, tags } = body;
+    const { title, subtitle, excerpt, coverImage, content, status, category, tags } = body;
 
     if (!title) {
       return new Response(JSON.stringify({ success: false, error: 'Title is required' }), {
@@ -71,6 +71,9 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     const story = new Story({
       title,
+      subtitle,
+      excerpt,
+      coverImage,
       content,
       slug,
       category,
@@ -97,5 +100,78 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+};
+
+export const PUT: APIRoute = async ({ request, locals, cookies }) => {
+  const env = (locals as { env: Env }).env;
+
+  if (!env) {
+    return new Response(JSON.stringify({ success: false, error: 'Environment not configured' }), {
+      status: 503,
+    });
+  }
+
+  try {
+    const token = cookies.get('auth_token')?.value;
+    if (!token)
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+      });
+
+    const payload = await verifyAuthToken(token, env);
+    if (!payload || !payload.userId)
+      return new Response(JSON.stringify({ success: false, error: 'Invalid token' }), {
+        status: 401,
+      });
+
+    const body = await request.json();
+    const { storyId, title, subtitle, excerpt, coverImage, content, status, tags } = body;
+
+    if (!storyId)
+      return new Response(JSON.stringify({ success: false, error: 'Story ID required' }), {
+        status: 400,
+      });
+
+    await createDatabase(env);
+    const story = await Story.findOne({ _id: storyId, authorId: payload.userId });
+    if (!story)
+      return new Response(JSON.stringify({ success: false, error: 'Story not found' }), {
+        status: 404,
+      });
+
+    function normalizeTag(tag: string) {
+      let t = tag.toLowerCase().trim();
+      if (t.endsWith('s') && !t.endsWith('ss') && t.length > 3 && t !== 'news') t = t.slice(0, -1);
+      return t;
+    }
+
+    if (title !== undefined) story.title = title;
+    if (subtitle !== undefined) story.subtitle = subtitle;
+    if (excerpt !== undefined) story.excerpt = excerpt;
+    if (coverImage !== undefined) story.coverImage = coverImage;
+    if (content !== undefined) story.content = content;
+    if (status !== undefined) story.status = status;
+    if (tags !== undefined) {
+      const normalizedTags = Array.isArray(tags) ? tags.map(normalizeTag).filter(Boolean) : [];
+      story.tags = [...new Set(normalizedTags)];
+    }
+
+    if (status === 'PUBLISHED' && !story.publishedAt) {
+      story.publishedAt = new Date();
+    }
+
+    story.updatedAt = new Date();
+    await story.save();
+
+    return new Response(
+      JSON.stringify({ success: true, story: { id: story._id, slug: story.slug } }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+  } catch (error: any) {
+    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500 });
   }
 };
