@@ -9,8 +9,7 @@ import ThemeSwitch from '../components/navigation/ThemeSwitch.astro';
 import Footer from '../components/ui/Footer.astro';
 import ReaderSettings from '../components/layout/ReaderSettings.astro';
 import HeadSEO from '../components/layout/HeadSEO.astro';
-import { createDatabase, type Env } from '../db';
-import { Story } from '../db/schema';
+import Navbar from '../components/navigation/Navbar.astro';
 
 interface LayoutProps {
   title: string;
@@ -31,40 +30,6 @@ interface LayoutProps {
 const props = Astro.props;
 const { breadcrumbs } = props;
 const currentPath = Astro.url.pathname;
-
-const env = (Astro.locals as { env: Env }).env;
-let trendingNavLinks: Array<{ label: string; href: string }> = [];
-
-if (env) {
-  try {
-    await createDatabase(env);
-
-    const tagAggregation = await Story.aggregate([
-      { $match: { status: 'PUBLISHED' } },
-      { $unwind: '$tags' },
-      { $group: { _id: '$tags', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 4 }, // Top 4 trending categories
-    ]);
-
-    trendingNavLinks = tagAggregation.map((t) => ({
-      label: t._id.charAt(0).toUpperCase() + t._id.slice(1),
-      href: `/tag/${t._id}`,
-    }));
-  } catch (e) {
-    console.error('Failed to load trending tags for nav:', e);
-  }
-}
-
-const navLinks: Array<{ label: string; href: string }> = [
-  ...trendingNavLinks,
-  { label: 'Write', href: '/write' },
-];
-
-const activeLink = navLinks.find((link) => {
-  if (link.href === '/') return currentPath === '/';
-  return currentPath.startsWith(link.href);
-});
 ---
 
 <!doctype html>
@@ -75,81 +40,7 @@ const activeLink = navLinks.find((link) => {
   <body>
     <a href="#main-content" class="skip-link">Skip to content</a>
 
-    <header class="site-header" role="banner">
-      <div class="container header-inner">
-        <a href="/" class="logo" aria-label="BigBlog home">
-          <span class="logo-text">BigBlog</span>
-        </a>
-        <div class="header-right-group">
-          <nav class="site-nav" aria-label="Main navigation">
-            <ul class="nav-list">
-              {
-                navLinks.map((link) => (
-                  <li>
-                    <a
-                      href={link.href}
-                      aria-current={activeLink?.href === link.href ? 'page' : undefined}
-                      class:list={[
-                        'nav-link',
-                        { 'nav-link--active': activeLink?.href === link.href },
-                      ]}
-                    >
-                      {link.label}
-                    </a>
-                  </li>
-                ))
-              }
-            </ul>
-          </nav>
-          <div class="header-actions">
-            <div class="auth-links">
-              <a href="#" data-auth-modal="login" class="nav-link">Log in</a>
-              <a
-                href="#"
-                data-auth-modal="signup"
-                class="btn btn-primary"
-                style="padding: 0.375rem 1rem; font-size: 0.875rem;">Get Started</a
-              >
-            </div>
-            <button
-              class="mobile-nav-toggle"
-              aria-label="Open menu"
-              aria-expanded="false"
-              type="button"
-            >
-              <span class="mobile-nav-icon" aria-hidden="true"></span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
-
-    <div class="mobile-nav-overlay" aria-hidden="true">
-      <div class="mobile-nav-drawer" role="dialog" aria-modal="true" aria-label="Navigation menu">
-        <div class="mobile-nav-header">
-          <button class="mobile-nav-close" aria-label="Close menu" type="button">
-            <span class="mobile-nav-close-icon" aria-hidden="true"></span>
-          </button>
-        </div>
-        <nav class="mobile-nav-links" aria-label="Mobile navigation">
-          <ul class="mobile-nav-list">
-            {
-              navLinks.map((link) => (
-                <li>
-                  <a
-                    href={link.href}
-                    class="mobile-nav-link"
-                    aria-current={activeLink?.href === link.href ? 'page' : undefined}
-                  >
-                    {link.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
-      </div>
-    </div>
+    <Navbar />
 
     <main id="main-content" class="main-content">
       {
@@ -390,615 +281,117 @@ const activeLink = navLinks.find((link) => {
       })();
     </script>
     <AuthModal />
-    <script is:inline data-astro-rerun>
-      // Global auth state checker — updates header for logged-in users on all pages
-      (async () => {
-        try {
-          const res = await fetch('/api/auth/me');
-          const data = await res.json();
-          if (!data.success || !data.user) return;
 
-          const user = data.user;
-          const authLinks = document.querySelector('.auth-links');
+    <style>
+      .skip-link {
+        position: absolute;
+        top: -100%;
+        left: 0;
+        padding: 0.5rem 1rem;
+        background: var(--color-primary);
+        color: var(--text-inverse);
+        font-size: var(--text-sm);
+        font-weight: var(--weight-medium);
+        z-index: var(--z-tooltip);
+        border-radius: var(--radius-md);
+        text-decoration: none;
+        transition: top var(--duration-fast) var(--ease-default);
+      }
 
-          // Update logo to redirect to dashboard when logged in
-          const logo = document.querySelector('.logo');
-          if (logo) logo.href = '/dashboard';
+      .skip-link:focus {
+        top: 0;
+      }
 
-          // Hide public nav links ("Our story", "Write") when logged in
-          const siteNav = document.querySelector('.site-nav');
-          if (siteNav) siteNav.style.display = 'none';
+      :global(:focus-visible) {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
 
-          // Hide mobile nav hamburger menu when logged in
-          const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
-          if (mobileNavToggle) mobileNavToggle.style.display = 'none';
+      :global(:focus:not(:focus-visible)) {
+        outline: none;
+      }
 
-          if (!authLinks) return;
+      .container {
+        max-width: 100%;
+        margin: 0 auto;
+        padding: 0 var(--space-6);
+      }
 
-          const displayName = user.name || user.email.split('@')[0];
-          const initials = displayName
-            .split(' ')
-            .map((n) => n[0])
-            .join('')
-            .toUpperCase()
-            .slice(0, 2);
+      .search-toggle:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
 
-          authLinks.innerHTML = `
-            <a href="/write" class="nav-link" style="display:inline-flex;align-items:center;gap:6px;">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 20h9"></path>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
-              </svg>
-              Write
-            </a>
-            <button class="global-notification-btn" aria-label="Notifications" style="background:none;border:none;color:var(--color-body);cursor:pointer;padding:6px;border-radius:var(--radius-sm);display:flex;align-items:center;">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
-                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
-              </svg>
-            </button>
-            <div style="position:relative;">
-              <button class="global-avatar-btn" aria-label="User menu" aria-expanded="false" style="background:none;border:none;cursor:pointer;padding:0;">
-                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1e1033,#5f4b8b);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-size:0.7rem;font-weight:600;color:white;">${initials}</div>
-              </button>
-              <div class="global-user-dropdown" style="position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--bg-canvas);border:1px solid var(--color-hairline);border-radius:var(--radius-md);box-shadow:0 8px 30px rgba(0,0,0,0.08);opacity:0;visibility:hidden;transform:translateY(-4px);transition:all 0.15s;z-index:600;overflow:hidden;">
-                <div style="padding:var(--space-md);display:flex;flex-direction:column;gap:2px;">
-                  <span style="font-family:var(--font-sans);font-size:var(--text-body-sm);font-weight:500;color:var(--color-ink);">${displayName}</span>
-                  <span style="font-family:var(--font-sans);font-size:var(--text-caption);color:var(--color-muted);">${user.email}</span>
-                  <span style="display:inline-block;font-family:var(--font-mono);font-size:0.65rem;color:var(--color-primary);background:rgba(30,16,51,0.1);padding:2px 6px;border-radius:4px;margin-top:4px;width:fit-content;text-transform:uppercase;letter-spacing:0.5px;">${user.role}</span>
-                </div>
-                <div style="height:1px;background:var(--color-hairline);"></div>
-                <a href="/dashboard" style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;">Dashboard</a>
-                <a href="/write" style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;">Write a story</a>
-                <div style="height:1px;background:var(--color-hairline);"></div>
-                <button class="global-logout-btn" style="display:block;width:100%;text-align:left;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-error);background:none;border:none;cursor:pointer;">Sign out</button>
-              </div>
-            </div>
-          `;
+      .search-kbd {
+        font-family: var(--font-mono);
+        font-size: var(--text-xs);
+        color: var(--color-muted);
+        padding: 0.1em 0.35em;
+        background: var(--bg-surface-soft);
+        border: 1px solid var(--color-hairline);
+        border-radius: var(--radius-sm);
+      }
 
-          // Dropdown toggle
-          const avatarBtn = document.querySelector('.global-avatar-btn');
-          const dropdown = document.querySelector('.global-user-dropdown');
-          if (avatarBtn && dropdown) {
-            avatarBtn.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const isOpen = dropdown.style.opacity === '1';
-              dropdown.style.opacity = isOpen ? '0' : '1';
-              dropdown.style.visibility = isOpen ? 'hidden' : 'visible';
-              dropdown.style.transform = isOpen ? 'translateY(-4px)' : 'translateY(0)';
-              avatarBtn.setAttribute('aria-expanded', String(!isOpen));
-            });
-            document.addEventListener('click', () => {
-              dropdown.style.opacity = '0';
-              dropdown.style.visibility = 'hidden';
-              dropdown.style.transform = 'translateY(-4px)';
-              avatarBtn.setAttribute('aria-expanded', 'false');
-            });
-          }
+      .theme-toggle {
+        background: none;
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-full);
+        width: 2.5rem;
+        height: 2.5rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        transition: all var(--duration-fast) var(--ease-default);
+      }
 
-          // Logout
-          document.querySelector('.global-logout-btn')?.addEventListener('click', async () => {
-            await fetch('/api/auth/logout', { method: 'POST' });
-            window.location.href = '/';
-          });
-        } catch (e) {
-          // Silently fail — user is just not logged in
+      .theme-toggle:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+      }
+
+      .theme-toggle:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+      }
+
+      .main-content {
+        min-height: 60vh;
+      }
+      @media (max-width: 639px) {
+        .search-kbd {
+          display: none;
         }
-      })();
-    </script>
+      }
+
+      @media (min-width: 768px) {
+        .footer-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .footer-bottom {
+          flex-direction: row;
+          justify-content: space-between;
+          align-items: center;
+        }
+      }
+
+      @media (min-width: 1024px) {
+        .footer-grid {
+          grid-template-columns: 2fr 1fr 1fr 1fr;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
   </body>
 </html>
-
-<script is:inline data-astro-rerun>
-  (() => {
-    const header = document.querySelector('.site-header');
-    const toggle = document.querySelector('.mobile-nav-toggle');
-    const overlay = document.querySelector('.mobile-nav-overlay');
-    const drawer = document.querySelector('.mobile-nav-drawer');
-    const closeBtn = document.querySelector('.mobile-nav-close');
-
-    if (!header || !toggle || !overlay || !drawer) return;
-
-    function open() {
-      overlay.classList.add('mobile-nav-overlay--open');
-      drawer.classList.add('mobile-nav-drawer--open');
-      overlay.setAttribute('aria-hidden', 'false');
-      toggle.setAttribute('aria-expanded', 'true');
-      const firstLink = drawer.querySelector('.mobile-nav-link');
-      if (firstLink) firstLink.focus();
-    }
-
-    function close() {
-      overlay.classList.remove('mobile-nav-overlay--open');
-      drawer.classList.remove('mobile-nav-drawer--open');
-      overlay.setAttribute('aria-hidden', 'true');
-      toggle.setAttribute('aria-expanded', 'false');
-    }
-
-    toggle.addEventListener('click', () => {
-      if (drawer.classList.contains('mobile-nav-drawer--open')) {
-        close();
-      } else {
-        open();
-      }
-    });
-
-    closeBtn?.addEventListener('click', close);
-
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) close();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && drawer.classList.contains('mobile-nav-drawer--open')) {
-        close();
-      }
-    });
-
-    document.querySelectorAll('.mobile-nav-link').forEach((link) => {
-      link.addEventListener('click', close);
-    });
-
-    let ticking = false;
-    window.addEventListener('scroll', () => {
-      if (!ticking) {
-        requestAnimationFrame(() => {
-          if (window.scrollY > 8) {
-            header.classList.add('site-header--scrolled');
-          } else {
-            header.classList.remove('site-header--scrolled');
-          }
-          ticking = false;
-        });
-        ticking = true;
-      }
-    });
-
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      const prefetched = new Set();
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const link = entry.target;
-              const href = link.getAttribute('href');
-              if (
-                href &&
-                href.startsWith('/') &&
-                !href.startsWith('//') &&
-                !prefetched.has(href) &&
-                !window.location.pathname.startsWith(href)
-              ) {
-                const a = document.createElement('link');
-                a.rel = 'prefetch';
-                a.href = href;
-                a.as = 'document';
-                document.head.appendChild(a);
-                prefetched.add(href);
-              }
-              observer.unobserve(link);
-            }
-          });
-        },
-        { rootMargin: '200px' }
-      );
-
-      document.querySelectorAll('a[href^="/"]').forEach((link) => {
-        observer.observe(link);
-      });
-
-      document.querySelectorAll('a[href^="/"]').forEach((link) => {
-        link.addEventListener(
-          'mouseenter',
-          () => {
-            const href = link.getAttribute('href');
-            if (href && !prefetched.has(href) && !window.location.pathname.startsWith(href)) {
-              const a = document.createElement('link');
-              a.rel = 'prefetch';
-              a.href = href;
-              a.as = 'document';
-              document.head.appendChild(a);
-              prefetched.add(href);
-            }
-          },
-          { once: true }
-        );
-      });
-    }
-  })();
-</script>
-
-<style>
-  .skip-link {
-    position: absolute;
-    top: -100%;
-    left: 0;
-    padding: 0.5rem 1rem;
-    background: var(--color-primary);
-    color: var(--text-inverse);
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    z-index: var(--z-tooltip);
-    border-radius: var(--radius-md);
-    text-decoration: none;
-    transition: top var(--duration-fast) var(--ease-default);
-  }
-
-  .skip-link:focus {
-    top: 0;
-  }
-
-  :global(:focus-visible) {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  :global(:focus:not(:focus-visible)) {
-    outline: none;
-  }
-
-  :global(.container) {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 0 var(--space-6);
-  }
-
-  .site-header {
-    border-bottom: 1px solid var(--color-hairline);
-    background: var(--bg-canvas);
-    position: sticky;
-    top: 0;
-    z-index: var(--z-sticky);
-    height: var(--header-height);
-    transition: box-shadow var(--duration-fast) var(--ease-default);
-  }
-
-  .site-header--scrolled {
-    box-shadow: 0 1px 3px rgb(0 0 0 / 0.08);
-  }
-
-  .header-inner {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 100%;
-  }
-
-  .logo {
-    text-decoration: none;
-    color: var(--text-primary);
-  }
-
-  .logo-text {
-    font-family: var(--font-serif);
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: -0.5px;
-    color: var(--color-ink);
-  }
-
-  .site-nav {
-    display: none;
-  }
-
-  .nav-list {
-    display: flex;
-    list-style: none;
-    gap: var(--space-1);
-    margin: 0;
-    padding: 0;
-  }
-
-  .nav-link {
-    display: inline-block;
-    padding: var(--space-2) var(--space-3);
-    color: var(--text-secondary);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: var(--weight-medium);
-    border-radius: var(--radius-md);
-    transition:
-      color var(--duration-fast) var(--ease-default),
-      background var(--duration-fast) var(--ease-default);
-  }
-
-  .nav-link:hover {
-    color: var(--text-primary);
-    background: var(--bg-tertiary);
-    text-decoration: none;
-  }
-
-  .nav-link--active {
-    color: var(--color-primary);
-    background: var(--bg-tertiary);
-  }
-
-  .header-right-group {
-    display: flex;
-    align-items: center;
-    gap: var(--space-4);
-  }
-
-  .nav-link:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-  }
-
-  .auth-links {
-    display: none;
-    align-items: center;
-    gap: var(--space-4);
-  }
-
-  @media (min-width: 768px) {
-    .auth-links {
-      display: flex;
-    }
-  }
-
-  .search-toggle:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .search-kbd {
-    font-family: var(--font-mono);
-    font-size: var(--text-xs);
-    color: var(--color-muted);
-    padding: 0.1em 0.35em;
-    background: var(--bg-surface-soft);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-sm);
-  }
-
-  .theme-toggle {
-    background: none;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-full);
-    width: 2.5rem;
-    height: 2.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    transition: all var(--duration-fast) var(--ease-default);
-  }
-
-  .theme-toggle:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  .theme-toggle:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .mobile-nav-toggle {
-    background: none;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    width: 2.5rem;
-    height: 2.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-    transition: all var(--duration-fast) var(--ease-default);
-  }
-
-  .mobile-nav-toggle:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-  }
-
-  .mobile-nav-toggle:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .mobile-nav-icon {
-    display: block;
-    width: 1.25rem;
-    height: 1.5px;
-    background: currentColor;
-    position: relative;
-    transition: background var(--duration-fast) var(--ease-default);
-  }
-
-  .mobile-nav-icon::before,
-  .mobile-nav-icon::after {
-    content: '';
-    display: block;
-    width: 1.25rem;
-    height: 1.5px;
-    background: currentColor;
-    position: absolute;
-    left: 0;
-    transition: transform var(--duration-fast) var(--ease-default);
-  }
-
-  .mobile-nav-icon::before {
-    top: -5px;
-  }
-  .mobile-nav-icon::after {
-    top: 5px;
-  }
-
-  .mobile-nav-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: var(--z-modal-backdrop);
-    background: transparent;
-    visibility: hidden;
-    transition:
-      visibility 0s linear var(--duration-normal),
-      background var(--duration-normal) var(--ease-default);
-  }
-
-  .mobile-nav-overlay--open {
-    visibility: visible;
-    background: rgb(0 0 0 / 0.5);
-    transition:
-      visibility 0s linear 0s,
-      background var(--duration-normal) var(--ease-default);
-  }
-
-  .mobile-nav-drawer {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: var(--z-modal);
-    width: min(320px, 85vw);
-    background: var(--bg-primary);
-    border-left: 1px solid var(--border-color);
-    transform: translateX(100%);
-    transition: transform var(--duration-normal) var(--ease-default);
-    display: flex;
-    flex-direction: column;
-    padding: var(--space-4);
-  }
-
-  .mobile-nav-drawer--open {
-    transform: translateX(0);
-  }
-
-  .mobile-nav-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: var(--space-4);
-  }
-
-  .mobile-nav-close {
-    background: none;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    width: 2.5rem;
-    height: 2.5rem;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--text-secondary);
-  }
-
-  .mobile-nav-close:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .mobile-nav-close-icon {
-    display: block;
-    width: 1rem;
-    height: 1.5px;
-    background: currentColor;
-    position: relative;
-  }
-
-  .mobile-nav-close-icon::before,
-  .mobile-nav-close-icon::after {
-    content: '';
-    display: block;
-    width: 1rem;
-    height: 1.5px;
-    background: currentColor;
-    position: absolute;
-    left: 0;
-  }
-
-  .mobile-nav-close-icon::before {
-    top: -4px;
-    transform: rotate(45deg);
-  }
-  .mobile-nav-close-icon::after {
-    top: 4px;
-    transform: rotate(-45deg);
-  }
-
-  .mobile-nav-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-1);
-  }
-
-  .mobile-nav-link {
-    display: block;
-    padding: var(--space-3) var(--space-4);
-    color: var(--text-primary);
-    text-decoration: none;
-    font-size: var(--text-base);
-    font-weight: var(--weight-medium);
-    border-radius: var(--radius-md);
-    transition:
-      color var(--duration-fast) var(--ease-default),
-      background var(--duration-fast) var(--ease-default);
-  }
-
-  .mobile-nav-link:hover {
-    color: var(--color-primary);
-    background: var(--bg-tertiary);
-    text-decoration: none;
-  }
-
-  .mobile-nav-link:focus-visible {
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-  }
-
-  .main-content {
-    min-height: 60vh;
-  }
-  @media (max-width: 639px) {
-    .search-kbd {
-      display: none;
-    }
-  }
-
-  @media (min-width: 768px) {
-    .site-nav {
-      display: block;
-    }
-
-    .mobile-nav-toggle {
-      display: none;
-    }
-
-    .footer-grid {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .footer-bottom {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-  }
-
-  @media (min-width: 1024px) {
-    .footer-grid {
-      grid-template-columns: 2fr 1fr 1fr 1fr;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-</style>
