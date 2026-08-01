@@ -1,0 +1,346 @@
+---
+export interface Props {
+  publishedStories: any[];
+}
+const { publishedStories } = Astro.props;
+
+const gradientPairs: Array<[string, string]> = [
+  ['#1e1033', '#5f4b8b'],
+  ['#5db8a6', '#3d8b7a'],
+  ['#6366f1', '#8b5cf6'],
+  ['#f59e0b', '#d97706'],
+];
+const fallbackCovers = [
+  'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=400&q=80',
+  'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=400&q=80',
+];
+const storyInitials = (name: string) =>
+  name
+    .split(' ')
+    .map((n: string) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+const storyDate = (story: any) =>
+  new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  });
+const storyExcerpt = (story: any) => {
+  const text = story.content ? story.content.replace(/<[^>]+>/g, '').trim() : '';
+  return text.length > 140 ? text.substring(0, 140) + '...' : text || 'No excerpt available';
+};
+---
+
+<main class="feed" id="main-feed">
+  <div class="feed-tabs">
+    <button class="feed-tab feed-tab--active" data-tab="for-you">For you</button>
+    <button class="feed-tab" data-tab="featured">Featured</button>
+  </div>
+
+  <div class="feed-content" id="feed-content">
+    {
+      publishedStories.map((story, index) => (
+        <article class="feed-card">
+          <div class="feed-card-body">
+            <div class="feed-card-author">
+              <div
+                class="feed-card-avatar"
+                style={`background: linear-gradient(135deg, ${
+                  gradientPairs[index % gradientPairs.length][0]
+                }, ${gradientPairs[index % gradientPairs.length][1]});`}
+              >
+                <span>{storyInitials(story.authorId?.name || 'Anonymous')}</span>
+              </div>
+              <div class="feed-card-author-info">
+                <span class="feed-card-author-name">{story.authorId?.name || 'Anonymous'}</span>
+                <span class="feed-card-date">{storyDate(story)}</span>
+              </div>
+            </div>
+            <div class="feed-card-content-row">
+              <div class="feed-card-text">
+                <h2 class="feed-card-title">
+                  <a href={`/p/${story.slug}`} class="feed-card-title-link">
+                    {story.title}
+                  </a>
+                </h2>
+                <p class="feed-card-excerpt">{storyExcerpt(story)}</p>
+                <div class="feed-card-footer">
+                  <div class="feed-card-meta">
+                    <span class="feed-card-stat">{story.views || 0} views</span>
+                    <span class="feed-card-stat">·</span>
+                    <span class="feed-card-stat">{story.reads || 0} reads</span>
+                  </div>
+                  <div class="feed-card-actions">
+                    <button class="feed-card-action" aria-label="Save">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <a
+                href={`/p/${story.slug}`}
+                class="feed-card-thumbnail"
+                aria-label={`Read ${story.title}`}
+              >
+                <img
+                  src={fallbackCovers[index % fallbackCovers.length]}
+                  alt={story.title}
+                  loading="lazy"
+                />
+              </a>
+            </div>
+          </div>
+        </article>
+      ))
+    }
+  </div>
+</main>
+
+<style>
+  .feed {
+    padding: 0 var(--space-xl);
+    border-right: 1px solid var(--color-hairline);
+  }
+
+  .feed-tabs {
+    position: sticky;
+    top: var(--header-height);
+    background: var(--bg-canvas);
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--color-hairline);
+    z-index: 10;
+  }
+
+  .feed-tab {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 400;
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    padding: var(--space-md) var(--space-lg);
+    cursor: pointer;
+    position: relative;
+    transition: color var(--duration-fast);
+  }
+
+  .feed-tab:hover {
+    color: var(--color-ink);
+  }
+
+  .feed-tab--active {
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .feed-tab--active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: var(--space-lg);
+    right: var(--space-lg);
+    height: 1px;
+    background: var(--color-ink);
+  }
+
+  .feed-content {
+    padding-top: var(--space-lg);
+  }
+
+  .feed-card {
+    padding: var(--space-lg) 0;
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .feed-card:last-child {
+    border-bottom: none;
+  }
+
+  .feed-card-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .feed-card-author {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .feed-card-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 0.6rem;
+    font-weight: 600;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .feed-card-author-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    flex-wrap: wrap;
+  }
+
+  .feed-card-author-name {
+    color: var(--color-ink);
+    font-weight: 400;
+  }
+
+  .feed-card-date {
+    color: var(--color-muted);
+  }
+
+  .feed-card-content-row {
+    display: flex;
+    gap: var(--space-lg);
+    align-items: flex-start;
+  }
+
+  .feed-card-text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .feed-card-title {
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    line-height: 1.25;
+    font-weight: 700;
+    color: var(--color-ink);
+    margin-bottom: 6px;
+    letter-spacing: -0.3px;
+    cursor: pointer;
+    transition: color var(--duration-fast);
+  }
+
+  .feed-card-title:hover {
+    color: var(--color-primary);
+  }
+
+  .feed-card-title-link {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .feed-card-title-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 4px;
+  }
+
+  .feed-card-excerpt {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    line-height: 1.5;
+    color: var(--color-muted);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: var(--space-sm);
+  }
+
+  .feed-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--space-sm);
+  }
+
+  .feed-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .feed-card-stat {
+    white-space: nowrap;
+  }
+
+  .feed-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .feed-card-action {
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    transition: all var(--duration-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feed-card-action:hover {
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
+  }
+
+  .feed-card-thumbnail {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .feed-card-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .feed-card:hover .feed-card-thumbnail img {
+    transform: scale(1.05);
+  }
+
+  @media (max-width: 768px) {
+    .feed {
+      padding: 0 var(--space-md);
+      border-right: none;
+    }
+
+    .feed-card-thumbnail {
+      width: 80px;
+      height: 80px;
+    }
+
+    .feed-card-title {
+      font-size: 1.1rem;
+    }
+  }
+</style>
