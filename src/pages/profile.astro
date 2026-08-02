@@ -678,7 +678,7 @@ if (sessionId) {
   </div>
 </Layout>
 
-<FollowsModal authorId={user._id ? String(user._id) : ''} />
+<FollowsModal authorId={user.id} />
 
 <script>
   import { compressImage } from '../lib/compressImage';

@@ -259,7 +259,7 @@ const logoHref = isLoggedIn ? '/dashboard' : '/';
 
       // Dropdown toggle
       const avatarBtn = document.querySelector('.global-avatar-btn');
-      const dropdown = document.querySelector('.global-user-dropdown') as HTMLElement;
+      const dropdown = document.querySelector('.global-user-dropdown');
       if (avatarBtn && dropdown) {
         avatarBtn.addEventListener('click', (e) => {
           e.stopPropagation();
@@ -303,7 +303,7 @@ const logoHref = isLoggedIn ? '/dashboard' : '/';
       drawer.classList.add('mobile-nav-drawer--open');
       overlay.setAttribute('aria-hidden', 'false');
       toggle.setAttribute('aria-expanded', 'true');
-      const firstLink = drawer.querySelector('.mobile-nav-link') as HTMLElement;
+      const firstLink = drawer.querySelector('.mobile-nav-link');
       if (firstLink) firstLink.focus();
     }
 

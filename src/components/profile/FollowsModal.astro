@@ -1,6 +1,9 @@
 ---
 // FollowsModal.astro - Followers & Following modal
 // Props: authorId (target author ID for fetching the list)
+import X from 'lucide-astro/X';
+import Users from 'lucide-astro/Users';
+
 interface Props {
   authorId: string;
 }
@@ -17,39 +20,67 @@ const { authorId } = Astro.props;
   aria-labelledby="follows-modal-title"
 >
   <div class="follows-modal-panel" id="follows-modal-panel">
+    <div class="follows-modal-handle" aria-hidden="true"></div>
+
     <!-- Header -->
     <div class="follows-modal-header">
-      <div class="follows-tabs" role="tablist">
-        <button
-          class="follows-tab active"
-          id="follows-tab-followers"
-          data-follows-tab="followers"
-          role="tab"
-          aria-selected="true"
-        >
-          Followers
-        </button>
-        <button
-          class="follows-tab"
-          id="follows-tab-following"
-          data-follows-tab="following"
-          role="tab"
-          aria-selected="false"
-        >
-          Following
-        </button>
-      </div>
-      <button class="follows-modal-close" id="follows-modal-close" aria-label="Close">
-        &times;
+      <h2 class="follows-modal-title" id="follows-modal-title">Followers</h2>
+      <button type="button" class="follows-modal-close" id="follows-modal-close" aria-label="Close">
+        <X size={20} />
+      </button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="follows-tabs" role="tablist">
+      <button
+        type="button"
+        class="follows-tab active"
+        id="follows-tab-followers"
+        data-follows-tab="followers"
+        role="tab"
+        aria-selected="true"
+      >
+        Followers
+      </button>
+      <button
+        type="button"
+        class="follows-tab"
+        id="follows-tab-following"
+        data-follows-tab="following"
+        role="tab"
+        aria-selected="false"
+      >
+        Following
       </button>
     </div>
 
     <!-- List Container -->
     <div class="follows-list-container" id="follows-list-container">
-      <div class="follows-spinner" id="follows-spinner">
-        <span class="spinner-dot"></span>
-        <span class="spinner-dot"></span>
-        <span class="spinner-dot"></span>
+      <div class="follows-skeleton-list" id="follows-spinner" aria-hidden="true">
+        <div class="follows-skeleton-row">
+          <span class="follows-skeleton-avatar"></span>
+          <span class="follows-skeleton-lines">
+            <span class="follows-skeleton-line follows-skeleton-line--name"></span>
+            <span class="follows-skeleton-line follows-skeleton-line--bio"></span>
+          </span>
+          <span class="follows-skeleton-btn"></span>
+        </div>
+        <div class="follows-skeleton-row">
+          <span class="follows-skeleton-avatar"></span>
+          <span class="follows-skeleton-lines">
+            <span class="follows-skeleton-line follows-skeleton-line--name"></span>
+            <span class="follows-skeleton-line follows-skeleton-line--bio"></span>
+          </span>
+          <span class="follows-skeleton-btn"></span>
+        </div>
+        <div class="follows-skeleton-row">
+          <span class="follows-skeleton-avatar"></span>
+          <span class="follows-skeleton-lines">
+            <span class="follows-skeleton-line follows-skeleton-line--name"></span>
+            <span class="follows-skeleton-line follows-skeleton-line--bio"></span>
+          </span>
+          <span class="follows-skeleton-btn"></span>
+        </div>
       </div>
     </div>
   </div>
@@ -62,6 +93,7 @@ const { authorId } = Astro.props;
     var closeBtn = document.getElementById('follows-modal-close');
     var listContainer = document.getElementById('follows-list-container');
     var spinner = document.getElementById('follows-spinner');
+    var titleEl = document.getElementById('follows-modal-title');
     var tabBtns = document.querySelectorAll('.follows-tab');
 
     function getInitials(name) {
@@ -71,10 +103,14 @@ const { authorId } = Astro.props;
       return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
     }
 
+    function updateTitle(type) {
+      if (titleEl) titleEl.textContent = type === 'followers' ? 'Followers' : 'Following';
+    }
+
     function renderEmpty(type) {
       return (
         '<div class="follows-empty-state">' +
-        '<div class="follows-empty-icon">👥</div>' +
+        '<div class="follows-empty-icon"><svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></div>' +
         '<p class="follows-empty-title">' +
         (type === 'followers' ? 'No followers yet' : 'Not following anyone yet') +
         '</p>' +
@@ -136,18 +172,15 @@ const { authorId } = Astro.props;
       );
     }
 
-    function showSpinner() {
-      if (spinner) spinner.style.display = 'flex';
-    }
-
-    function hideSpinner() {
-      if (spinner) spinner.style.display = 'none';
+    function showSkeleton() {
+      if (!listContainer) return;
+      listContainer.innerHTML =
+        '<div class="follows-skeleton-list"><div class="follows-skeleton-row"><span class="follows-skeleton-avatar"></span><span class="follows-skeleton-lines"><span class="follows-skeleton-line follows-skeleton-line--name"></span><span class="follows-skeleton-line follows-skeleton-line--bio"></span></span><span class="follows-skeleton-btn"></span></div><div class="follows-skeleton-row"><span class="follows-skeleton-avatar"></span><span class="follows-skeleton-lines"><span class="follows-skeleton-line follows-skeleton-line--name"></span><span class="follows-skeleton-line follows-skeleton-line--bio"></span></span><span class="follows-skeleton-btn"></span></div><div class="follows-skeleton-row"><span class="follows-skeleton-avatar"></span><span class="follows-skeleton-lines"><span class="follows-skeleton-line follows-skeleton-line--name"></span><span class="follows-skeleton-line follows-skeleton-line--bio"></span></span><span class="follows-skeleton-btn"></span></div></div>';
     }
 
     function loadList(type) {
       if (!listContainer) return;
-      listContainer.innerHTML =
-        '<div class="follows-spinner" id="follows-spinner"><span class="spinner-dot"></span><span class="spinner-dot"></span><span class="spinner-dot"></span></div>';
+      showSkeleton();
 
       fetch('/api/follows/list?authorId=' + authorId + '&type=' + type)
         .then(function (res) {
@@ -187,6 +220,19 @@ const { authorId } = Astro.props;
                   console.error('Follow toggle failed:', err);
                 });
             });
+
+            // Instagram-style hover: "Following" reveals "Unfollow"
+            btn.addEventListener('mouseenter', function () {
+              if (btn.dataset.following === 'true') {
+                btn.dataset.originalLabel = btn.textContent;
+                btn.textContent = 'Unfollow';
+              }
+            });
+            btn.addEventListener('mouseleave', function () {
+              if (btn.dataset.following === 'true' && btn.dataset.originalLabel) {
+                btn.textContent = btn.dataset.originalLabel;
+              }
+            });
           });
         })
         .catch(function (err) {
@@ -205,6 +251,7 @@ const { authorId } = Astro.props;
         btn.classList.add('active');
         btn.setAttribute('aria-selected', 'true');
         currentTab = btn.dataset.followsTab;
+        updateTitle(currentTab);
         loadList(currentTab);
       });
     });
@@ -233,6 +280,7 @@ const { authorId } = Astro.props;
         b.classList.toggle('active', isActive);
         b.setAttribute('aria-selected', String(isActive));
       });
+      updateTitle(currentTab);
       if (overlay) overlay.hidden = false;
       loadList(currentTab);
     };
@@ -244,111 +292,123 @@ const { authorId } = Astro.props;
     position: fixed;
     inset: 0;
     z-index: 9999;
-    background: rgba(24, 23, 21, 0.45);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(24, 23, 21, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 16px;
-    animation: follows-overlay-in 0.18s ease;
+    animation: follows-overlay-in 0.2s ease;
   }
 
-  @keyframes follows-overlay-in {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
+  .follows-modal-overlay[hidden] {
+    display: none;
   }
 
   .follows-modal-panel {
-    background: #faf9f5;
-    border: 1px solid #e6dfd8;
-    border-radius: 16px;
-    box-shadow: 0 20px 60px rgba(24, 23, 21, 0.18);
+    background: #ffffff;
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(24, 23, 21, 0.22);
     width: 100%;
-    max-width: 440px;
-    max-height: 80vh;
+    max-width: 400px;
+    max-height: min(640px, 85dvh);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    animation: follows-panel-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: follows-panel-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  @keyframes follows-panel-in {
-    from {
-      transform: translateY(16px) scale(0.97);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0) scale(1);
-      opacity: 1;
-    }
+  .follows-modal-handle {
+    display: none;
   }
 
   .follows-modal-header {
+    position: relative;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid #e6dfd8;
+    justify-content: center;
+    min-height: 52px;
     padding: 0 16px;
+    border-bottom: 1px solid var(--color-hairline-soft, #ebe6df);
     flex-shrink: 0;
+  }
+
+  .follows-modal-title {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink, #181715);
+    margin: 0;
+  }
+
+  .follows-modal-close {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    border-radius: 50%;
+    color: var(--color-muted, #6c6a64);
+    cursor: pointer;
+    transition:
+      background 0.15s,
+      color 0.15s;
+  }
+
+  .follows-modal-close:hover {
+    background: var(--bg-surface-soft, #f5f0e8);
+    color: var(--color-ink, #181715);
   }
 
   .follows-tabs {
     display: flex;
-    flex: 1;
-    gap: 0;
+    gap: 4px;
+    margin: 14px 16px 6px;
+    padding: 3px;
+    background: var(--bg-surface-soft, #f5f0e8);
+    border-radius: 11px;
+    flex-shrink: 0;
   }
 
   .follows-tab {
     flex: 1;
-    padding: 16px 8px;
-    background: none;
+    padding: 8px 12px;
+    background: transparent;
     border: none;
-    border-bottom: 2px solid transparent;
+    border-radius: 8px;
     font-family: var(--font-sans, 'Inter', sans-serif);
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #8c8678;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-muted, #6c6a64);
     cursor: pointer;
     transition:
-      color 0.18s,
-      border-color 0.18s;
-    margin-bottom: -1px;
+      background 0.2s,
+      color 0.2s,
+      box-shadow 0.2s;
+    white-space: nowrap;
   }
 
   .follows-tab.active {
-    color: #181715;
-    border-bottom-color: #181715;
-  }
-
-  .follows-modal-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    line-height: 1;
-    color: #8c8678;
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition:
-      color 0.15s,
-      background 0.15s;
-    margin-left: 8px;
-  }
-
-  .follows-modal-close:hover {
-    color: #181715;
-    background: #efe9de;
+    background: #ffffff;
+    color: var(--color-ink, #181715);
+    box-shadow: 0 1px 3px rgba(24, 23, 21, 0.12);
   }
 
   .follows-list-container {
     flex: 1;
     overflow-y: auto;
-    padding: 8px 0;
-    min-height: 200px;
+    padding: 8px 0 12px;
+    min-height: 220px;
+    overscroll-behavior: contain;
   }
 
   .follows-author-list {
@@ -360,13 +420,13 @@ const { authorId } = Astro.props;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 12px 20px;
+    padding: 10px 20px;
     gap: 12px;
     transition: background 0.15s;
   }
 
   .follows-author-item:hover {
-    background: #efe9de;
+    background: var(--bg-surface-soft, #f5f0e8);
   }
 
   .follows-author-left {
@@ -385,28 +445,29 @@ const { authorId } = Astro.props;
     border-radius: 50%;
     object-fit: cover;
     flex-shrink: 0;
-    border: 2px solid #e6dfd8;
+    background: var(--bg-surface-soft, #f5f0e8);
   }
 
   .follows-author-avatar-fallback {
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: #efe9de;
-    border: 2px solid #e6dfd8;
+    background: var(--bg-surface-soft, #f5f0e8);
+    border: 1px solid var(--color-hairline, #e6dfd8);
     display: flex;
     align-items: center;
     justify-content: center;
     font-family: var(--font-sans, 'Inter', sans-serif);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
-    color: #181715;
+    color: var(--color-ink, #181715);
     flex-shrink: 0;
   }
 
   .follows-author-info {
     display: flex;
     flex-direction: column;
+    gap: 1px;
     min-width: 0;
   }
 
@@ -414,7 +475,7 @@ const { authorId } = Astro.props;
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.9rem;
     font-weight: 600;
-    color: #181715;
+    color: var(--color-ink, #181715);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -423,7 +484,7 @@ const { authorId } = Astro.props;
   .follows-author-bio {
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.78rem;
-    color: #8c8678;
+    color: var(--color-muted, #6c6a64);
     margin: 0;
     white-space: nowrap;
     overflow: hidden;
@@ -431,11 +492,11 @@ const { authorId } = Astro.props;
   }
 
   .follows-author-follow-btn {
-    background: #181715;
-    color: #faf9f5;
-    border: 1.5px solid #181715;
-    border-radius: 20px;
-    padding: 6px 16px;
+    background: var(--color-primary, #181715);
+    color: #ffffff;
+    border: 1px solid var(--color-primary, #181715);
+    border-radius: 8px;
+    padding: 7px 18px;
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.8rem;
     font-weight: 600;
@@ -448,14 +509,20 @@ const { authorId } = Astro.props;
     white-space: nowrap;
   }
 
-  .follows-author-follow-btn.is-following {
-    background: transparent;
-    color: #181715;
-    border-color: #e6dfd8;
+  .follows-author-follow-btn:hover {
+    background: var(--color-primary-active, #252320);
   }
 
-  .follows-author-follow-btn:hover {
-    opacity: 0.85;
+  .follows-author-follow-btn.is-following {
+    background: var(--bg-surface-soft, #f5f0e8);
+    color: var(--color-ink, #181715);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .follows-author-follow-btn.is-following:hover {
+    background: var(--bg-surface-soft, #f5f0e8);
+    border-color: var(--color-hairline, #e6dfd8);
+    color: var(--color-error, #c64545);
   }
 
   .follows-empty-state {
@@ -463,74 +530,178 @@ const { authorId } = Astro.props;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 48px 24px;
+    padding: 56px 24px;
     text-align: center;
   }
 
   .follows-empty-icon {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
-    opacity: 0.5;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--bg-surface-soft, #f5f0e8);
+    color: var(--color-muted, #6c6a64);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
   }
 
   .follows-empty-title {
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.95rem;
     font-weight: 600;
-    color: #181715;
+    color: var(--color-ink, #181715);
     margin: 0 0 6px;
   }
 
   .follows-empty-sub {
     font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.82rem;
-    color: #8c8678;
+    color: var(--color-muted, #6c6a64);
     margin: 0;
+    max-width: 26ch;
+    line-height: 1.5;
   }
 
-  .follows-spinner {
+  .follows-skeleton-list {
+    display: flex;
+    flex-direction: column;
+    padding: 4px 0;
+  }
+
+  .follows-skeleton-row {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 48px;
+    gap: 12px;
+    padding: 12px 20px;
   }
 
-  .spinner-dot {
-    width: 8px;
-    height: 8px;
+  .follows-skeleton-avatar {
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    background: #c9bfb3;
-    animation: spinner-bounce 1.2s infinite ease-in-out;
+    background: var(--bg-surface-soft, #f5f0e8);
+    flex-shrink: 0;
+    animation: follows-shimmer 1.4s ease-in-out infinite;
   }
 
-  .spinner-dot:nth-child(1) {
-    animation-delay: 0s;
-  }
-  .spinner-dot:nth-child(2) {
-    animation-delay: 0.18s;
-  }
-  .spinner-dot:nth-child(3) {
-    animation-delay: 0.36s;
+  .follows-skeleton-lines {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    min-width: 0;
   }
 
-  @keyframes spinner-bounce {
+  .follows-skeleton-line {
+    height: 10px;
+    border-radius: 5px;
+    background: var(--bg-surface-soft, #f5f0e8);
+    animation: follows-shimmer 1.4s ease-in-out infinite;
+  }
+
+  .follows-skeleton-line--name {
+    width: 55%;
+  }
+
+  .follows-skeleton-line--bio {
+    width: 38%;
+    height: 8px;
+  }
+
+  .follows-skeleton-btn {
+    width: 72px;
+    height: 32px;
+    border-radius: 8px;
+    background: var(--bg-surface-soft, #f5f0e8);
+    flex-shrink: 0;
+    animation: follows-shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes follows-shimmer {
     0%,
-    80%,
     100% {
-      transform: scale(0.6);
-      opacity: 0.4;
-    }
-    40% {
-      transform: scale(1);
       opacity: 1;
+    }
+    50% {
+      opacity: 0.55;
     }
   }
 
   .follows-error {
     text-align: center;
-    color: #cc785c;
+    color: var(--color-error, #c64545);
+    font-family: var(--font-sans, 'Inter', sans-serif);
     font-size: 0.85rem;
-    padding: 32px;
+    padding: 40px 24px;
+  }
+
+  /* Mobile: Instagram-style bottom sheet */
+  @media (max-width: 640px) {
+    .follows-modal-overlay {
+      align-items: flex-end;
+      padding: 0;
+    }
+
+    .follows-modal-panel {
+      max-width: 100%;
+      max-height: 88dvh;
+      border-radius: 20px 20px 0 0;
+      border: none;
+      animation: follows-sheet-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .follows-modal-handle {
+      display: block;
+      width: 36px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--color-hairline, #e6dfd8);
+      margin: 10px auto 2px;
+      flex-shrink: 0;
+    }
+
+    .follows-modal-header {
+      min-height: 48px;
+    }
+  }
+
+  @keyframes follows-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes follows-panel-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.97);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes follows-sheet-in {
+    from {
+      transform: translateY(100%);
+    }
+    to {
+      transform: translateY(0);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .follows-modal-overlay,
+    .follows-modal-panel,
+    .follows-skeleton-avatar,
+    .follows-skeleton-line,
+    .follows-skeleton-btn {
+      animation: none;
+    }
   }
 </style>
