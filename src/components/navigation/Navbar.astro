@@ -42,13 +42,113 @@ const logoHref = isLoggedIn ? '/dashboard' : '/';
       </nav>
       <div class="header-actions">
         <div class="auth-links">
-          <a href="#" data-auth-modal="login" class="nav-link">Log in</a>
-          <a
-            href="#"
-            data-auth-modal="signup"
-            class="btn btn-primary"
-            style="padding: 0.375rem 1rem; font-size: 0.875rem;">Get Started</a
-          >
+          {
+            isLoggedIn ? (
+              <>
+                <a
+                  href="/write"
+                  class="nav-link"
+                  style="display:inline-flex;align-items:center;gap:6px;"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Write
+                </a>
+                <button
+                  class="global-notification-btn"
+                  aria-label="Notifications"
+                  style="background:none;border:none;color:var(--color-body);cursor:pointer;padding:6px;border-radius:var(--radius-sm);display:flex;align-items:center;"
+                >
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                </button>
+                <div style="position:relative;">
+                  <button
+                    class="global-avatar-btn"
+                    aria-label="User menu"
+                    aria-expanded="false"
+                    style="background:none;border:none;cursor:pointer;padding:0;"
+                  >
+                    <div
+                      class="global-avatar-initials"
+                      style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1e1033,#5f4b8b);display:flex;align-items:center;justify-content:center;font-family:var(--font-sans);font-size:0.7rem;font-weight:600;color:white;"
+                    >
+                      U
+                    </div>
+                  </button>
+                  <div
+                    class="global-user-dropdown"
+                    style="position:absolute;top:calc(100% + 8px);right:0;width:220px;background:var(--bg-canvas);border:1px solid var(--color-hairline);border-radius:var(--radius-md);box-shadow:0 8px 30px rgba(0,0,0,0.08);opacity:0;visibility:hidden;transform:translateY(-4px);transition:all 0.15s;z-index:600;overflow:hidden;"
+                  >
+                    <div style="padding:var(--space-md);display:flex;flex-direction:column;gap:2px;">
+                      <span
+                        class="user-dropdown-name"
+                        style="font-family:var(--font-sans);font-size:var(--text-body-sm);font-weight:500;color:var(--color-ink);"
+                      >
+                        Account
+                      </span>
+                    </div>
+                    <div style="height:1px;background:var(--color-hairline);" />
+                    <a
+                      href="/dashboard"
+                      style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;"
+                    >
+                      Dashboard
+                    </a>
+                    <a
+                      href="/write"
+                      style="display:block;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-body);text-decoration:none;"
+                    >
+                      Write a story
+                    </a>
+                    <div style="height:1px;background:var(--color-hairline);" />
+                    <button
+                      class="global-logout-btn"
+                      style="display:block;width:100%;text-align:left;padding:10px var(--space-md);font-family:var(--font-sans);font-size:var(--text-body-sm);color:var(--color-error);background:none;border:none;cursor:pointer;"
+                    >
+                      Sign out
+                    </button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <a href="#" data-auth-modal="login" class="nav-link">
+                  Log in
+                </a>
+                <a
+                  href="#"
+                  data-auth-modal="signup"
+                  class="btn btn-primary"
+                  style="padding: 0.375rem 1rem; font-size: 0.875rem;"
+                >
+                  Get Started
+                </a>
+              </>
+            )
+          }
         </div>
         <button
           class="mobile-nav-toggle"
