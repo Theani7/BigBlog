@@ -1,17 +1,19 @@
 ---
 const currentPath = Astro.url.pathname;
+const isLoggedIn = Astro.cookies.has('auth_token');
 
-const navLinks: Array<{ label: string; href: string }> = [
-  { label: 'Stories', href: '/stories' },
-  { label: 'About', href: '/about' },
-  { label: 'Write', href: '/write' },
-];
+const navLinks: Array<{ label: string; href: string }> = isLoggedIn
+  ? [{ label: 'Write', href: '/write' }]
+  : [
+      { label: 'Stories', href: '/stories' },
+      { label: 'About', href: '/about' },
+      { label: 'Write', href: '/write' },
+    ];
 
 const activeLink = navLinks.find((link) => {
   if (link.href === '/') return currentPath === '/';
   return currentPath.startsWith(link.href);
 });
-const isLoggedIn = Astro.cookies.has('auth_token');
 const logoHref = isLoggedIn ? '/dashboard' : '/';
 ---
 
@@ -99,13 +101,18 @@ const logoHref = isLoggedIn ? '/dashboard' : '/';
       const user = data.user;
       const authLinks = document.querySelector('.auth-links');
 
-      // Hide public nav links ("Our story", "Write") when logged in
+      // Hide public nav links ("Stories", "About") when logged in
       const siteNav = document.querySelector('.site-nav');
       if (siteNav) siteNav.style.display = 'none';
 
-      // Hide mobile nav hamburger menu when logged in
-      const mobileNavToggle = document.querySelector('.mobile-nav-toggle');
-      if (mobileNavToggle) mobileNavToggle.style.display = 'none';
+      // Update mobile nav list for logged-in state
+      const mobileNavList = document.querySelector('.mobile-nav-list');
+      if (mobileNavList) {
+        mobileNavList.innerHTML = `
+          <li><a href="/write" class="mobile-nav-link">Write</a></li>
+          <li><a href="/dashboard" class="mobile-nav-link">Dashboard</a></li>
+        `;
+      }
 
       if (!authLinks) return;
 
