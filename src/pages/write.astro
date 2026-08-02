@@ -457,8 +457,18 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
   }
 
   .write-layout {
-    background-color: var(--color-canvas);
+    background-color: var(--color-canvas, #faf9f5);
     min-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .write-container {
+    width: 100%;
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 48px 24px 96px 24px;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
   }
@@ -540,13 +550,13 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     }
   }
 
-  /* Override Quill Styles to match BigBlog */
+  /* Quill Typography & Editorial Styling */
   :global(.ql-editor) {
-    font-family: var(--font-serif);
-    font-size: 1.375rem;
-    line-height: 1.6;
-    color: var(--color-body-strong);
-    padding: 0;
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.25rem;
+    line-height: 1.65;
+    color: var(--color-body-strong, #252523);
+    padding: 0 !important;
     flex-grow: 1;
   }
 
@@ -554,12 +564,29 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     margin-bottom: 1.5em;
   }
 
+  :global(.ql-editor blockquote) {
+    border-left: 3px solid var(--color-primary, #cc785c);
+    padding-left: 20px;
+    margin-left: 0;
+    font-style: italic;
+    color: var(--color-ink, #141413);
+  }
+
+  :global(.ql-editor pre.ql-syntax) {
+    background-color: var(--color-surface-dark, #181715) !important;
+    color: var(--color-on-dark, #faf9f5) !important;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 14px;
+  }
+
   :global(.ql-editor.ql-blank::before) {
     color: var(--color-muted-soft);
     opacity: 0.7;
     font-style: normal;
     left: 0;
-    font-family: var(--font-serif);
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
   }
 
   :global([data-theme='dark'] .ql-editor.ql-blank::before) {
@@ -570,17 +597,18 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     border: none !important;
   }
 
-  /* Quill Tooltip styling for a premium feel */
+  /* Quill Bubble Tooltip (Dark Navy Surface) */
   :global(.ql-bubble .ql-tooltip) {
-    background-color: var(--bg-surface-dark) !important;
+    background-color: var(--color-surface-dark, #181715) !important;
     border-radius: 8px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25) !important;
+    box-shadow: 0 4px 20px rgba(20, 20, 19, 0.25) !important;
     padding: 6px 12px !important;
+    border: 1px solid var(--color-surface-dark-elevated, #252320) !important;
   }
 
   :global(.ql-bubble .ql-tooltip-arrow) {
-    border-bottom-color: var(--bg-surface-dark) !important;
-    border-top-color: var(--bg-surface-dark) !important;
+    border-bottom-color: var(--color-surface-dark, #181715) !important;
+    border-top-color: var(--color-surface-dark, #181715) !important;
   }
 
   /* Fix SVG Icon Colors */
