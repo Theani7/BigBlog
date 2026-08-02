@@ -14,10 +14,8 @@ export interface Props {
     </div>
     <div class="publish-drawer-body">
       <div class="publish-form-group">
-        <label class="publish-label">SEO Excerpt</label>
-        <p class="publish-help">
-          A brief description for search engines and social media previews.
-        </p>
+        <label class="publish-label">SEO & Story Excerpt</label>
+        <p class="publish-help">A summary for search engines and social media preview cards.</p>
         <textarea
           id="post-excerpt"
           class="publish-textarea"
@@ -25,7 +23,7 @@ export interface Props {
           placeholder="Write a captivating summary..."></textarea>
       </div>
       <div class="publish-preview-card">
-        <p class="publish-preview-label">Social Preview</p>
+        <p class="publish-preview-label">Social Media Card Preview</p>
         <div class="preview-card-inner">
           <div class="preview-img-placeholder" id="preview-cover">No cover image</div>
           <div class="preview-content">
@@ -36,23 +34,21 @@ export interface Props {
       </div>
     </div>
     <div class="publish-drawer-footer">
-      <button class="btn btn-primary" id="confirm-publish-btn" style="width: 100%;"
-        >Publish now</button
-      >
+      <button class="btn-publish-submit" id="confirm-publish-btn" type="button">Publish Now</button>
     </div>
   </div>
 </div>
 
 <style>
-  /* Publish Drawer Styling */
   .publish-drawer-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(4px);
+    background: rgba(20, 20, 19, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     z-index: 1000;
     display: none;
     justify-content: center;
@@ -60,12 +56,14 @@ export interface Props {
   }
 
   .publish-drawer {
-    background: var(--bg-canvas);
+    background: var(--color-canvas, #faf9f5);
     width: 100%;
     max-width: 600px;
     border-radius: 16px 16px 0 0;
-    padding: var(--space-xl);
-    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.1);
+    padding: 32px;
+    box-shadow: 0 -8px 32px rgba(20, 20, 19, 0.12);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-bottom: none;
     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
@@ -82,12 +80,14 @@ export interface Props {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: 24px;
   }
 
   .publish-drawer-title {
-    font-family: var(--font-serif);
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
     font-size: 24px;
+    font-weight: 400;
+    color: var(--color-ink, #141413);
     margin: 0;
   }
 
@@ -96,57 +96,67 @@ export interface Props {
     border: none;
     font-size: 28px;
     line-height: 1;
-    color: var(--color-muted);
+    color: var(--color-muted, #6c6a64);
     cursor: pointer;
   }
 
   .publish-form-group {
-    margin-bottom: var(--space-xl);
+    margin-bottom: 24px;
   }
 
   .publish-label {
     display: block;
-    font-family: var(--font-sans);
-    font-weight: 600;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink, #141413);
     margin-bottom: 4px;
   }
 
   .publish-help {
     font-size: 13px;
-    color: var(--color-muted);
+    color: var(--color-muted, #6c6a64);
     margin-bottom: 12px;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
   }
 
   .publish-textarea {
     width: 100%;
-    border: 1px solid var(--color-hairline);
+    border: 1px solid var(--color-hairline, #e6dfd8);
     border-radius: 8px;
     padding: 12px;
-    font-family: var(--font-sans);
-    background: var(--bg-surface-soft);
-    color: var(--color-ink);
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 14px;
+    background: var(--color-surface-card, #efe9de);
+    color: var(--color-ink, #141413);
     resize: vertical;
+    outline: none;
+  }
+
+  .publish-textarea:focus {
+    border-color: var(--color-ink, #141413);
   }
 
   .publish-preview-card {
-    border: 1px solid var(--color-hairline);
-    border-radius: 8px;
-    padding: 16px;
-    background: var(--bg-surface-soft);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    padding: 20px;
+    background: var(--color-surface-card, #efe9de);
   }
 
   .publish-preview-label {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
     font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--color-muted);
+    letter-spacing: 1px;
+    color: var(--color-muted, #6c6a64);
     margin-bottom: 12px;
-    font-weight: 600;
+    font-weight: 500;
   }
 
   .preview-card-inner {
-    background: var(--bg-canvas);
-    border: 1px solid var(--color-hairline);
+    background: var(--color-canvas, #faf9f5);
+    border: 1px solid var(--color-hairline, #e6dfd8);
     border-radius: 8px;
     overflow: hidden;
   }
@@ -154,12 +164,13 @@ export interface Props {
   .preview-img-placeholder {
     width: 100%;
     height: 160px;
-    background: var(--color-hairline);
+    background: var(--color-surface-card, #efe9de);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-muted);
+    color: var(--color-muted, #6c6a64);
     font-size: 14px;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
   }
 
   .preview-content {
@@ -168,21 +179,42 @@ export interface Props {
 
   #preview-title {
     margin: 0 0 8px 0;
-    font-family: var(--font-serif);
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
     font-size: 18px;
+    font-weight: 400;
+    color: var(--color-ink, #141413);
     line-height: 1.3;
   }
 
   #preview-excerpt {
     margin: 0;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
     font-size: 14px;
-    color: var(--color-muted);
+    color: var(--color-muted, #6c6a64);
     line-height: 1.5;
   }
 
   .publish-drawer-footer {
-    margin-top: var(--space-2xl);
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-hairline);
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .btn-publish-submit {
+    width: 100%;
+    height: 44px;
+    background-color: var(--color-surface-dark, #181715);
+    color: var(--color-on-dark, #faf9f5);
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 15px;
+    font-weight: 500;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+
+  .btn-publish-submit:hover {
+    background-color: var(--color-primary-active, #252320);
   }
 </style>
