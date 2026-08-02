@@ -1,47 +1,186 @@
 ---
+import { createDatabase, type Env } from '../../db';
+import { Story, User } from '../../db/schema';
+
+// Ensure User model is registered for Mongoose populate
+void User;
+
 export interface Props {
   // Add props if needed
 }
+
+const env = (Astro.locals as { env?: Env }).env;
+
+interface StaffPick {
+  title: string;
+  slug: string;
+  authorName: string;
+  authorAvatar?: string;
+  formattedDate: string;
+}
+
+interface TopicItem {
+  name: string;
+  tag: string;
+}
+
+let staffPicks: StaffPick[] = [];
+let recommendedTopics: TopicItem[] = [];
+
+if (env) {
+  try {
+    await createDatabase(env);
+
+    // Fetch top 3 "Staff Picks" dynamically from Story model
+    // (published stories populated with authorId, sorted by views or publishedAt)
+    const picks = await Story.find({ status: 'PUBLISHED' })
+      .populate('authorId', 'name avatar')
+      .sort({ views: -1, publishedAt: -1, createdAt: -1 })
+      .limit(3)
+      .lean();
+
+    staffPicks = picks.map((story: any) => {
+      const author = story.authorId || {};
+      const authorName = author.name || 'Anonymous';
+      const authorAvatar = author.avatar || '';
+
+      const dateVal = story.publishedAt || story.createdAt;
+      let formattedDate = '';
+      if (dateVal) {
+        const d = new Date(dateVal);
+        formattedDate = d.toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        });
+      }
+
+      return {
+        title: story.title || 'Untitled',
+        slug: story.slug,
+        authorName,
+        authorAvatar,
+        formattedDate,
+      };
+    });
+
+    // Fetch "Recommended Topics" dynamically from Story model (aggregating top tags/categories)
+    const tagAgg = await Story.aggregate([
+      { $match: { status: 'PUBLISHED' } },
+      { $unwind: '$tags' },
+      { $match: { tags: { $exists: true, $ne: '' } } },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+
+    const categoryAgg = await Story.aggregate([
+      { $match: { status: 'PUBLISHED', category: { $exists: true, $ne: null } } },
+      { $group: { _id: '$category', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+    ]);
+
+    const topicSet = new Map<string, string>(); // tag -> displayName
+
+    tagAgg.forEach((t: { _id: string }) => {
+      if (t._id) {
+        const raw = t._id.trim();
+        const tag = raw.toLowerCase();
+        const displayName = raw.length > 0 ? raw.charAt(0).toUpperCase() + raw.slice(1) : raw;
+        if (!topicSet.has(tag)) {
+          topicSet.set(tag, displayName);
+        }
+      }
+    });
+
+    categoryAgg.forEach((c: { _id: string }) => {
+      if (c._id) {
+        const raw = c._id.trim();
+        const tag = raw.toLowerCase();
+        const displayName = raw;
+        if (!topicSet.has(tag)) {
+          topicSet.set(tag, displayName);
+        }
+      }
+    });
+
+    recommendedTopics = Array.from(topicSet.entries())
+      .slice(0, 7)
+      .map(([tag, name]) => ({
+        tag,
+        name,
+      }));
+  } catch (error) {
+    console.error('Failed to load RightSidebar data from MongoDB:', error);
+  }
+}
+
+// Fallback if DB is empty or recommended topics yielded no items
+const defaultTopics: TopicItem[] = [
+  { name: 'Programming', tag: 'programming' },
+  { name: 'Self Improvement', tag: 'self-improvement' },
+  { name: 'Writing', tag: 'writing' },
+  { name: 'Relationships', tag: 'relationships' },
+  { name: 'Machine Learning', tag: 'machine-learning' },
+  { name: 'Politics', tag: 'politics' },
+  { name: 'Cryptocurrency', tag: 'cryptocurrency' },
+];
+
+if (recommendedTopics.length === 0) {
+  recommendedTopics = defaultTopics;
+}
+
+const gradientPairs: Array<[string, string]> = [
+  ['#10b981', '#059669'],
+  ['#8b5cf6', '#6d28d9'],
+  ['#f59e0b', '#d97706'],
+  ['#3b82f6', '#1d4ed8'],
+  ['#ec4899', '#be185d'],
+];
+
+const getInitials = (name: string) => {
+  if (!name) return 'A';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+};
 ---
 
 <aside class="right-sidebar" id="right-sidebar">
   <section class="staff-picks">
     <h3 class="right-sidebar-title">Staff Picks</h3>
 
-    <div class="pick-item">
-      <div class="pick-author">
-        <div class="pick-avatar" style="background: linear-gradient(135deg, #10b981, #059669);">
-          <span>AC</span>
-        </div>
-        <span class="pick-author-name">Admiral Cloudberg</span>
-      </div>
-      <a href="#" class="pick-title"
-        >Reaping the Whirlwind | Inside the Architecture of Large-Scale Systems</a
-      >
-      <span class="pick-date">1d ago</span>
-    </div>
-
-    <div class="pick-item">
-      <div class="pick-author">
-        <div class="pick-avatar" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);">
-          <span>AS</span>
-        </div>
-        <span class="pick-author-name">Anna Saraiva</span>
-      </div>
-      <a href="#" class="pick-title">Night(mare) at the Museum of Code</a>
-      <span class="pick-date">Jul 20</span>
-    </div>
-
-    <div class="pick-item">
-      <div class="pick-author">
-        <div class="pick-avatar" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-          <span>JT</span>
-        </div>
-        <span class="pick-author-name">In <strong>Our Game</strong> by John Thorn</span>
-      </div>
-      <a href="#" class="pick-title">Engineering Culture: A Love Story</a>
-      <span class="pick-date">Oct 7, 2025</span>
-    </div>
+    {
+      staffPicks.length > 0 ? (
+        staffPicks.map((pick, index) => (
+          <div class="pick-item">
+            <div class="pick-author">
+              <div
+                class="pick-avatar"
+                style={`background: linear-gradient(135deg, ${
+                  gradientPairs[index % gradientPairs.length][0]
+                }, ${gradientPairs[index % gradientPairs.length][1]});`}
+              >
+                {pick.authorAvatar ? (
+                  <img src={pick.authorAvatar} alt={pick.authorName} class="pick-avatar-img" />
+                ) : (
+                  <span>{getInitials(pick.authorName)}</span>
+                )}
+              </div>
+              <span class="pick-author-name">{pick.authorName}</span>
+            </div>
+            <a href={`/p/${pick.slug}`} class="pick-title">
+              {pick.title}
+            </a>
+            {pick.formattedDate && <span class="pick-date">{pick.formattedDate}</span>}
+          </div>
+        ))
+      ) : (
+        <p class="sidebar-empty-text">No staff picks available yet.</p>
+      )
+    }
 
     <a href="#" class="see-full-list">See the full list</a>
   </section>
@@ -49,13 +188,13 @@ export interface Props {
   <section class="recommended-topics">
     <h3 class="right-sidebar-title">Recommended topics</h3>
     <div class="topic-chips">
-      <a href="#" class="topic-chip">Programming <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Self Improvement <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Writing <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Relationships <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Machine Learning <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Politics <span class="chip-plus">+</span></a>
-      <a href="#" class="topic-chip">Cryptocurrency <span class="chip-plus">+</span></a>
+      {
+        recommendedTopics.map((topic) => (
+          <a href={`/tag/${topic.tag}`} class="topic-chip">
+            {topic.name} <span class="chip-plus">+</span>
+          </a>
+        ))
+      }
     </div>
     <a href="#" class="see-more-topics">See more topics</a>
   </section>
@@ -97,7 +236,7 @@ export interface Props {
           fill="none"
           stroke="currentColor"
           stroke-width="1.5"
-          ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline
+          ><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline
             points="14 2 14 8 20 8"></polyline></svg
         >
         Review Content
@@ -185,6 +324,22 @@ export interface Props {
     font-weight: 600;
     color: white;
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .pick-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  .sidebar-empty-text {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    font-style: italic;
+    margin-bottom: var(--space-md);
   }
 
   .pick-author-name {
