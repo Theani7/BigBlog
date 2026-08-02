@@ -68,10 +68,11 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
 <script is:inline src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
 <script
   is:inline
-  src="https://cdn.jsdelivr.net/npm/quilljs-markdown@latest/dist/quilljs-markdown.js"
-></script><script>
+  src="https://cdn.jsdelivr.net/npm/quilljs-markdown@latest/dist/quilljs-markdown.js"></script>
+
+<script>
   import { compressImage } from '../lib/compressImage';
-  (window as any).compressImage = compressImage;
+  window['compressImage'] = compressImage;
 </script>
 
 <script is:inline>

@@ -682,7 +682,7 @@ if (sessionId) {
 
 <script>
   import { compressImage } from '../lib/compressImage';
-  (window as any).compressImage = compressImage;
+  window['compressImage'] = compressImage;
 </script>
 
 <script is:inline data-astro-rerun>
