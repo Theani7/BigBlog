@@ -726,5 +726,47 @@ document.addEventListener('astro:page-load', () => {
     initFollow();
     loadComments();
     initState();
+    
+    // Track View
+    try {
+      await fetch('/api/views', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug }),
+      });
+    } catch (e) {
+      console.error('Failed to track view', e);
+    }
+    
+    // Track Read
+    let readTracked = false;
+    const postContent = document.querySelector('.post-content');
+    if (postContent) {
+      const observer = new IntersectionObserver(
+        async (entries) => {
+          if (entries[0].isIntersecting && !readTracked) {
+            readTracked = true;
+            try {
+              await fetch('/api/reading-history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ articleSlug: slug, progress: 100 }),
+              });
+            } catch (e) {
+              console.error('Failed to track read', e);
+            }
+          }
+        },
+        { threshold: 0.1 }
+      );
+      
+      // Observe the last element in the article, or the article itself if small
+      const lastChild = postContent.lastElementChild;
+      if (lastChild) {
+        observer.observe(lastChild);
+      } else {
+        observer.observe(postContent);
+      }
+    }
   })();
 }); // end astro:page-load

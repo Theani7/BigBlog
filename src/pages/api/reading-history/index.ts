@@ -1,15 +1,16 @@
 import type { APIRoute } from 'astro';
+import { createDatabase, type Env } from '../../../db';
+import { Story } from '../../../db/schema/story';
 
-export const GET: APIRoute = async ({ request, locals }) => {
-  const env = (locals as { env: { DB: D1Database } }).env;
-  if (!env?.DB) {
+export const GET: APIRoute = async ({ locals, url }) => {
+  const env = (locals as { env: Env }).env;
+  if (!env) {
     return new Response(JSON.stringify({ success: false, error: 'Database not configured' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
     });
   }
 
-  const url = new URL(request.url);
   const action = url.searchParams.get('action');
   const slug = url.searchParams.get('slug');
 
@@ -21,10 +22,16 @@ export const GET: APIRoute = async ({ request, locals }) => {
   }
 
   if (slug) {
-    return new Response(JSON.stringify({ success: true, data: { progress: 0 } }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    try {
+      await createDatabase(env);
+      const story = await Story.findOne({ slug });
+      return new Response(JSON.stringify({ success: true, data: { progress: story ? story.reads : 0 } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch {
+      return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { status: 500 });
+    }
   }
 
   return new Response(JSON.stringify({ success: true, data: [] }), {
@@ -34,8 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = (locals as { env: { DB: D1Database } }).env;
-  if (!env?.DB) {
+  const env = (locals as { env: Env }).env;
+  if (!env) {
     return new Response(JSON.stringify({ success: false, error: 'Database not configured' }), {
       status: 503,
       headers: { 'Content-Type': 'application/json' },
@@ -55,6 +62,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    await createDatabase(env);
+    
+    // If progress is substantial (e.g., 100%), count as a read
+    if (progress >= 100) {
+      await Story.updateOne({ slug: articleSlug }, { $inc: { reads: 1 } });
     }
 
     return new Response(JSON.stringify({ success: true, data: { updated: true } }), {
