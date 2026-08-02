@@ -11,7 +11,7 @@ export function getOrCreateSessionId(cookies: AstroCookies): string {
   cookies.set(SESSION_COOKIE, sessionId, {
     path: '/',
     httpOnly: true,
-    secure: true,
+    secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
     maxAge: SESSION_MAX_AGE,
   });
