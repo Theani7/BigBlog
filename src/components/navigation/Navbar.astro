@@ -1,34 +1,9 @@
 ---
-import { createDatabase, type Env } from '../../db';
-import { Story } from '../../db/schema';
-
 const currentPath = Astro.url.pathname;
-const env = (Astro.locals as { env: Env }).env;
-let trendingNavLinks: Array<{ label: string; href: string }> = [];
-
-if (env) {
-  try {
-    await createDatabase(env);
-
-    const tagAggregation = await Story.aggregate([
-      { $match: { status: 'PUBLISHED' } },
-      { $unwind: '$tags' },
-      { $group: { _id: '$tags', count: { $sum: 1 } } },
-      { $sort: { count: -1 } },
-      { $limit: 4 }, // Top 4 trending categories
-    ]);
-
-    trendingNavLinks = tagAggregation.map((t) => ({
-      label: t._id.charAt(0).toUpperCase() + t._id.slice(1),
-      href: `/tag/${t._id}`,
-    }));
-  } catch (e) {
-    console.error('Failed to load trending tags for nav:', e);
-  }
-}
 
 const navLinks: Array<{ label: string; href: string }> = [
-  ...trendingNavLinks,
+  { label: 'Stories', href: '/stories' },
+  { label: 'About', href: '/about' },
   { label: 'Write', href: '/write' },
 ];
 
