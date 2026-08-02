@@ -4,7 +4,7 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
 import EditProfileModal from '../components/profile/EditProfileModal.astro';
 
 import { createDatabase, type Env } from '../db';
-import { User, Story, Repost, comments } from '../db/schema';
+import { User, Story, Repost, comments, authorFollows } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
 import { formatCompactNumber } from '../lib/formatters';
 
@@ -30,15 +30,28 @@ const user = {
   id: userId.toString(),
   name: dbUser?.name || 'Anonymous',
   username: `@${dbUser?.name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
-  avatar: dbUser?.avatar || 'https://i.pravatar.cc/150?img=11',
+  avatar: dbUser?.avatar || '',
   bio: dbUser?.bio || '',
   pronouns: dbUser?.pronouns || '',
   website: dbUser?.website || '',
   twitter: dbUser?.twitter || '',
   github: dbUser?.github || '',
   linkedin: dbUser?.linkedin || '',
+  role: dbUser?.role || 'AUTHOR',
   createdAt: dbUser?.createdAt || new Date(),
 };
+
+const publishedCount = await Story.countDocuments({ authorId: userId, status: 'PUBLISHED' });
+const followerCount = await authorFollows.countDocuments({ authorId: userId });
+const followingCount = await authorFollows.countDocuments({ userId: userId });
+
+const userInitials = (user.name || 'U')
+  .trim()
+  .split(/\s+/)
+  .map((part: string) => part[0])
+  .join('')
+  .slice(0, 2)
+  .toUpperCase();
 
 const publishedStories = await Story.find({ authorId: userId, status: 'PUBLISHED' }).sort({
   createdAt: -1,
@@ -98,12 +111,202 @@ const activities: ActivityItem[] = [
 
     <!-- Center Profile Content -->
     <main class="profile-feed">
-      <div class="profile-header-main">
-        <div class="profile-header-left">
-          <img src={user.avatar} alt={user.name} class="profile-header-avatar" />
-          <h1 class="profile-title">{user.name}</h1>
+      <!-- Instagram-Style Profile Header Card -->
+      <div class="instagram-profile-header">
+        <div class="instagram-avatar-container">
+          {
+            user.avatar ? (
+              <img src={user.avatar} alt={user.name} class="instagram-avatar-img" />
+            ) : (
+              <div class="instagram-avatar-fallback">
+                <span>{userInitials}</span>
+              </div>
+            )
+          }
         </div>
-        <button type="button" class="profile-edit-link" data-open-edit-profile>Edit profile</button>
+
+        <div class="instagram-profile-details">
+          <div class="instagram-profile-top-row">
+            <div class="instagram-name-badges-group">
+              <h1 class="instagram-display-name">{user.name}</h1>
+              <div class="instagram-badges-row">
+                <span class="instagram-role-badge">{user.role}</span>
+                {user.pronouns && <span class="instagram-pronouns-pill">{user.pronouns}</span>}
+              </div>
+            </div>
+
+            <div class="instagram-profile-actions">
+              <button
+                type="button"
+                id="open-edit-profile-btn"
+                class="instagram-btn instagram-btn-primary"
+                data-open-edit-profile
+                data-tab-target="edit"
+              >
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                id="share-profile-btn"
+                class="instagram-btn instagram-btn-secondary"
+              >
+                <svg
+                  width="15"
+                  height="15"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"></path>
+                  <polyline points="16 6 12 2 8 6"></polyline>
+                  <line x1="12" y1="2" x2="12" y2="15"></line>
+                </svg>
+                <span>Share Profile</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="instagram-metrics-row">
+            <div class="instagram-metric-item">
+              <span class="instagram-metric-value">{formatCompactNumber(publishedCount)}</span>
+              <span class="instagram-metric-label">Posts</span>
+            </div>
+            <div class="instagram-metric-item">
+              <span class="instagram-metric-value">{formatCompactNumber(followerCount)}</span>
+              <span class="instagram-metric-label">Followers</span>
+            </div>
+            <div class="instagram-metric-item">
+              <span class="instagram-metric-value">{formatCompactNumber(followingCount)}</span>
+              <span class="instagram-metric-label">Following</span>
+            </div>
+          </div>
+
+          {
+            user.bio ? (
+              <p class="instagram-bio-text">{user.bio}</p>
+            ) : (
+              <p class="instagram-bio-text empty-bio">No bio added yet.</p>
+            )
+          }
+
+          {
+            (user.website || user.twitter || user.github || user.linkedin) && (
+              <div class="instagram-socials-row">
+                {user.website && (
+                  <a
+                    href={
+                      user.website.startsWith('http') ? user.website : `https://${user.website}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="instagram-social-link"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="2" y1="12" x2="22" y2="12" />
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z" />
+                    </svg>
+                    <span>{user.website.replace(/^https?:\/\//, '')}</span>
+                  </a>
+                )}
+                {user.twitter && (
+                  <a
+                    href={
+                      user.twitter.startsWith('http')
+                        ? user.twitter
+                        : `https://twitter.com/${user.twitter.replace('@', '')}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="instagram-social-link"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                    </svg>
+                    <span>{user.twitter.startsWith('@') ? user.twitter : `@${user.twitter}`}</span>
+                  </a>
+                )}
+                {user.github && (
+                  <a
+                    href={
+                      user.github.startsWith('http')
+                        ? user.github
+                        : `https://github.com/${user.github.replace('@', '')}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="instagram-social-link"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                    </svg>
+                    <span>
+                      {user.github.replace(/^https?:\/\/github\.com\//, '').replace('@', '')}
+                    </span>
+                  </a>
+                )}
+                {user.linkedin && (
+                  <a
+                    href={
+                      user.linkedin.startsWith('http')
+                        ? user.linkedin
+                        : `https://linkedin.com/in/${user.linkedin}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="instagram-social-link"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                      <rect x="2" y="9" width="4" height="12" />
+                      <circle cx="4" cy="4" r="2" />
+                    </svg>
+                    <span>LinkedIn</span>
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
       </div>
 
       <nav class="profile-tabs">
@@ -545,16 +748,6 @@ const activities: ActivityItem[] = [
         </div>
       </div>
     </main>
-
-    <!-- Right Profile Sidebar -->
-    <aside class="profile-sidebar-right">
-      <div class="profile-info-card">
-        <img src={user.avatar} alt={user.name} class="profile-large-avatar" />
-        <h2 class="profile-large-name">{user.name}</h2>
-        {user.bio && <p class="profile-sidebar-bio">{user.bio}</p>}
-        <button type="button" id="open-edit-profile" class="profile-edit-link">Edit profile</button>
-      </div>
-    </aside>
   </div>
 
   <EditProfileModal user={user} />
@@ -584,7 +777,7 @@ const activities: ActivityItem[] = [
     });
 
     const openEditButtons = document.querySelectorAll(
-      '#open-edit-profile, [data-open-edit-profile]'
+      '#open-edit-profile, #open-edit-profile-btn, [data-open-edit-profile], [data-tab-target="edit"]'
     );
     const modal = document.getElementById('edit-profile-modal');
 
@@ -600,6 +793,34 @@ const activities: ActivityItem[] = [
         }
       });
     });
+
+    const shareBtn = document.getElementById('share-profile-btn');
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.share) {
+            await navigator.share({
+              title: document.title,
+              url: window.location.href,
+            });
+          } else {
+            await navigator.clipboard.writeText(window.location.href);
+            const span = shareBtn.querySelector('span');
+            if (span) {
+              const originalText = span.textContent;
+              span.textContent = 'Link Copied!';
+              setTimeout(() => {
+                span.textContent = originalText;
+              }, 2000);
+            }
+          }
+        } catch (err) {
+          if ((err as Error).name !== 'AbortError') {
+            console.error('Error sharing:', err);
+          }
+        }
+      });
+    }
   }
 
   document.addEventListener('astro:page-load', setupProfileTabs);
@@ -613,10 +834,218 @@ const activities: ActivityItem[] = [
 <style>
   .dashboard-layout {
     display: grid;
-    grid-template-columns: 240px 1fr 340px;
+    grid-template-columns: 240px 1fr;
     min-height: calc(100vh - var(--header-height));
-    max-width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     INSTAGRAM PROFILE HEADER CARD STYLES
+     ═══════════════════════════════════════════════════════════════════ */
+  .instagram-profile-header {
+    display: flex;
+    gap: var(--space-xl, 2rem);
+    align-items: flex-start;
+    padding: var(--space-xl, 1.5rem);
+    background: var(--bg-surface-card, #ffffff);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: var(--radius-lg, 12px);
+    margin-bottom: var(--space-xl, 1.5rem);
+  }
+
+  .instagram-avatar-container {
+    flex-shrink: 0;
+    width: 96px;
+    height: 96px;
+  }
+
+  .instagram-avatar-img {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .instagram-avatar-fallback {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 2px solid var(--color-hairline, #e6dfd8);
+    background: var(--bg-surface-soft, #f4f0eb);
+    color: var(--color-ink, #1a1a1a);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 600;
+    font-family: var(--font-sans);
+  }
+
+  .instagram-profile-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md, 1rem);
+    min-width: 0;
+  }
+
+  .instagram-profile-top-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md, 1rem);
+  }
+
+  .instagram-name-badges-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-sm, 0.5rem) var(--space-md, 0.75rem);
+  }
+
+  .instagram-display-name {
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--color-ink, #1a1a1a);
+    margin: 0;
+    line-height: 1.2;
+  }
+
+  .instagram-badges-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .instagram-role-badge {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-surface-soft, #f4f0eb);
+    color: var(--color-ink, #1a1a1a);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .instagram-pronouns-pill {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    color: var(--color-muted, #757575);
+    background: var(--bg-surface-soft, #f4f0eb);
+    padding: 2px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .instagram-profile-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .instagram-btn {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    line-height: 1.4;
+  }
+
+  .instagram-btn-primary {
+    background: var(--color-ink, #1a1a1a);
+    color: #ffffff;
+    border: 1px solid var(--color-ink, #1a1a1a);
+  }
+
+  .instagram-btn-primary:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+  }
+
+  .instagram-btn-secondary {
+    background: var(--bg-surface-card, #ffffff);
+    color: var(--color-ink, #1a1a1a);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .instagram-btn-secondary:hover {
+    background: var(--bg-surface-soft, #f5f5f5);
+    border-color: var(--color-ink, #1a1a1a);
+  }
+
+  .instagram-metrics-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl, 2rem);
+  }
+
+  .instagram-metric-item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    font-family: var(--font-sans);
+  }
+
+  .instagram-metric-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--color-ink, #1a1a1a);
+  }
+
+  .instagram-metric-label {
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--color-muted, #757575);
+  }
+
+  .instagram-bio-text {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.5;
+    color: var(--color-ink, #1a1a1a);
+    margin: 0;
+  }
+
+  .instagram-bio-text.empty-bio {
+    color: var(--color-muted, #757575);
+    font-style: italic;
+  }
+
+  .instagram-socials-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .instagram-social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-link, #0066cc);
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .instagram-social-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
   }
 
   /* ═══════════════════════════════════════════════════════════════════
