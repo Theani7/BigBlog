@@ -88,6 +88,14 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       });
     }
 
+    const targetStory = await Story.findById(storyId);
+    if (!targetStory) {
+      return new Response(JSON.stringify({ success: false, error: 'Story not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     const existing = await Repost.findOne({ userId: payload.userId, storyId });
     if (existing) {
       await Repost.deleteOne({ _id: existing._id });
