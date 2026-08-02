@@ -651,7 +651,7 @@ const activities: ActivityItem[] = [
 
   .profile-title {
     font-family: var(--font-serif);
-    font-size: 42px;
+    font-size: 48px;
     font-weight: 400;
     color: var(--color-ink);
     margin: 0;
@@ -678,9 +678,10 @@ const activities: ActivityItem[] = [
 
   .profile-tabs {
     display: flex;
-    gap: var(--space-xl);
+    gap: var(--space-sm);
     border-bottom: 1px solid var(--color-hairline);
     margin-top: 0;
+    padding-bottom: var(--space-md);
   }
 
   .profile-tab {
@@ -689,29 +690,21 @@ const activities: ActivityItem[] = [
     color: var(--color-muted);
     background: transparent;
     border: none;
-    padding: 0 0 var(--space-md) 0;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-pill);
     cursor: pointer;
-    position: relative;
-    transition: color var(--duration-fast);
+    transition: all var(--duration-fast);
   }
 
   .profile-tab:hover {
     color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .profile-tab--active {
     color: var(--color-ink);
     font-weight: 500;
-  }
-
-  .profile-tab--active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 1px;
-    background: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .profile-content {
@@ -726,7 +719,7 @@ const activities: ActivityItem[] = [
   /* Reading List Card inside Profile */
   .reading-list-card {
     display: flex;
-    background: var(--bg-surface);
+    background: var(--bg-surface-card);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -836,7 +829,7 @@ const activities: ActivityItem[] = [
   }
 
   .story-card {
-    background: var(--bg-surface);
+    background: var(--bg-surface-card);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
     padding: var(--space-lg);
@@ -926,7 +919,7 @@ const activities: ActivityItem[] = [
     display: flex;
     gap: var(--space-md);
     padding: var(--space-md);
-    background: var(--bg-surface);
+    background: var(--bg-surface-card);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-md);
   }
@@ -992,7 +985,7 @@ const activities: ActivityItem[] = [
 
   /* About Tab */
   .about-card {
-    background: var(--bg-surface);
+    background: var(--bg-surface-card);
     border: 1px solid var(--color-hairline);
     border-radius: var(--radius-lg);
     padding: var(--space-xl);
@@ -1009,10 +1002,10 @@ const activities: ActivityItem[] = [
 
   .about-subtitle {
     font-family: var(--font-sans);
-    font-size: var(--text-caption-uppercase);
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 1.5px;
     color: var(--color-muted);
     margin: 0;
   }
@@ -1092,7 +1085,7 @@ const activities: ActivityItem[] = [
   .empty-state {
     padding: var(--space-xxl) var(--space-md);
     text-align: center;
-    background: var(--bg-surface);
+    background: var(--bg-surface-card);
     border: 1px dashed var(--color-hairline);
     border-radius: var(--radius-lg);
   }

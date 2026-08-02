@@ -456,10 +456,10 @@ const { user = {} } = Astro.props;
 
   .form-section-title {
     font-family: var(--font-sans);
-    font-size: var(--text-caption-uppercase);
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 1.5px;
     color: var(--color-muted);
     margin-top: var(--space-xs);
     padding-top: var(--space-xs);
@@ -525,6 +525,11 @@ const { user = {} } = Astro.props;
 
   .btn-save:hover {
     opacity: 0.9;
+  }
+
+  .btn-save:active {
+    background: #252320;
+    color: #ffffff;
   }
 
   .btn-save:disabled {
