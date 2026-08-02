@@ -142,7 +142,9 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
           input.onchange = () => {
             const file = input.files && input.files[0];
             if (file) {
-              (window.compressImage || compressImage)(file, {
+              const compress =
+                window.compressImage || (() => Promise.reject('Compressor not ready'));
+              compress(file, {
                 maxWidth: 1400,
                 maxHeight: 1400,
                 quality: 0.82,
@@ -218,7 +220,8 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
         input.onchange = () => {
           const file = input.files && input.files[0];
           if (file) {
-            (window.compressImage || compressImage)(file, {
+            const compress = window.compressImage || (() => Promise.reject('Compressor not ready'));
+            compress(file, {
               maxWidth: 1400,
               maxHeight: 1400,
               quality: 0.82,
@@ -269,7 +272,8 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     coverImageInput?.addEventListener('change', (e) => {
       const file = e.target.files && e.target.files[0];
       if (file) {
-        (window.compressImage || compressImage)(file, {
+        const compress = window.compressImage || (() => Promise.reject('Compressor not ready'));
+        compress(file, {
           maxWidth: 1600,
           maxHeight: 900,
           quality: 0.82,
