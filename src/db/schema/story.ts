@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type StoryStatus = 'DRAFT' | 'PUBLISHED' | 'SCHEDULED' | 'UNLISTED';
 export type StoryCategory = 'Technology' | 'Design' | 'Business' | 'Culture' | 'Life' | 'Other';
@@ -51,4 +51,5 @@ const storySchema = new Schema<IStory>({
 storySchema.index({ authorId: 1, status: 1 });
 storySchema.index({ slug: 1 });
 
-export const Story = mongoose.models.Story || mongoose.model<IStory>('Story', storySchema);
+export const Story: Model<IStory> =
+  (mongoose.models.Story as Model<IStory>) || mongoose.model<IStory>('Story', storySchema);

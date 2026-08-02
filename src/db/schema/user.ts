@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export type UserRole = 'ADMIN' | 'AUTHOR';
 
@@ -81,4 +81,5 @@ const userSchema = new Schema<IUser>({
 
 userSchema.index({ email: 1 });
 
-export const User = mongoose.models.User || mongoose.model<IUser>('User', userSchema);
+export const User: Model<IUser> =
+  (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>('User', userSchema);

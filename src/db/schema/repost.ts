@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IRepost extends Document {
   userId: mongoose.Types.ObjectId;
@@ -25,4 +25,5 @@ const repostSchema = new Schema<IRepost>({
 
 repostSchema.index({ userId: 1, storyId: 1 }, { unique: true });
 
-export const Repost = mongoose.models.Repost || mongoose.model<IRepost>('Repost', repostSchema);
+export const Repost: Model<IRepost> =
+  (mongoose.models.Repost as Model<IRepost>) || mongoose.model<IRepost>('Repost', repostSchema);
