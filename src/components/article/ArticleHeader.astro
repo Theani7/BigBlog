@@ -13,14 +13,18 @@ const { title, author, authorId, publishDate, readTime } = Astro.props;
   <h1 class="post-title">{title}</h1>
   <div class="post-meta">
     <div class="author-info">
-      <img
-        src={author?.avatar || 'https://i.pravatar.cc/150?img=11'}
-        alt={author?.name || 'Anonymous'}
-        class="author-avatar"
-      />
+      <a href={authorId ? `/author/${authorId}` : '#'} class="author-avatar-link">
+        <img
+          src={author?.avatar || 'https://i.pravatar.cc/150?img=11'}
+          alt={author?.name || 'Anonymous'}
+          class="author-avatar"
+        />
+      </a>
       <div class="author-details">
         <div class="author-line">
-          <span class="author-name">{author?.name || 'Anonymous'}</span>
+          <a href={authorId ? `/author/${authorId}` : '#'} class="author-name-link">
+            <span class="author-name">{author?.name || 'Anonymous'}</span>
+          </a>
           <button
             class="follow-btn"
             id="follow-btn"
@@ -95,11 +99,31 @@ const { title, author, authorId, publishDate, readTime } = Astro.props;
     gap: var(--space-sm);
   }
 
+  .author-avatar-link {
+    display: inline-block;
+    border-radius: var(--radius-full);
+    transition: opacity var(--duration-fast);
+  }
+
+  .author-avatar-link:hover {
+    opacity: 0.85;
+  }
+
+  .author-name-link {
+    text-decoration: none;
+  }
+
+  .author-name-link:hover .author-name {
+    text-decoration: underline;
+    color: var(--color-primary);
+  }
+
   .author-name {
     font-family: var(--font-sans);
     font-size: var(--text-body-md);
     font-weight: 500;
     color: var(--color-ink);
+    transition: color var(--duration-fast);
   }
 
   .follow-btn {

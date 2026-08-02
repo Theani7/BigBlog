@@ -1,0 +1,709 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Sidebar from '../../components/dashboard/Sidebar.astro';
+import { createDatabase, type Env } from '../../db';
+import { User, Story } from '../../db/schema';
+import mongoose from 'mongoose';
+
+const { id } = Astro.params;
+const env = (Astro.locals as { env: Env }).env;
+
+if (!env) {
+  throw new Error('Environment not configured');
+}
+
+await createDatabase(env);
+
+let authorUser = null;
+
+// Search by ObjectId or fallback by email prefix / name matching
+if (id && mongoose.Types.ObjectId.isValid(id)) {
+  authorUser = await User.findById(id).lean();
+}
+
+if (!authorUser && id) {
+  const decodedId = decodeURIComponent(id).toLowerCase();
+  authorUser = await User.findOne({
+    $or: [{ name: new RegExp(`^${decodedId}$`, 'i') }, { email: new RegExp(`^${decodedId}`, 'i') }],
+  }).lean();
+}
+
+if (!authorUser) {
+  return Astro.redirect('/404');
+}
+
+const authorIdStr = String(authorUser._id);
+const authorName = authorUser.name || authorUser.email.split('@')[0] || 'Author';
+const authorAvatar = authorUser.avatar || '';
+const authorBio = authorUser.bio || 'Writer on BigBlog. Sharing perspectives, ideas, and stories.';
+const authorRole = authorUser.role || 'AUTHOR';
+const authorPronouns = authorUser.pronouns || '';
+const authorWebsite = authorUser.website || '';
+const authorTwitter = authorUser.twitter || '';
+const authorGithub = authorUser.github || '';
+const authorLinkedin = authorUser.linkedin || '';
+
+// Fetch all published stories by this author
+const storiesDocs = await Story.find({
+  authorId: authorUser._id,
+  status: 'PUBLISHED',
+})
+  .sort({ publishedAt: -1, createdAt: -1 })
+  .lean();
+
+const stories = storiesDocs.map((story: any) => {
+  const plainText = story.content ? story.content.replace(/<[^>]+>/g, '') : '';
+  const wordCount = plainText.split(/\s+/).filter(Boolean).length;
+  const readTime = Math.max(1, Math.ceil(wordCount / 225));
+  const dateStr = new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  return {
+    id: String(story._id),
+    title: story.title,
+    subtitle: story.subtitle || story.excerpt || '',
+    coverImage: story.coverImage || '',
+    slug: story.slug,
+    publishedAt: dateStr,
+    readTime,
+    tags: story.tags || [],
+    views: story.views || 0,
+    reads: story.reads || 0,
+  };
+});
+
+const totalPublished = stories.length;
+const totalReads = stories.reduce((acc: number, s: any) => acc + s.reads, 0);
+
+function getInitials(name: string): string {
+  if (!name) return 'A';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+}
+---
+
+<Layout title={`${authorName} — BigBlog`} description={authorBio}>
+  <div class="author-page-wrapper">
+    <Sidebar />
+
+    <main class="author-main-content">
+      <!-- Author Profile Header Banner -->
+      <section class="author-profile-card">
+        <div class="author-card-header">
+          <div class="author-avatar-wrapper">
+            {
+              authorAvatar ? (
+                <img src={authorAvatar} alt={authorName} class="author-profile-avatar" />
+              ) : (
+                <div class="author-avatar-fallback">{getInitials(authorName)}</div>
+              )
+            }
+          </div>
+
+          <div class="author-heading-group">
+            <div class="author-name-row">
+              <h1 class="author-display-name">{authorName}</h1>
+              <span class="author-role-badge">{authorRole}</span>
+              {authorPronouns && <span class="author-pronouns-badge">{authorPronouns}</span>}
+            </div>
+
+            <p class="author-bio-text">{authorBio}</p>
+
+            <div class="author-actions-row">
+              <button class="author-follow-btn" id="author-follow-btn" data-author-id={authorIdStr}>
+                Follow
+              </button>
+              <span class="author-follower-badge" id="author-follower-count">0 followers</span>
+            </div>
+
+            <!-- Social Links -->
+            {
+              (authorWebsite || authorTwitter || authorGithub || authorLinkedin) && (
+                <div class="author-social-links">
+                  {authorWebsite && (
+                    <a
+                      href={authorWebsite}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-link"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <circle cx="12" cy="12" r="10" />
+                        <line x1="2" y1="12" x2="22" y2="12" />
+                        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                      </svg>
+                      Website
+                    </a>
+                  )}
+                  {authorTwitter && (
+                    <a
+                      href={
+                        authorTwitter.startsWith('http')
+                          ? authorTwitter
+                          : `https://twitter.com/${authorTwitter.replace('@', '')}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-link"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                      </svg>
+                      Twitter
+                    </a>
+                  )}
+                  {authorGithub && (
+                    <a
+                      href={
+                        authorGithub.startsWith('http')
+                          ? authorGithub
+                          : `https://github.com/${authorGithub}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-link"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                      </svg>
+                      GitHub
+                    </a>
+                  )}
+                  {authorLinkedin && (
+                    <a
+                      href={
+                        authorLinkedin.startsWith('http')
+                          ? authorLinkedin
+                          : `https://linkedin.com/in/${authorLinkedin}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="social-link"
+                    >
+                      <svg
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                      >
+                        <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                        <rect x="2" y="9" width="4" height="12" />
+                        <circle cx="4" cy="4" r="2" />
+                      </svg>
+                      LinkedIn
+                    </a>
+                  )}
+                </div>
+              )
+            }
+          </div>
+        </div>
+
+        <!-- Metrics bar -->
+        <div class="author-metrics-bar">
+          <div class="metric-item">
+            <span class="metric-value">{totalPublished}</span>
+            <span class="metric-label">Stories</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric-item">
+            <span class="metric-value">{totalReads}</span>
+            <span class="metric-label">Total Reads</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Author's Articles List Section -->
+      <section class="author-stories-section">
+        <h2 class="section-title">Published Stories ({totalPublished})</h2>
+
+        {
+          stories.length === 0 ? (
+            <div class="empty-stories-card">
+              <p class="empty-text">No published stories yet from {authorName}.</p>
+            </div>
+          ) : (
+            <div class="stories-feed">
+              {stories.map((story: any) => (
+                <article class="story-feed-card">
+                  <div class="story-feed-content">
+                    <div class="story-feed-meta">
+                      <span class="story-date">{story.publishedAt}</span>
+                      <span class="meta-dot">&bull;</span>
+                      <span class="story-read-time">{story.readTime} min read</span>
+                    </div>
+
+                    <h3 class="story-feed-title">
+                      <a href={`/p/${story.slug}`}>{story.title}</a>
+                    </h3>
+
+                    {story.subtitle && <p class="story-feed-subtitle">{story.subtitle}</p>}
+
+                    {story.tags && story.tags.length > 0 && (
+                      <div class="story-tags-row">
+                        {story.tags.slice(0, 4).map((tag: string) => (
+                          <a href={`/tag/${encodeURIComponent(tag)}`} class="story-tag-pill">
+                            #{tag}
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {story.coverImage && (
+                    <div class="story-feed-cover">
+                      <a href={`/p/${story.slug}`}>
+                        <img src={story.coverImage} alt={story.title} loading="lazy" />
+                      </a>
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          )
+        }
+      </section>
+    </main>
+  </div>
+</Layout>
+
+<script is:inline>
+  document.addEventListener('astro:page-load', () => {
+    const followBtn = document.getElementById('author-follow-btn');
+    const followerCountEl = document.getElementById('author-follower-count');
+    if (!followBtn) return;
+
+    const authorId = followBtn.getAttribute('data-author-id');
+    if (!authorId) return;
+
+    async function loadFollowState() {
+      try {
+        const res = await fetch(`/api/follows?authorId=${authorId}`);
+        const data = await res.json();
+        if (data.success) {
+          if (followerCountEl) {
+            followerCountEl.textContent = `${data.count} follower${data.count === 1 ? '' : 's'}`;
+          }
+          if (data.isFollowing) {
+            followBtn.textContent = 'Following';
+            followBtn.classList.add('is-following');
+          } else {
+            followBtn.textContent = 'Follow';
+            followBtn.classList.remove('is-following');
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load follow status:', e);
+      }
+    }
+
+    followBtn.addEventListener('click', async () => {
+      try {
+        followBtn.disabled = true;
+        const res = await fetch('/api/follows', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ authorId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          if (followerCountEl) {
+            followerCountEl.textContent = `${data.count} follower${data.count === 1 ? '' : 's'}`;
+          }
+          if (data.isFollowing) {
+            followBtn.textContent = 'Following';
+            followBtn.classList.add('is-following');
+          } else {
+            followBtn.textContent = 'Follow';
+            followBtn.classList.remove('is-following');
+          }
+        }
+      } catch (e) {
+        console.error('Failed to toggle follow:', e);
+      } finally {
+        followBtn.disabled = false;
+      }
+    });
+
+    loadFollowState();
+  });
+</script>
+
+<style>
+  .author-page-wrapper {
+    background-color: var(--color-canvas, #faf9f5);
+    min-height: calc(100vh - 64px);
+    display: flex;
+  }
+
+  .author-main-content {
+    flex-grow: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 40px 24px 96px 24px;
+  }
+
+  /* Author Profile Card */
+  .author-profile-card {
+    background-color: var(--color-surface-card, #efe9de);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 40px;
+  }
+
+  .author-card-header {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+  }
+
+  .author-profile-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .author-avatar-fallback {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #181715, #3d3d3a);
+    color: #faf9f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 1.5rem;
+    font-weight: 600;
+  }
+
+  .author-heading-group {
+    flex-grow: 1;
+  }
+
+  .author-name-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .author-display-name {
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: var(--color-ink, #141413);
+    margin: 0;
+    letter-spacing: -0.5px;
+    line-height: 1.15;
+  }
+
+  .author-role-badge {
+    background: var(--color-surface-dark, #181715);
+    color: var(--color-on-dark, #faf9f5);
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .author-pronouns-badge {
+    color: var(--color-muted, #6c6a64);
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 13px;
+  }
+
+  .author-bio-text {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--color-body-strong, #252523);
+    margin: 0 0 16px 0;
+  }
+
+  .author-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .author-follow-btn {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 18px;
+    border-radius: 8px;
+    background-color: var(--color-surface-dark, #181715);
+    color: var(--color-on-dark, #faf9f5);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .author-follow-btn:hover {
+    background-color: var(--color-primary-active, #252320);
+  }
+
+  .author-follow-btn.is-following {
+    background-color: var(--color-canvas, #faf9f5);
+    color: var(--color-ink, #141413);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .author-follower-badge {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 13px;
+    color: var(--color-muted, #6c6a64);
+  }
+
+  .author-social-links {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-ink, #141413);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .social-link:hover {
+    color: var(--color-primary, #cc785c);
+  }
+
+  .author-metrics-bar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .metric-item {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .metric-value {
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--color-ink, #141413);
+  }
+
+  .metric-label {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 12px;
+    color: var(--color-muted, #6c6a64);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .metric-divider {
+    width: 1px;
+    height: 32px;
+    background-color: var(--color-hairline, #e6dfd8);
+  }
+
+  /* Stories Feed Section */
+  .author-stories-section {
+    margin-top: 16px;
+  }
+
+  .section-title {
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
+    font-size: 24px;
+    font-weight: 400;
+    color: var(--color-ink, #141413);
+    margin-bottom: 24px;
+  }
+
+  .empty-stories-card {
+    background-color: var(--color-surface-card, #efe9de);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+  }
+
+  .empty-text {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 14px;
+    color: var(--color-muted, #6c6a64);
+    margin: 0;
+  }
+
+  .stories-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .story-feed-card {
+    background-color: var(--color-surface-card, #efe9de);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    transition: border-color 0.2s ease;
+  }
+
+  .story-feed-card:hover {
+    border-color: var(--color-ink, #141413);
+  }
+
+  .story-feed-content {
+    flex-grow: 1;
+  }
+
+  .story-feed-meta {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 13px;
+    color: var(--color-muted, #6c6a64);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .story-feed-title {
+    font-family: 'Copernicus', 'Tiempos Headline', 'Cormorant Garamond', Georgia, serif;
+    font-size: 22px;
+    font-weight: 400;
+    margin: 0 0 8px 0;
+    line-height: 1.25;
+  }
+
+  .story-feed-title a {
+    color: var(--color-ink, #141413);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .story-feed-title a:hover {
+    color: var(--color-primary, #cc785c);
+  }
+
+  .story-feed-subtitle {
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 14px;
+    color: var(--color-muted, #6c6a64);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+  }
+
+  .story-tags-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .story-tag-pill {
+    background-color: var(--color-canvas, #faf9f5);
+    color: var(--color-ink, #141413);
+    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    text-decoration: none;
+    transition: border-color 0.2s ease;
+  }
+
+  .story-tag-pill:hover {
+    border-color: var(--color-ink, #141413);
+  }
+
+  .story-feed-cover {
+    width: 140px;
+    height: 100px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .story-feed-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  @media (max-width: 768px) {
+    .author-card-header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .author-name-row {
+      justify-content: center;
+    }
+
+    .author-actions-row {
+      justify-content: center;
+    }
+
+    .author-social-links {
+      justify-content: center;
+    }
+
+    .author-metrics-bar {
+      justify-content: center;
+    }
+
+    .story-feed-card {
+      flex-direction: column-reverse;
+    }
+
+    .story-feed-cover {
+      width: 100%;
+      height: 160px;
+    }
+  }
+</style>
