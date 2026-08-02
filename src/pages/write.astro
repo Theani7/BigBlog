@@ -105,6 +105,75 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
       }
     }
 
+    function compressImage(file, options) {
+      options = options || {};
+      var maxWidth = options.maxWidth || 1600;
+      var maxHeight = options.maxHeight || 1600;
+      var quality = options.quality || 0.82;
+      var targetFormat = options.format || 'image/webp';
+
+      return new Promise(function (resolve, reject) {
+        if (!file || !file.type || !file.type.startsWith('image/')) {
+          return reject(new Error('Invalid image file'));
+        }
+        var objectUrl = URL.createObjectURL(file);
+        var img = new Image();
+
+        img.onload = function () {
+          URL.revokeObjectURL(objectUrl);
+          try {
+            var width = img.naturalWidth || img.width;
+            var height = img.naturalHeight || img.height;
+
+            if (!width || !height) {
+              return reject(new Error('Invalid image dimensions'));
+            }
+
+            var ratio = 1;
+            if (width > maxWidth || height > maxHeight) {
+              ratio = Math.min(maxWidth / width, maxHeight / height);
+            }
+
+            var targetWidth = Math.max(1, Math.round(width * ratio));
+            var targetHeight = Math.max(1, Math.round(height * ratio));
+
+            var canvas = document.createElement('canvas');
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            var ctx = canvas.getContext('2d');
+            if (!ctx) {
+              return reject(new Error('Failed to get 2D context from canvas'));
+            }
+
+            ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+            var format = targetFormat;
+            if (format === 'image/webp') {
+              var testCanvas = document.createElement('canvas');
+              testCanvas.width = 1;
+              testCanvas.height = 1;
+              if (!testCanvas.toDataURL('image/webp').startsWith('data:image/webp')) {
+                format = 'image/jpeg';
+              }
+            }
+
+            var dataUrl = canvas.toDataURL(format, quality);
+            resolve(dataUrl);
+          } catch (error) {
+            reject(error);
+          }
+        };
+
+        img.onerror = function () {
+          URL.revokeObjectURL(objectUrl);
+          reject(new Error('Failed to load image for compression'));
+        };
+
+        img.src = objectUrl;
+      });
+    }
+
     function initQuill() {
       quill = new Quill('#quill-editor', {
         theme: 'bubble', // 'bubble' gives the beautiful highlight-to-format Medium style popup
@@ -126,6 +195,35 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
       new window.QuillMarkdown(quill, {
         ignoreTags: ['strikethrough', 'image', 'video'], // Ignore some complex or buggy tags if needed
       });
+
+      // Override default Quill toolbar image upload handler to use compression
+      const toolbarModule = quill.getModule('toolbar');
+      if (toolbarModule) {
+        toolbarModule.addHandler('image', () => {
+          const input = document.createElement('input');
+          input.setAttribute('type', 'file');
+          input.setAttribute('accept', 'image/*');
+          input.click();
+
+          input.onchange = () => {
+            const file = input.files && input.files[0];
+            if (file) {
+              compressImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.82 })
+                .then((compressedDataUrl) => {
+                  const range = (quill && quill.getSelection(true)) || {
+                    index: quill ? quill.getLength() : 0,
+                  };
+                  const index = range ? range.index : 0;
+                  quill.insertEmbed(index, 'image', compressedDataUrl);
+                  quill.setSelection(index + 1);
+                })
+                .catch((err) => {
+                  console.error('Failed to compress body image:', err);
+                });
+            }
+          };
+        });
+      }
 
       // Medium-style Floating Action Menu
       const floatMenu = document.getElementById('floating-action-menu');
@@ -180,15 +278,20 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
         input.click();
 
         input.onchange = () => {
-          const file = input.files[0];
-          if (file && currentRange) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              quill.insertEmbed(currentRange.index, 'image', e.target.result);
-              quill.setSelection(currentRange.index + 1);
-              hideFloatMenu();
-            };
-            reader.readAsDataURL(file);
+          const file = input.files && input.files[0];
+          if (file) {
+            compressImage(file, { maxWidth: 1400, maxHeight: 1400, quality: 0.82 })
+              .then((compressedDataUrl) => {
+                const range = currentRange ||
+                  (quill && quill.getSelection(true)) || { index: quill ? quill.getLength() : 0 };
+                const index = range ? range.index : 0;
+                quill.insertEmbed(index, 'image', compressedDataUrl);
+                quill.setSelection(index + 1);
+                hideFloatMenu();
+              })
+              .catch((err) => {
+                console.error('Failed to compress body image:', err);
+              });
           }
         };
       });
@@ -222,18 +325,20 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     addCoverBtn?.addEventListener('click', () => coverImageInput?.click());
 
     coverImageInput?.addEventListener('change', (e) => {
-      const file = e.target.files[0];
+      const file = e.target.files && e.target.files[0];
       if (file) {
-        const reader = new FileReader();
-        reader.onload = (evt) => {
-          coverImageDataUrl = evt.target.result;
-          coverImagePreview.src = coverImageDataUrl;
-          coverImagePreview.style.display = 'block';
-          removeCoverBtn.style.display = 'flex';
-          addCoverBtn.style.display = 'none';
-          triggerAutoSave();
-        };
-        reader.readAsDataURL(file);
+        compressImage(file, { maxWidth: 1600, maxHeight: 900, quality: 0.82 })
+          .then((compressedDataUrl) => {
+            coverImageDataUrl = compressedDataUrl;
+            coverImagePreview.src = coverImageDataUrl;
+            coverImagePreview.style.display = 'block';
+            removeCoverBtn.style.display = 'flex';
+            addCoverBtn.style.display = 'none';
+            triggerAutoSave();
+          })
+          .catch((err) => {
+            console.error('Failed to compress cover image:', err);
+          });
       }
     });
 
