@@ -1,7 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
-import EditProfileModal from '../components/profile/EditProfileModal.astro';
 
 import { createDatabase, type Env } from '../db';
 import { User, Story, Repost, comments, authorFollows, articleBookmarks } from '../db/schema';
@@ -123,7 +122,6 @@ if (sessionId) {
                 type="button"
                 id="open-edit-profile-btn"
                 class="instagram-btn instagram-btn-primary"
-                data-open-edit-profile
                 data-tab-target="edit"
               >
                 Edit Profile
@@ -624,8 +622,6 @@ if (sessionId) {
       </div>
     </main>
   </div>
-
-  <EditProfileModal user={user} />
 </Layout>
 
 <script is:inline data-astro-rerun>
@@ -664,9 +660,7 @@ if (sessionId) {
       });
     });
 
-    const editBtns = document.querySelectorAll(
-      '[data-tab-target="edit"], [data-open-edit-profile], #open-edit-profile-btn'
-    );
+    const editBtns = document.querySelectorAll('[data-tab-target="edit"], #open-edit-profile-btn');
     editBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
