@@ -43,7 +43,13 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const following =
       (await authorFollows.exists({ authorId: authorObjectId, sessionId })) !== null;
 
-    return json({ success: true, data: { count, following } });
+    return json({
+      success: true,
+      data: { count, following },
+      count,
+      following,
+      isFollowing: following,
+    });
   } catch (error: any) {
     return json({ success: false, error: error.message }, 500);
   }
@@ -89,7 +95,15 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const count = await authorFollows.countDocuments({ authorId: authorObjectId });
-    return json({ success: true, data: { following: !existing, count } });
+    const isFollowing = !existing;
+
+    return json({
+      success: true,
+      data: { following: isFollowing, count },
+      count,
+      following: isFollowing,
+      isFollowing,
+    });
   } catch (error: any) {
     return json({ success: false, error: error.message }, 500);
   }
