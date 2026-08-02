@@ -8,6 +8,11 @@ export interface IUser extends Document {
   name?: string;
   bio?: string;
   avatar?: string;
+  pronouns?: string;
+  website?: string;
+  twitter?: string;
+  github?: string;
+  linkedin?: string;
   role: UserRole;
   createdAt: Date;
   updatedAt: Date;
@@ -35,6 +40,31 @@ const userSchema = new Schema<IUser>({
     default: '',
   },
   avatar: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  pronouns: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  website: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  twitter: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  github: {
+    type: String,
+    trim: true,
+    default: '',
+  },
+  linkedin: {
     type: String,
     trim: true,
     default: '',

@@ -4,6 +4,7 @@ import mongoose, { Schema } from 'mongoose';
 export * from './analytics';
 export * from './user';
 export * from './story';
+export * from './repost';
 
 // =============================================================================
 // ANONYMOUS SESSIONS
