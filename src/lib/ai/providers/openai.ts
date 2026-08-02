@@ -251,12 +251,7 @@ export class OpenAIProvider implements AIProvider {
       }
 
       if (!response.body) {
-        const error = new AIError(
-          'Response body is null',
-          'NETWORK_ERROR',
-          PROVIDER_NAME,
-          false
-        );
+        const error = new AIError('Response body is null', 'NETWORK_ERROR', PROVIDER_NAME, false);
         callbacks.onError?.(error);
         return;
       }
@@ -293,9 +288,7 @@ export class OpenAIProvider implements AIProvider {
               };
 
               if (chunk.choices[0].finish_reason) {
-                streamChunk.finishReason = this.mapFinishReason(
-                  chunk.choices[0].finish_reason
-                );
+                streamChunk.finishReason = this.mapFinishReason(chunk.choices[0].finish_reason);
               }
 
               callbacks.onChunk?.(streamChunk);
@@ -320,9 +313,7 @@ export class OpenAIProvider implements AIProvider {
       const finalResponse: AIResponse = {
         id,
         content: accumulatedContent,
-        finishReason: finalFinishReason
-          ? this.mapFinishReason(finalFinishReason)
-          : 'stop',
+        finishReason: finalFinishReason ? this.mapFinishReason(finalFinishReason) : 'stop',
         model: modelDef.id,
         provider: PROVIDER_NAME,
         usage,
@@ -374,9 +365,7 @@ export class OpenAIProvider implements AIProvider {
       }
 
       const data = (await response.json()) as OpenAIEmbeddingResponse;
-      const embeddings = data.data
-        .sort((a, b) => a.index - b.index)
-        .map((d) => d.embedding);
+      const embeddings = data.data.sort((a, b) => a.index - b.index).map((d) => d.embedding);
       const totalTokens = data.usage?.total_tokens ?? 0;
       const estimatedCostUsd = estimateEmbeddingCost(modelDef, totalTokens);
 
@@ -416,12 +405,7 @@ export class OpenAIProvider implements AIProvider {
     if (modelId) {
       const model = getModel(modelId);
       if (!model) {
-        throw new AIError(
-          `Model not found: ${modelId}`,
-          'MODEL_NOT_FOUND',
-          PROVIDER_NAME,
-          false
-        );
+        throw new AIError(`Model not found: ${modelId}`, 'MODEL_NOT_FOUND', PROVIDER_NAME, false);
       }
       if (model.provider !== PROVIDER_NAME) {
         throw new AIError(
@@ -450,12 +434,7 @@ export class OpenAIProvider implements AIProvider {
     if (modelId) {
       const model = getModel(modelId);
       if (!model) {
-        throw new AIError(
-          `Model not found: ${modelId}`,
-          'MODEL_NOT_FOUND',
-          PROVIDER_NAME,
-          false
-        );
+        throw new AIError(`Model not found: ${modelId}`, 'MODEL_NOT_FOUND', PROVIDER_NAME, false);
       }
       if (model.provider !== PROVIDER_NAME) {
         throw new AIError(
@@ -542,10 +521,7 @@ export class OpenAIProvider implements AIProvider {
     return FINISH_REASON_MAP[reason] ?? 'error';
   }
 
-  private buildUsage(
-    usage: OpenAIUsage | undefined,
-    model: ModelDefinition
-  ): AIUsage {
+  private buildUsage(usage: OpenAIUsage | undefined, model: ModelDefinition): AIUsage {
     const promptTokens = usage?.prompt_tokens ?? 0;
     const completionTokens = usage?.completion_tokens ?? 0;
     const totalTokens = usage?.total_tokens ?? 0;
@@ -602,13 +578,7 @@ export class OpenAIProvider implements AIProvider {
     if (error instanceof AIError) return error;
 
     if (error instanceof Error && error.name === 'AbortError') {
-      return new AIError(
-        'Request timed out',
-        'TIMEOUT',
-        PROVIDER_NAME,
-        true,
-        error
-      );
+      return new AIError('Request timed out', 'TIMEOUT', PROVIDER_NAME, true, error);
     }
 
     if (error instanceof TypeError) {
@@ -621,8 +591,7 @@ export class OpenAIProvider implements AIProvider {
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : 'Unknown error occurred';
+    const message = error instanceof Error ? error.message : 'Unknown error occurred';
 
     return new AIError(message, 'UNKNOWN', PROVIDER_NAME, false);
   }

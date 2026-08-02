@@ -18,12 +18,14 @@ interface NavigationProps {
 }
 
 const { links, logoText } = Astro.props as NavigationProps;
+const isLoggedIn = Astro.cookies.has('auth_token');
+const logoHref = isLoggedIn ? '/dashboard' : '/';
 ---
 
 <header class="navigation" role="banner">
   <Container size="lg">
     <Stack direction="row" align="center" justify="between" wrap>
-      <a href="/" class="navigation-logo" aria-label={logoText}>
+      <a href={logoHref} class="navigation-logo" aria-label={logoText}>
         <span class="navigation-logo-text">{logoText}</span>
       </a>
       <nav class="navigation-desktop" aria-label="Main navigation">

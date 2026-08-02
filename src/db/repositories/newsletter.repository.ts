@@ -20,7 +20,7 @@ export class NewsletterRepository {
               confirmationToken: token,
               unsubscribedAt: null,
               subscribedAt: new Date(),
-            }
+            },
           }
         );
         return { token };

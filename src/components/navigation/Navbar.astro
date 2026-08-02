@@ -36,11 +36,13 @@ const activeLink = navLinks.find((link) => {
   if (link.href === '/') return currentPath === '/';
   return currentPath.startsWith(link.href);
 });
+const isLoggedIn = Astro.cookies.has('auth_token');
+const logoHref = isLoggedIn ? '/dashboard' : '/';
 ---
 
 <header class="site-header" role="banner">
   <div class="container header-inner">
-    <a href="/" class="logo" aria-label="BigBlog home">
+    <a href={logoHref} class="logo" aria-label="BigBlog home">
       <span class="logo-text">BigBlog</span>
     </a>
     <div class="header-right-group">
@@ -121,10 +123,6 @@ const activeLink = navLinks.find((link) => {
 
       const user = data.user;
       const authLinks = document.querySelector('.auth-links');
-
-      // Update logo to redirect to dashboard when logged in
-      const logo = document.querySelector('.logo');
-      if (logo) logo.href = '/dashboard';
 
       // Hide public nav links ("Our story", "Write") when logged in
       const siteNav = document.querySelector('.site-nav');

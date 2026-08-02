@@ -276,7 +276,10 @@ export function getModelsByType(type: AIModelType): ModelDefinition[] {
   return MODEL_REGISTRY.filter((m) => m.type === type);
 }
 
-export function getDefaultModel(provider: AIProviderName, type: AIModelType): ModelDefinition | undefined {
+export function getDefaultModel(
+  provider: AIProviderName,
+  type: AIModelType
+): ModelDefinition | undefined {
   return getModelsByProvider(provider).find((m) => m.type === type);
 }
 
@@ -291,10 +294,7 @@ export function estimateCost(
   return Math.round((inputCost + outputCost) * 1000000) / 1000000;
 }
 
-export function estimateEmbeddingCost(
-  model: ModelDefinition,
-  tokens: number
-): number {
+export function estimateEmbeddingCost(model: ModelDefinition, tokens: number): number {
   if (model.provider === 'ollama') return 0;
-  return Math.round(((tokens / 1000) * model.embeddingCostPer1kTokens) * 1000000) / 1000000;
+  return Math.round((tokens / 1000) * model.embeddingCostPer1kTokens * 1000000) / 1000000;
 }

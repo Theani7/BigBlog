@@ -91,7 +91,9 @@ img {
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: background var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default);
+  transition:
+    background var(--duration-fast) var(--ease-default),
+    color var(--duration-fast) var(--ease-default);
 }
 
 .btn:hover {
@@ -159,14 +161,14 @@ img {
   }
 
   .article-page__body a::after {
-    content: " (" attr(href) ")";
+    content: ' (' attr(href) ')';
     font-size: 0.8em;
     color: #666;
   }
 
-  .article-page__body a[href^="#"]::after,
-  .article-page__body a[href^="/"]::after {
-    content: "";
+  .article-page__body a[href^='#']::after,
+  .article-page__body a[href^='/']::after {
+    content: '';
   }
 
   .article-page__body pre {

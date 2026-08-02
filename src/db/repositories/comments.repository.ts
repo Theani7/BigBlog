@@ -19,11 +19,14 @@ export class CommentsRepository {
   }
 
   async findByArticle(articleSlug: string, status: CommentStatus = 'approved') {
-    return comments.find({
-      articleSlug,
-      status,
-      deletedAt: null
-    }).sort({ createdAt: -1 }).populate('reactions');
+    return comments
+      .find({
+        articleSlug,
+        status,
+        deletedAt: null,
+      })
+      .sort({ createdAt: -1 })
+      .populate('reactions');
   }
 
   async findThreaded(articleSlug: string, status: CommentStatus = 'approved') {
@@ -81,10 +84,7 @@ export class CommentsRepository {
 
   async softDelete(id: number) {
     try {
-      await comments.updateOne(
-        { id },
-        { $set: { deletedAt: new Date() } }
-      );
+      await comments.updateOne({ id }, { $set: { deletedAt: new Date() } });
       return comments.findOne({ id });
     } catch (_error) {
       throw new DatabaseError('Failed to delete comment');
@@ -93,10 +93,7 @@ export class CommentsRepository {
 
   async updateStatus(id: number, status: CommentStatus) {
     try {
-      await comments.updateOne(
-        { id },
-        { $set: { status } }
-      );
+      await comments.updateOne({ id }, { $set: { status } });
       return comments.findOne({ id });
     } catch (_error) {
       throw new DatabaseError('Failed to update comment status');
@@ -107,7 +104,7 @@ export class CommentsRepository {
     return comments.countDocuments({
       articleSlug,
       status,
-      deletedAt: null
+      deletedAt: null,
     });
   }
 }
@@ -119,7 +116,7 @@ export class CommentReactionsRepository {
     const existing = await commentReactions.findOne({
       commentId,
       sessionId,
-      emoji
+      emoji,
     });
 
     if (existing) {
@@ -152,10 +149,7 @@ export class CommentReportsRepository {
   }
 
   async updateStatus(id: number, status: 'pending' | 'reviewed' | 'resolved') {
-    await commentReports.updateOne(
-      { id },
-      { $set: { status, reviewedAt: new Date() } }
-    );
+    await commentReports.updateOne({ id }, { $set: { status, reviewedAt: new Date() } });
     return commentReports.findOne({ id });
   }
 

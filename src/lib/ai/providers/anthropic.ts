@@ -233,12 +233,7 @@ export class AnthropicProvider implements AIProvider {
       }
 
       if (!response.body) {
-        const error = new AIError(
-          'Response body is null',
-          'NETWORK_ERROR',
-          PROVIDER_NAME,
-          false
-        );
+        const error = new AIError('Response body is null', 'NETWORK_ERROR', PROVIDER_NAME, false);
         callbacks.onError?.(error);
         return;
       }
@@ -303,9 +298,7 @@ export class AnthropicProvider implements AIProvider {
       const finalResponse: AIResponse = {
         id,
         content: accumulatedContent,
-        finishReason: finalFinishReason
-          ? this.mapFinishReason(finalFinishReason)
-          : 'stop',
+        finishReason: finalFinishReason ? this.mapFinishReason(finalFinishReason) : 'stop',
         model: modelDef.id,
         provider: PROVIDER_NAME,
         usage,
@@ -362,12 +355,7 @@ export class AnthropicProvider implements AIProvider {
     if (modelId) {
       const model = getModel(modelId);
       if (!model) {
-        throw new AIError(
-          `Model not found: ${modelId}`,
-          'MODEL_NOT_FOUND',
-          PROVIDER_NAME,
-          false
-        );
+        throw new AIError(`Model not found: ${modelId}`, 'MODEL_NOT_FOUND', PROVIDER_NAME, false);
       }
       if (model.provider !== PROVIDER_NAME) {
         throw new AIError(
@@ -449,10 +437,7 @@ export class AnthropicProvider implements AIProvider {
     return FINISH_REASON_MAP[reason] ?? 'error';
   }
 
-  private buildUsage(
-    usage: AnthropicUsage | undefined,
-    model: ModelDefinition
-  ): AIUsage {
+  private buildUsage(usage: AnthropicUsage | undefined, model: ModelDefinition): AIUsage {
     const promptTokens = usage?.input_tokens ?? 0;
     const completionTokens = usage?.output_tokens ?? 0;
     const totalTokens = promptTokens + completionTokens;
@@ -510,13 +495,7 @@ export class AnthropicProvider implements AIProvider {
     if (error instanceof AIError) return error;
 
     if (error instanceof Error && error.name === 'AbortError') {
-      return new AIError(
-        'Request timed out',
-        'TIMEOUT',
-        PROVIDER_NAME,
-        true,
-        error
-      );
+      return new AIError('Request timed out', 'TIMEOUT', PROVIDER_NAME, true, error);
     }
 
     if (error instanceof TypeError) {
@@ -529,8 +508,7 @@ export class AnthropicProvider implements AIProvider {
       );
     }
 
-    const message =
-      error instanceof Error ? error.message : 'Unknown error occurred';
+    const message = error instanceof Error ? error.message : 'Unknown error occurred';
 
     return new AIError(message, 'UNKNOWN', PROVIDER_NAME, false);
   }

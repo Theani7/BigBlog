@@ -39,10 +39,7 @@ export class SessionRepository {
   }
 
   async updateLastActive(id: string) {
-    await anonymousSessions.updateOne(
-      { id },
-      { $set: { lastActiveAt: new Date() } }
-    );
+    await anonymousSessions.updateOne({ id }, { $set: { lastActiveAt: new Date() } });
   }
 }
 
@@ -69,9 +66,18 @@ export class ViewsRepository {
     const uniqueViewsResult = await articleViews.distinct('sessionId', { articleSlug });
     const uniqueViews = uniqueViewsResult.length;
 
-    const dailyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: todayStart } });
-    const weeklyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: weekStart } });
-    const monthlyViews = await articleViews.countDocuments({ articleSlug, viewedAt: { $gte: monthStart } });
+    const dailyViews = await articleViews.countDocuments({
+      articleSlug,
+      viewedAt: { $gte: todayStart },
+    });
+    const weeklyViews = await articleViews.countDocuments({
+      articleSlug,
+      viewedAt: { $gte: weekStart },
+    });
+    const monthlyViews = await articleViews.countDocuments({
+      articleSlug,
+      viewedAt: { $gte: monthStart },
+    });
 
     return {
       totalViews,
@@ -89,7 +95,7 @@ export class ViewsRepository {
     const existing = await articleViews.findOne({
       articleSlug,
       sessionId,
-      viewedAt: { $gte: todayStart }
+      viewedAt: { $gte: todayStart },
     });
 
     return !!existing;

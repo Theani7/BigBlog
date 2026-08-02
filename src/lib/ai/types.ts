@@ -4,12 +4,7 @@
 // =============================================================================
 
 export type AIProviderName =
-  | 'openai'
-  | 'anthropic'
-  | 'gemini'
-  | 'openrouter'
-  | 'ollama'
-  | 'cloudflare';
+  'openai' | 'anthropic' | 'gemini' | 'openrouter' | 'ollama' | 'cloudflare';
 
 export type AIModelType = 'chat' | 'embedding' | 'image';
 

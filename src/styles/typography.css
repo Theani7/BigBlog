@@ -11,7 +11,9 @@ body {
   color: var(--color-ink);
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   font-family: var(--font-serif);
   font-weight: 400;
   color: var(--color-ink);
@@ -35,7 +37,9 @@ h3 {
   letter-spacing: -0.5px;
 }
 
-h4, h5, h6 {
+h4,
+h5,
+h6 {
   font-family: var(--font-sans);
   font-weight: 500;
   color: var(--color-ink);
@@ -58,7 +62,10 @@ h6 {
   letter-spacing: 1.5px;
 }
 
-code, pre, kbd, samp {
+code,
+pre,
+kbd,
+samp {
   font-family: var(--font-mono);
 }
 

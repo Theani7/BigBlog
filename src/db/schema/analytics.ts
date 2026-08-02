@@ -27,7 +27,8 @@ analyticsEventsSchema.index({ createdAt: 1 });
 analyticsEventsSchema.index({ event: 1, page: 1 });
 analyticsEventsSchema.index({ event: 1, createdAt: 1 });
 
-export const analyticsEvents = mongoose.models.AnalyticsEvent || mongoose.model<any>('AnalyticsEvent', analyticsEventsSchema);
+export const analyticsEvents =
+  mongoose.models.AnalyticsEvent || mongoose.model<any>('AnalyticsEvent', analyticsEventsSchema);
 
 // =============================================================================
 // PAGE VIEWS
@@ -48,7 +49,8 @@ pageViewsSchema.index({ sessionId: 1 });
 pageViewsSchema.index({ createdAt: 1 });
 pageViewsSchema.index({ page: 1, createdAt: 1 });
 
-export const pageViews = mongoose.models.PageView || mongoose.model<any>('PageView', pageViewsSchema);
+export const pageViews =
+  mongoose.models.PageView || mongoose.model<any>('PageView', pageViewsSchema);
 
 // =============================================================================
 // PERFORMANCE METRICS
@@ -70,7 +72,9 @@ performanceMetricsSchema.index({ page: 1 });
 performanceMetricsSchema.index({ createdAt: 1 });
 performanceMetricsSchema.index({ metric: 1, createdAt: 1 });
 
-export const performanceMetrics = mongoose.models.PerformanceMetric || mongoose.model<any>('PerformanceMetric', performanceMetricsSchema);
+export const performanceMetrics =
+  mongoose.models.PerformanceMetric ||
+  mongoose.model<any>('PerformanceMetric', performanceMetricsSchema);
 
 // =============================================================================
 // ERROR LOGS
@@ -93,7 +97,8 @@ errorLogsSchema.index({ page: 1 });
 errorLogsSchema.index({ createdAt: 1 });
 errorLogsSchema.index({ resolved: 1 });
 
-export const errorLogs = mongoose.models.ErrorLog || mongoose.model<any>('ErrorLog', errorLogsSchema);
+export const errorLogs =
+  mongoose.models.ErrorLog || mongoose.model<any>('ErrorLog', errorLogsSchema);
 
 // =============================================================================
 // SEARCH EVENTS
@@ -110,7 +115,8 @@ const searchEventsSchema = new Schema({
 searchEventsSchema.index({ query: 1 });
 searchEventsSchema.index({ createdAt: 1 });
 
-export const searchEvents = mongoose.models.SearchEvent || mongoose.model<any>('SearchEvent', searchEventsSchema);
+export const searchEvents =
+  mongoose.models.SearchEvent || mongoose.model<any>('SearchEvent', searchEventsSchema);
 
 // =============================================================================
 // API LATENCY
@@ -129,7 +135,8 @@ apiLatencySchema.index({ endpoint: 1 });
 apiLatencySchema.index({ createdAt: 1 });
 apiLatencySchema.index({ statusCode: 1 });
 
-export const apiLatency = mongoose.models.ApiLatency || mongoose.model<any>('ApiLatency', apiLatencySchema);
+export const apiLatency =
+  mongoose.models.ApiLatency || mongoose.model<any>('ApiLatency', apiLatencySchema);
 
 // =============================================================================
 // SCROLL DEPTH
@@ -147,4 +154,5 @@ scrollDepthSchema.index({ page: 1 });
 scrollDepthSchema.index({ sessionId: 1 });
 scrollDepthSchema.index({ createdAt: 1 });
 
-export const scrollDepth = mongoose.models.ScrollDepth || mongoose.model<any>('ScrollDepth', scrollDepthSchema);
+export const scrollDepth =
+  mongoose.models.ScrollDepth || mongoose.model<any>('ScrollDepth', scrollDepthSchema);

@@ -119,9 +119,7 @@ export function getAIConfig(): AIConfig {
       enabled: getEnvBoolean('AI_SAFETY_ENABLED', true),
       maxInputTokens: getEnvNumber('AI_MAX_INPUT_TOKENS', 100000),
       maxOutputTokens: getEnvNumber('AI_MAX_OUTPUT_TOKENS', 8192),
-      blockedPatterns: getEnv('AI_BLOCKED_PATTERNS', '')
-        .split(',')
-        .filter(Boolean),
+      blockedPatterns: getEnv('AI_BLOCKED_PATTERNS', '').split(',').filter(Boolean),
     },
     cost: {
       enabled: getEnvBoolean('AI_COST_ENABLED', true),

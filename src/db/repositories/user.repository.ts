@@ -22,7 +22,7 @@ export class ReadingHistoryRepository {
               readTime: data.readTime,
               completedAt: data.completedAt,
               updatedAt: new Date(),
-            }
+            },
           }
         );
         return readingHistory.findById(existing._id);
