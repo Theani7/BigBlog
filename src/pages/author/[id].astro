@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Sidebar from '../../components/dashboard/Sidebar.astro';
 import { createDatabase, type Env } from '../../db';
 import { User, Story } from '../../db/schema';
+import { formatCompactNumber } from '../../lib/formatters';
 import mongoose from 'mongoose';
 
 const { id } = Astro.params;
@@ -229,12 +230,12 @@ function getInitials(name: string): string {
         <!-- Metrics bar -->
         <div class="author-metrics-bar">
           <div class="metric-item">
-            <span class="metric-value">{totalPublished}</span>
+            <span class="metric-value">{formatCompactNumber(totalPublished)}</span>
             <span class="metric-label">Stories</span>
           </div>
           <div class="metric-divider"></div>
           <div class="metric-item">
-            <span class="metric-value">{totalReads}</span>
+            <span class="metric-value">{formatCompactNumber(totalReads)}</span>
             <span class="metric-label">Total Reads</span>
           </div>
         </div>
@@ -303,15 +304,26 @@ function getInitials(name: string): string {
     const authorId = followBtn.getAttribute('data-author-id');
     if (!authorId) return;
 
+    function formatCompact(num) {
+      if (num === null || num === undefined) return '0';
+      if (num < 1000) return String(num);
+      return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+      }).format(num);
+    }
+
     async function loadFollowState() {
       try {
         const res = await fetch(`/api/follows?authorId=${authorId}`);
         const data = await res.json();
         if (data.success) {
+          const count = data.count ?? data.data?.count ?? 0;
+          const following = data.following ?? data.isFollowing ?? data.data?.following ?? false;
           if (followerCountEl) {
-            followerCountEl.textContent = `${data.count} follower${data.count === 1 ? '' : 's'}`;
+            followerCountEl.textContent = `${formatCompact(count)} follower${count === 1 ? '' : 's'}`;
           }
-          if (data.isFollowing) {
+          if (following) {
             followBtn.textContent = 'Following';
             followBtn.classList.add('is-following');
           } else {
@@ -334,10 +346,12 @@ function getInitials(name: string): string {
         });
         const data = await res.json();
         if (data.success) {
+          const count = data.count ?? data.data?.count ?? 0;
+          const following = data.following ?? data.isFollowing ?? data.data?.following ?? false;
           if (followerCountEl) {
-            followerCountEl.textContent = `${data.count} follower${data.count === 1 ? '' : 's'}`;
+            followerCountEl.textContent = `${formatCompact(count)} follower${count === 1 ? '' : 's'}`;
           }
-          if (data.isFollowing) {
+          if (following) {
             followBtn.textContent = 'Following';
             followBtn.classList.add('is-following');
           } else {

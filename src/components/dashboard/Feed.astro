@@ -1,4 +1,6 @@
 ---
+import { formatCompactNumber } from '../../lib/formatters';
+
 export interface Props {
   publishedStories: any[];
 }
@@ -69,9 +71,13 @@ const storyExcerpt = (story: any) => {
                 <p class="feed-card-excerpt">{storyExcerpt(story)}</p>
                 <div class="feed-card-footer">
                   <div class="feed-card-meta">
-                    <span class="feed-card-stat">{story.views || 0} views</span>
+                    <span class="feed-card-stat">
+                      {formatCompactNumber(story.views || 0)} views
+                    </span>
                     <span class="feed-card-stat">·</span>
-                    <span class="feed-card-stat">{story.reads || 0} reads</span>
+                    <span class="feed-card-stat">
+                      {formatCompactNumber(story.reads || 0)} reads
+                    </span>
                   </div>
                   <div class="feed-card-actions">
                     <button class="feed-card-action" aria-label="Save">

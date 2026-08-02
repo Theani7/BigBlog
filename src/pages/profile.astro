@@ -6,6 +6,7 @@ import EditProfileModal from '../components/profile/EditProfileModal.astro';
 import { createDatabase, type Env } from '../db';
 import { User, Story, Repost, comments } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
+import { formatCompactNumber } from '../lib/formatters';
 
 const env = (Astro.locals as { env: Env }).env;
 if (!env) {
@@ -193,7 +194,7 @@ const activities: ActivityItem[] = [
                             )}
                           </span>
                           <span>·</span>
-                          <span>{story.views || 0} views</span>
+                          <span>{formatCompactNumber(story.views || 0)} views</span>
                         </div>
                       </div>
                     </article>

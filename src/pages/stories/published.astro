@@ -5,6 +5,7 @@ import StoryList from '../../components/stories/StoryList.astro';
 import { createDatabase, type Env } from '../../db';
 import { Story } from '../../db/schema';
 import { verifyAuthToken } from '../../lib/auth';
+import { formatCompactNumber } from '../../lib/formatters';
 
 const env = (Astro.locals as { env: Env }).env;
 if (!env) {
@@ -35,7 +36,7 @@ const published = dbPublished.map((story) => {
     slug: story.slug,
     excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
     meta1: `Published ${new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
-    meta2: `${story.views || 0} views • ${story.reads || 0} reads`,
+    meta2: `${formatCompactNumber(story.views || 0)} views • ${formatCompactNumber(story.reads || 0)} reads`,
   };
 });
 ---

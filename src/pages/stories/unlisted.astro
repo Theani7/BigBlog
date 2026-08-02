@@ -5,6 +5,7 @@ import StoryList from '../../components/stories/StoryList.astro';
 import { createDatabase, type Env } from '../../db';
 import { Story } from '../../db/schema';
 import { verifyAuthToken } from '../../lib/auth';
+import { formatCompactNumber } from '../../lib/formatters';
 
 const env = (Astro.locals as { env: Env }).env;
 if (!env) {
@@ -33,7 +34,7 @@ const unlisted = dbUnlisted.map((story) => {
     slug: story.slug,
     excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
     meta1: `Unlisted on ${new Date(story.createdAt).toLocaleDateString()}`,
-    meta2: `${story.views || 0} views`,
+    meta2: `${formatCompactNumber(story.views || 0)} views`,
   };
 });
 ---

@@ -43,6 +43,21 @@ export default [
         // Browser Storage API
         localStorage: 'readonly',
         sessionStorage: 'readonly',
+        // DOM Type Globals
+        HTMLMetaElement: 'readonly',
+        HTMLButtonElement: 'readonly',
+        HTMLElement: 'readonly',
+        HTMLFormElement: 'readonly',
+        HTMLTextAreaElement: 'readonly',
+        HTMLAnchorElement: 'readonly',
+        Node: 'readonly',
+        Element: 'readonly',
+        confirm: 'readonly',
+        IntersectionObserver: 'readonly',
+        Intl: 'readonly',
+        Blob: 'readonly',
+        File: 'readonly',
+        FormData: 'readonly',
       },
     },
     plugins: {

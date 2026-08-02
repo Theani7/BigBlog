@@ -5,6 +5,7 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
 import { createDatabase, type Env } from '../db';
 import { Story } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
+import { formatCompactNumber } from '../lib/formatters';
 
 const env = (Astro.locals as { env: Env }).env;
 if (!env) {
@@ -39,14 +40,14 @@ const avgRatio = totalReads > 0 && totalViews > 0 ? Math.round((totalReads / tot
 const topStats = [
   {
     label: 'Total Views',
-    value: totalViews.toLocaleString(),
+    value: formatCompactNumber(totalViews),
     trend: '+12.4%',
     isPositive: true,
     trendData: [20, 30, 40, 35, 50, 60, 80],
   },
   {
     label: 'Total Reads',
-    value: totalReads.toLocaleString(),
+    value: formatCompactNumber(totalReads),
     trend: '+8.2%',
     isPositive: true,
     trendData: [10, 15, 25, 20, 35, 45, 60],
@@ -202,12 +203,12 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
                     </td>
                     <td class="text-right">
                       <div class="progress-cell">
-                        <span class="metric-number-small">{post.views.toLocaleString()}</span>
+                        <span class="metric-number-small">{formatCompactNumber(post.views)}</span>
                       </div>
                     </td>
                     <td class="text-right">
                       <div class="progress-cell">
-                        <span class="metric-number-small">{post.reads.toLocaleString()}</span>
+                        <span class="metric-number-small">{formatCompactNumber(post.reads)}</span>
                       </div>
                     </td>
                     <td class="text-right">

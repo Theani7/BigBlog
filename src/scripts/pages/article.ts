@@ -1,4 +1,3 @@
-/* eslint-env browser */
 let _shareMenuListenerAttached = false;
 
 document.addEventListener('astro:page-load', () => {
@@ -144,7 +143,14 @@ document.addEventListener('astro:page-load', () => {
     followBtn.setAttribute('aria-pressed', String(following));
     followBtn.textContent = following ? 'Following' : 'Follow';
     if (followerCount) {
-      followerCount.textContent = `${count} ${count === 1 ? 'follower' : 'followers'}`;
+      const formatted =
+        count >= 1000
+          ? new Intl.NumberFormat('en-US', {
+              notation: 'compact',
+              maximumFractionDigits: 1,
+            }).format(count)
+          : String(count);
+      followerCount.textContent = `${formatted} ${count === 1 ? 'follower' : 'followers'}`;
     }
   }
 
@@ -726,7 +732,7 @@ document.addEventListener('astro:page-load', () => {
     initFollow();
     loadComments();
     initState();
-    
+
     // Track View
     try {
       await fetch('/api/views', {
@@ -737,7 +743,7 @@ document.addEventListener('astro:page-load', () => {
     } catch (e) {
       console.error('Failed to track view', e);
     }
-    
+
     // Track Read
     let readTracked = false;
     const postContent = document.querySelector('.post-content');
@@ -759,7 +765,7 @@ document.addEventListener('astro:page-load', () => {
         },
         { threshold: 0.1 }
       );
-      
+
       // Observe the last element in the article, or the article itself if small
       const lastChild = postContent.lastElementChild;
       if (lastChild) {
