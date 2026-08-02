@@ -626,10 +626,10 @@ if (sessionId) {
 
 <script is:inline data-astro-rerun>
   function setupProfileWorkspace() {
-    const tabs = document.querySelectorAll<HTMLElement>('.profile-tab');
-    const panels = document.querySelectorAll<HTMLElement>('.tab-panel, .tab-content');
+    const tabs = document.querySelectorAll('.profile-tab');
+    const panels = document.querySelectorAll('.tab-panel, .tab-content');
 
-    function switchTab(targetTab: string) {
+    function switchTab(targetTab) {
       tabs.forEach((t) => {
         if (t.getAttribute('data-tab') === targetTab) {
           t.classList.add('active', 'profile-tab--active');
@@ -665,17 +665,15 @@ if (sessionId) {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         switchTab('edit');
-        const nameInput = document.getElementById('inpage-name') as HTMLInputElement | null;
+        const nameInput = document.getElementById('inpage-name');
         if (nameInput) nameInput.focus();
       });
     });
 
     // In-page form submit handler
-    const form = document.getElementById('inpage-edit-profile-form') as HTMLFormElement | null;
-    const avatarInput = document.getElementById('inpage-avatar') as HTMLInputElement | null;
-    const avatarPreview = document.getElementById(
-      'inpage-avatar-preview'
-    ) as HTMLImageElement | null;
+    const form = document.getElementById('inpage-edit-profile-form');
+    const avatarInput = document.getElementById('inpage-avatar');
+    const avatarPreview = document.getElementById('inpage-avatar-preview');
 
     if (avatarInput && avatarPreview) {
       avatarInput.addEventListener('input', () => {
@@ -690,7 +688,7 @@ if (sessionId) {
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const alertEl = document.getElementById('inpage-edit-alert');
-        const submitBtn = document.getElementById('inpage-edit-submit') as HTMLButtonElement | null;
+        const submitBtn = document.getElementById('inpage-edit-submit');
         const spinner = document.getElementById('inpage-edit-spinner');
 
         if (alertEl) {
@@ -699,7 +697,7 @@ if (sessionId) {
           alertEl.textContent = '';
         }
 
-        const nameVal = (document.getElementById('inpage-name') as HTMLInputElement)?.value || '';
+        const nameVal = document.getElementById('inpage-name')?.value || '';
         if (!nameVal.trim()) {
           if (alertEl) {
             alertEl.textContent = 'Full Name is required.';
@@ -714,13 +712,13 @@ if (sessionId) {
 
         const payload = {
           name: nameVal.trim(),
-          pronouns: (document.getElementById('inpage-pronouns') as HTMLInputElement)?.value || '',
-          avatar: (document.getElementById('inpage-avatar') as HTMLInputElement)?.value || '',
-          bio: (document.getElementById('inpage-bio') as HTMLTextAreaElement)?.value || '',
-          website: (document.getElementById('inpage-website') as HTMLInputElement)?.value || '',
-          twitter: (document.getElementById('inpage-twitter') as HTMLInputElement)?.value || '',
-          github: (document.getElementById('inpage-github') as HTMLInputElement)?.value || '',
-          linkedin: (document.getElementById('inpage-linkedin') as HTMLInputElement)?.value || '',
+          pronouns: document.getElementById('inpage-pronouns')?.value || '',
+          avatar: document.getElementById('inpage-avatar')?.value || '',
+          bio: document.getElementById('inpage-bio')?.value || '',
+          website: document.getElementById('inpage-website')?.value || '',
+          twitter: document.getElementById('inpage-twitter')?.value || '',
+          github: document.getElementById('inpage-github')?.value || '',
+          linkedin: document.getElementById('inpage-linkedin')?.value || '',
         };
 
         try {
@@ -783,7 +781,7 @@ if (sessionId) {
             }
           }
         } catch (err) {
-          if ((err as Error).name !== 'AbortError') {
+          if (err && err.name !== 'AbortError') {
             console.error('Error sharing:', err);
           }
         }
