@@ -1,0 +1,536 @@
+---
+// FollowsModal.astro - Followers & Following modal
+// Props: authorId (target author ID for fetching the list)
+interface Props {
+  authorId: string;
+}
+const { authorId } = Astro.props;
+---
+
+<!-- Follows Modal Overlay -->
+<div
+  id="follows-modal-overlay"
+  class="follows-modal-overlay"
+  hidden
+  aria-modal="true"
+  role="dialog"
+  aria-labelledby="follows-modal-title"
+>
+  <div class="follows-modal-panel" id="follows-modal-panel">
+    <!-- Header -->
+    <div class="follows-modal-header">
+      <div class="follows-tabs" role="tablist">
+        <button
+          class="follows-tab active"
+          id="follows-tab-followers"
+          data-follows-tab="followers"
+          role="tab"
+          aria-selected="true"
+        >
+          Followers
+        </button>
+        <button
+          class="follows-tab"
+          id="follows-tab-following"
+          data-follows-tab="following"
+          role="tab"
+          aria-selected="false"
+        >
+          Following
+        </button>
+      </div>
+      <button class="follows-modal-close" id="follows-modal-close" aria-label="Close">
+        &times;
+      </button>
+    </div>
+
+    <!-- List Container -->
+    <div class="follows-list-container" id="follows-list-container">
+      <div class="follows-spinner" id="follows-spinner">
+        <span class="spinner-dot"></span>
+        <span class="spinner-dot"></span>
+        <span class="spinner-dot"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script define:vars={{ authorId }}>
+  (function () {
+    var currentTab = 'followers';
+    var overlay = document.getElementById('follows-modal-overlay');
+    var closeBtn = document.getElementById('follows-modal-close');
+    var listContainer = document.getElementById('follows-list-container');
+    var spinner = document.getElementById('follows-spinner');
+    var tabBtns = document.querySelectorAll('.follows-tab');
+
+    function getInitials(name) {
+      if (!name) return 'A';
+      var parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+      return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
+    }
+
+    function renderEmpty(type) {
+      return (
+        '<div class="follows-empty-state">' +
+        '<div class="follows-empty-icon">👥</div>' +
+        '<p class="follows-empty-title">' +
+        (type === 'followers' ? 'No followers yet' : 'Not following anyone yet') +
+        '</p>' +
+        '<p class="follows-empty-sub">' +
+        (type === 'followers'
+          ? 'Be the first to follow this author.'
+          : 'Follow authors to see their content here.') +
+        '</p>' +
+        '</div>'
+      );
+    }
+
+    function renderAuthorItem(author) {
+      var avatarHtml = author.avatar
+        ? '<img src="' +
+          author.avatar +
+          '" alt="' +
+          author.name +
+          '" class="follows-author-avatar" />'
+        : '<div class="follows-author-avatar-fallback">' + getInitials(author.name) + '</div>';
+
+      var bioHtml = author.bio
+        ? '<p class="follows-author-bio">' +
+          author.bio.slice(0, 80) +
+          (author.bio.length > 80 ? '…' : '') +
+          '</p>'
+        : '';
+
+      var followLabel = author.isFollowing ? 'Following' : 'Follow';
+      var followClass = author.isFollowing
+        ? 'follows-author-follow-btn is-following'
+        : 'follows-author-follow-btn';
+
+      return (
+        '<div class="follows-author-item" data-author-id="' +
+        author.id +
+        '">' +
+        '<a href="/author/' +
+        author.id +
+        '" class="follows-author-left">' +
+        avatarHtml +
+        '<div class="follows-author-info">' +
+        '<span class="follows-author-name">' +
+        author.name +
+        '</span>' +
+        bioHtml +
+        '</div>' +
+        '</a>' +
+        '<button class="' +
+        followClass +
+        '" data-author-id="' +
+        author.id +
+        '" data-following="' +
+        author.isFollowing +
+        '">' +
+        followLabel +
+        '</button>' +
+        '</div>'
+      );
+    }
+
+    function showSpinner() {
+      if (spinner) spinner.style.display = 'flex';
+    }
+
+    function hideSpinner() {
+      if (spinner) spinner.style.display = 'none';
+    }
+
+    function loadList(type) {
+      if (!listContainer) return;
+      listContainer.innerHTML =
+        '<div class="follows-spinner" id="follows-spinner"><span class="spinner-dot"></span><span class="spinner-dot"></span><span class="spinner-dot"></span></div>';
+
+      fetch('/api/follows/list?authorId=' + authorId + '&type=' + type)
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          if (!data.success || !data.data || data.data.length === 0) {
+            listContainer.innerHTML = renderEmpty(type);
+            return;
+          }
+          var html = data.data.map(renderAuthorItem).join('');
+          listContainer.innerHTML = '<div class="follows-author-list">' + html + '</div>';
+
+          // Wire follow toggle buttons
+          listContainer.querySelectorAll('.follows-author-follow-btn').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+              e.preventDefault();
+              var targetId = btn.dataset.authorId;
+              var isFollowing = btn.dataset.following === 'true';
+              fetch('/api/follows', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ authorId: targetId }),
+              })
+                .then(function (r) {
+                  return r.json();
+                })
+                .then(function (result) {
+                  if (result.success) {
+                    var nowFollowing = result.action === 'follow';
+                    btn.dataset.following = String(nowFollowing);
+                    btn.textContent = nowFollowing ? 'Following' : 'Follow';
+                    btn.classList.toggle('is-following', nowFollowing);
+                  }
+                })
+                .catch(function (err) {
+                  console.error('Follow toggle failed:', err);
+                });
+            });
+          });
+        })
+        .catch(function (err) {
+          listContainer.innerHTML = '<p class="follows-error">Failed to load list.</p>';
+          console.error(err);
+        });
+    }
+
+    // Tab switching
+    tabBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        tabBtns.forEach(function (b) {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        currentTab = btn.dataset.followsTab;
+        loadList(currentTab);
+      });
+    });
+
+    // Close handlers
+    if (closeBtn) {
+      closeBtn.addEventListener('click', function () {
+        if (overlay) overlay.hidden = true;
+      });
+    }
+    if (overlay) {
+      overlay.addEventListener('click', function (e) {
+        if (e.target === overlay) overlay.hidden = true;
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && overlay && !overlay.hidden) overlay.hidden = true;
+    });
+
+    // Expose open function globally so profile/author pages can trigger it
+    window.openFollowsModal = function (type) {
+      currentTab = type || 'followers';
+      // Reset tabs
+      tabBtns.forEach(function (b) {
+        var isActive = b.dataset.followsTab === currentTab;
+        b.classList.toggle('active', isActive);
+        b.setAttribute('aria-selected', String(isActive));
+      });
+      if (overlay) overlay.hidden = false;
+      loadList(currentTab);
+    };
+  })();
+</script>
+
+<style>
+  .follows-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(24, 23, 21, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    animation: follows-overlay-in 0.18s ease;
+  }
+
+  @keyframes follows-overlay-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .follows-modal-panel {
+    background: #faf9f5;
+    border: 1px solid #e6dfd8;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(24, 23, 21, 0.18);
+    width: 100%;
+    max-width: 440px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: follows-panel-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes follows-panel-in {
+    from {
+      transform: translateY(16px) scale(0.97);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+  }
+
+  .follows-modal-header {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #e6dfd8;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  .follows-tabs {
+    display: flex;
+    flex: 1;
+    gap: 0;
+  }
+
+  .follows-tab {
+    flex: 1;
+    padding: 16px 8px;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #8c8678;
+    cursor: pointer;
+    transition:
+      color 0.18s,
+      border-color 0.18s;
+    margin-bottom: -1px;
+  }
+
+  .follows-tab.active {
+    color: #181715;
+    border-bottom-color: #181715;
+  }
+
+  .follows-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #8c8678;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition:
+      color 0.15s,
+      background 0.15s;
+    margin-left: 8px;
+  }
+
+  .follows-modal-close:hover {
+    color: #181715;
+    background: #efe9de;
+  }
+
+  .follows-list-container {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 0;
+    min-height: 200px;
+  }
+
+  .follows-author-list {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .follows-author-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    gap: 12px;
+    transition: background 0.15s;
+  }
+
+  .follows-author-item:hover {
+    background: #efe9de;
+  }
+
+  .follows-author-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .follows-author-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    flex-shrink: 0;
+    border: 2px solid #e6dfd8;
+  }
+
+  .follows-author-avatar-fallback {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #efe9de;
+    border: 2px solid #e6dfd8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #181715;
+    flex-shrink: 0;
+  }
+
+  .follows-author-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .follows-author-name {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #181715;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .follows-author-bio {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.78rem;
+    color: #8c8678;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .follows-author-follow-btn {
+    background: #181715;
+    color: #faf9f5;
+    border: 1.5px solid #181715;
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+      background 0.18s,
+      color 0.18s,
+      border-color 0.18s;
+    white-space: nowrap;
+  }
+
+  .follows-author-follow-btn.is-following {
+    background: transparent;
+    color: #181715;
+    border-color: #e6dfd8;
+  }
+
+  .follows-author-follow-btn:hover {
+    opacity: 0.85;
+  }
+
+  .follows-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .follows-empty-icon {
+    font-size: 2.5rem;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .follows-empty-title {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #181715;
+    margin: 0 0 6px;
+  }
+
+  .follows-empty-sub {
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 0.82rem;
+    color: #8c8678;
+    margin: 0;
+  }
+
+  .follows-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 48px;
+  }
+
+  .spinner-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #c9bfb3;
+    animation: spinner-bounce 1.2s infinite ease-in-out;
+  }
+
+  .spinner-dot:nth-child(1) {
+    animation-delay: 0s;
+  }
+  .spinner-dot:nth-child(2) {
+    animation-delay: 0.18s;
+  }
+  .spinner-dot:nth-child(3) {
+    animation-delay: 0.36s;
+  }
+
+  @keyframes spinner-bounce {
+    0%,
+    80%,
+    100% {
+      transform: scale(0.6);
+      opacity: 0.4;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .follows-error {
+    text-align: center;
+    color: #cc785c;
+    font-size: 0.85rem;
+    padding: 32px;
+  }
+</style>

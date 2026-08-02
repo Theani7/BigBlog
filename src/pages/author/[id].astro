@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Sidebar from '../../components/dashboard/Sidebar.astro';
+import FollowsModal from '../../components/profile/FollowsModal.astro';
 import { createDatabase, type Env } from '../../db';
 import { User, Story } from '../../db/schema';
 import { formatCompactNumber } from '../../lib/formatters';
@@ -118,7 +119,13 @@ function getInitials(name: string): string {
               <button class="author-follow-btn" id="author-follow-btn" data-author-id={authorIdStr}>
                 Follow
               </button>
-              <span class="author-follower-badge" id="author-follower-count">0 followers</span>
+              <span
+                class="author-follower-badge follows-trigger"
+                id="author-follower-count"
+                data-open-follows="followers"
+                data-author-id={authorIdStr}
+                style="cursor:pointer;">0 followers</span
+              >
             </div>
 
             <!-- Social Links -->
@@ -295,6 +302,8 @@ function getInitials(name: string): string {
   </div>
 </Layout>
 
+<FollowsModal authorId={authorIdStr} />
+
 <script is:inline>
   document.addEventListener('astro:page-load', () => {
     const followBtn = document.getElementById('author-follow-btn');
@@ -367,6 +376,16 @@ function getInitials(name: string): string {
     });
 
     loadFollowState();
+
+    // Followers modal trigger
+    document.querySelectorAll('.follows-trigger[data-open-follows]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var type = el.getAttribute('data-open-follows') || 'followers';
+        if (typeof window.openFollowsModal === 'function') {
+          window.openFollowsModal(type);
+        }
+      });
+    });
   });
 </script>
 

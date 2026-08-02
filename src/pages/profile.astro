@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
+import FollowsModal from '../components/profile/FollowsModal.astro';
 
 import { createDatabase, type Env } from '../db';
 import { User, Story, Repost, comments, authorFollows, articleBookmarks } from '../db/schema';
@@ -155,11 +156,19 @@ if (sessionId) {
               <span class="instagram-metric-value">{formatCompactNumber(publishedCount)}</span>
               <span class="instagram-metric-label">Posts</span>
             </div>
-            <div class="instagram-metric-item">
+            <div
+              class="instagram-metric-item follows-trigger"
+              data-open-follows="followers"
+              style="cursor:pointer;"
+            >
               <span class="instagram-metric-value">{formatCompactNumber(followerCount)}</span>
               <span class="instagram-metric-label">Followers</span>
             </div>
-            <div class="instagram-metric-item">
+            <div
+              class="instagram-metric-item follows-trigger"
+              data-open-follows="following"
+              style="cursor:pointer;"
+            >
               <span class="instagram-metric-value">{formatCompactNumber(followingCount)}</span>
               <span class="instagram-metric-label">Following</span>
             </div>
@@ -669,6 +678,8 @@ if (sessionId) {
   </div>
 </Layout>
 
+<FollowsModal authorId={user._id ? String(user._id) : ''} />
+
 <script>
   import { compressImage } from '../lib/compressImage';
   (window as any).compressImage = compressImage;
@@ -905,6 +916,16 @@ if (sessionId) {
         }
       });
     }
+
+    // Followers / Following modal triggers
+    document.querySelectorAll('.follows-trigger[data-open-follows]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        var type = el.getAttribute('data-open-follows') || 'followers';
+        if (typeof window.openFollowsModal === 'function') {
+          window.openFollowsModal(type);
+        }
+      });
+    });
   }
 
   document.addEventListener('astro:page-load', setupProfileWorkspace);
