@@ -628,7 +628,7 @@ if (sessionId) {
   <EditProfileModal user={user} />
 </Layout>
 
-<script>
+<script is:inline data-astro-rerun>
   function setupProfileWorkspace() {
     const tabs = document.querySelectorAll<HTMLElement>('.profile-tab');
     const panels = document.querySelectorAll<HTMLElement>('.tab-panel, .tab-content');
