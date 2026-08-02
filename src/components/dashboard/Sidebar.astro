@@ -1,4 +1,7 @@
 ---
+import { createDatabase, type Env } from '../../db';
+import { Story, User } from '../../db/schema';
+
 /**
  * Reusable sidebar component for authenticated dashboard pages.
  * Accepts `activePage` prop to highlight the correct nav link.
@@ -8,6 +11,97 @@ interface Props {
 }
 
 const { activePage = 'home' } = Astro.props;
+
+interface TopicItem {
+  name: string;
+}
+
+interface AuthorItem {
+  id: string;
+  name: string;
+  avatar?: string;
+}
+
+const env =
+  (Astro.locals as { env?: Env })?.env ||
+  (process.env.MONGO_URI ? ({ MONGO_URI: process.env.MONGO_URI } as Env) : undefined);
+
+let topics: TopicItem[] = [];
+let authors: AuthorItem[] = [];
+
+if (env) {
+  try {
+    await createDatabase(env);
+
+    // Fetch dynamic topics from published stories in Story model
+    const tagAggregation = await Story.aggregate([
+      { $match: { status: 'PUBLISHED' } },
+      { $unwind: '$tags' },
+      { $match: { tags: { $exists: true, $ne: '' } } },
+      { $group: { _id: '$tags', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 },
+    ]);
+
+    if (tagAggregation && tagAggregation.length > 0) {
+      topics = tagAggregation.map((t) => ({
+        name: String(t._id),
+      }));
+    }
+
+    // Supplement with category if tags returned fewer than 5 items
+    if (topics.length < 5) {
+      const categoryAggregation = await Story.aggregate([
+        { $match: { status: 'PUBLISHED', category: { $exists: true, $ne: null } } },
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 5 - topics.length },
+      ]);
+      const existingNames = new Set(topics.map((t) => t.name.toLowerCase()));
+      for (const cat of categoryAggregation) {
+        const catName = String(cat._id);
+        if (catName && !existingNames.has(catName.toLowerCase()) && topics.length < 5) {
+          topics.push({ name: catName });
+        }
+      }
+    }
+
+    // Fetch dynamic top 5 authors from User model
+    const userDocs = await User.find({}).select('_id name avatar email').limit(5).lean();
+
+    if (userDocs && userDocs.length > 0) {
+      authors = userDocs.map((u: any) => ({
+        id: String(u._id),
+        name: u.name || u.email?.split('@')[0] || 'Author',
+        avatar: u.avatar || '',
+      }));
+    }
+  } catch (error) {
+    console.error('Failed to load dynamic sidebar topics and authors:', error);
+  }
+}
+
+// Graceful fallbacks if DB is empty or connection fails/loading
+if (topics.length === 0) {
+  topics = [{ name: 'Technology' }, { name: 'Marketing' }, { name: 'Data Science' }];
+}
+
+if (authors.length === 0) {
+  authors = [
+    {
+      id: 'staff',
+      name: 'BigBlog Staff',
+      avatar: '',
+    },
+  ];
+}
+
+function getInitials(name: string): string {
+  if (!name) return 'B';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+}
 ---
 
 <aside class="sidebar" id="sidebar" transition:persist="sidebar">
@@ -155,70 +249,54 @@ const { activePage = 'home' } = Astro.props;
     <div class="sidebar-sub-section">
       <p class="sidebar-sub-title">Topics</p>
       <ul class="sidebar-topic-list">
-        <li>
-          <a href="#" class="sidebar-topic-link">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              ><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"
-              ></line></svg
-            >
-            Technology
-          </a>
-        </li>
-        <li>
-          <a href="#" class="sidebar-topic-link">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              ><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"
-              ></line></svg
-            >
-            Marketing
-          </a>
-        </li>
-        <li>
-          <a href="#" class="sidebar-topic-link">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              ><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"
-              ></line></svg
-            >
-            Data Science
-          </a>
-        </li>
+        {
+          topics.map((topic) => (
+            <li>
+              <a href={`/tag/${encodeURIComponent(topic.name)}`} class="sidebar-topic-link">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                {topic.name}
+              </a>
+            </li>
+          ))
+        }
       </ul>
     </div>
 
     <div class="sidebar-sub-section">
       <p class="sidebar-sub-title">Writers and publications</p>
       <ul class="sidebar-topic-list">
-        <li>
-          <a href="#" class="sidebar-topic-link">
-            <span class="sidebar-pub-avatar">Bb</span>
-            BigBlog Staff
-            <span class="sidebar-pub-dot"></span>
-          </a>
-        </li>
+        {
+          authors.map((author) => (
+            <li>
+              <a
+                href={author.id !== 'staff' ? `/author/${author.id}` : '#'}
+                class="sidebar-topic-link"
+              >
+                <span class="sidebar-pub-avatar">
+                  {author.avatar ? (
+                    <img src={author.avatar} alt={author.name} />
+                  ) : (
+                    getInitials(author.name)
+                  )}
+                </span>
+                {author.name}
+                <span class="sidebar-pub-dot" />
+              </a>
+            </li>
+          ))
+        }
       </ul>
     </div>
 
@@ -392,6 +470,13 @@ const { activePage = 'home' } = Astro.props;
     font-size: 0.55rem;
     font-weight: 600;
     flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  .sidebar-pub-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
   }
 
   .sidebar-pub-dot {
