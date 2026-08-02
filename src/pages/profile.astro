@@ -440,25 +440,70 @@ if (sessionId) {
               </div>
 
               <div class="form-group">
-                <label for="inpage-avatar">Avatar URL</label>
-                <div class="avatar-input-preview-group">
-                  <div class="avatar-preview-box">
+                <label>Profile Picture</label>
+                <div class="avatar-upload-widget" id="avatar-upload-widget">
+                  <div class="avatar-preview-wrapper">
                     <img
                       id="inpage-avatar-preview"
                       src={user.avatar || 'https://i.pravatar.cc/150'}
                       alt="Avatar preview"
                       class="avatar-preview-img"
                     />
+                    <div class="avatar-overlay" id="avatar-overlay">
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      >
+                        <path
+                          d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+                        ></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                      </svg>
+                    </div>
                   </div>
+
+                  <div class="avatar-upload-controls">
+                    <button
+                      type="button"
+                      id="trigger-avatar-file-btn"
+                      class="instagram-btn instagram-btn-secondary"
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                      <span>Upload photo from device</span>
+                    </button>
+                    <button type="button" id="remove-avatar-btn" class="avatar-remove-link">
+                      Remove photo
+                    </button>
+                  </div>
+
                   <input
-                    type="text"
-                    id="inpage-avatar"
-                    name="avatar"
-                    value={user.avatar}
-                    placeholder="https://example.com/avatar.jpg"
-                    class="avatar-url-input"
+                    type="file"
+                    id="inpage-avatar-file"
+                    accept="image/png, image/jpeg, image/webp, image/gif"
+                    style="display: none;"
                   />
+                  <input type="hidden" id="inpage-avatar" name="avatar" value={user.avatar} />
                 </div>
+                <span class="field-hint"
+                  >PNG, JPG, or WEBP. Drag and drop file or choose from your device.</span
+                >
               </div>
 
               <div class="form-group">
@@ -674,12 +719,75 @@ if (sessionId) {
     const form = document.getElementById('inpage-edit-profile-form');
     const avatarInput = document.getElementById('inpage-avatar');
     const avatarPreview = document.getElementById('inpage-avatar-preview');
+    const avatarFileInput = document.getElementById('inpage-avatar-file');
+    const avatarUploadBtn = document.getElementById('trigger-avatar-file-btn');
+    const avatarOverlay = document.getElementById('avatar-overlay');
+    const avatarRemoveBtn = document.getElementById('remove-avatar-btn');
+    const avatarDropWidget = document.getElementById('avatar-upload-widget');
 
-    if (avatarInput && avatarPreview) {
-      avatarInput.addEventListener('input', () => {
-        const val = avatarInput.value.trim();
-        if (val) {
-          avatarPreview.src = val;
+    function handleAvatarFile(file) {
+      if (!file || !file.type || !file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        if (e.target && e.target.result) {
+          if (avatarPreview) avatarPreview.src = e.target.result;
+          if (avatarInput) avatarInput.value = e.target.result;
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    if (avatarUploadBtn && avatarFileInput) {
+      avatarUploadBtn.addEventListener('click', function () {
+        avatarFileInput.click();
+      });
+    }
+
+    if (avatarOverlay && avatarFileInput) {
+      avatarOverlay.addEventListener('click', function () {
+        avatarFileInput.click();
+      });
+    }
+
+    if (avatarFileInput) {
+      avatarFileInput.addEventListener('change', function (e) {
+        const file = e.target.files && e.target.files[0];
+        if (file) {
+          handleAvatarFile(file);
+        }
+      });
+    }
+
+    if (avatarRemoveBtn) {
+      avatarRemoveBtn.addEventListener('click', function () {
+        if (avatarFileInput) avatarFileInput.value = '';
+        if (avatarInput) avatarInput.value = '';
+        if (avatarPreview) avatarPreview.src = 'https://i.pravatar.cc/150';
+      });
+    }
+
+    if (avatarDropWidget) {
+      ['dragenter', 'dragover'].forEach(function (eventName) {
+        avatarDropWidget.addEventListener(eventName, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          avatarDropWidget.classList.add('is-dragover');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach(function (eventName) {
+        avatarDropWidget.addEventListener(eventName, function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          avatarDropWidget.classList.remove('is-dragover');
+        });
+      });
+
+      avatarDropWidget.addEventListener('drop', function (e) {
+        const dt = e.dataTransfer;
+        const files = dt && dt.files;
+        if (files && files.length > 0) {
+          handleAvatarFile(files[0]);
         }
       });
     }
@@ -1257,30 +1365,82 @@ if (sessionId) {
     min-height: 90px;
   }
 
-  .avatar-input-preview-group {
+  .avatar-upload-widget {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1.25rem;
+    padding: 1rem;
+    background: var(--bg-surface-soft, #f4f0eb);
+    border: 2px dashed var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    transition: all 0.2s ease;
   }
 
-  .avatar-preview-box {
-    width: 56px;
-    height: 56px;
+  .avatar-upload-widget.is-dragover {
+    border-color: var(--color-ink, #181715);
+    background: var(--bg-surface-card, #ffffff);
+    box-shadow: 0 0 0 4px rgba(24, 23, 21, 0.05);
+  }
+
+  .avatar-preview-wrapper {
+    position: relative;
+    width: 72px;
+    height: 72px;
     border-radius: 50%;
     overflow: hidden;
     flex-shrink: 0;
     border: 2px solid var(--color-hairline, #e6dfd8);
-    background: var(--bg-surface-soft, #f4f0eb);
+    background: var(--bg-surface-card, #ffffff);
+    cursor: pointer;
   }
 
   .avatar-preview-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
   }
 
-  .avatar-url-input {
-    flex: 1;
+  .avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .avatar-preview-wrapper:hover .avatar-overlay {
+    opacity: 1;
+  }
+
+  .avatar-upload-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .avatar-remove-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--color-error, #c64545);
+    cursor: pointer;
+    text-decoration: underline;
+    transition: opacity 0.2s ease;
+  }
+
+  .avatar-remove-link:hover {
+    opacity: 0.8;
   }
 
   .field-hint {
