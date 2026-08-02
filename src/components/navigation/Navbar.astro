@@ -3,7 +3,7 @@ const currentPath = Astro.url.pathname;
 const isLoggedIn = Astro.cookies.has('auth_token');
 
 const navLinks: Array<{ label: string; href: string }> = isLoggedIn
-  ? [{ label: 'Write', href: '/write' }]
+  ? []
   : [
       { label: 'Stories', href: '/stories' },
       { label: 'About', href: '/about' },
