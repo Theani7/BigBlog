@@ -1,9 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Sidebar from '../components/dashboard/Sidebar.astro';
+import EditProfileModal from '../components/profile/EditProfileModal.astro';
 
 import { createDatabase, type Env } from '../db';
-import { User, Story } from '../db/schema';
+import { User, Story, Repost, comments } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
 
 const env = (Astro.locals as { env: Env }).env;
@@ -25,15 +26,68 @@ if (!userId) {
 
 const dbUser = await User.findById(userId);
 const user = {
+  id: userId.toString(),
   name: dbUser?.name || 'Anonymous',
-  username: `@${dbUser?.name?.toLowerCase().replace(/\\s+/g, '') || 'user'}`,
+  username: `@${dbUser?.name?.toLowerCase().replace(/\s+/g, '') || 'user'}`,
   avatar: dbUser?.avatar || 'https://i.pravatar.cc/150?img=11',
+  bio: dbUser?.bio || '',
+  pronouns: dbUser?.pronouns || '',
+  website: dbUser?.website || '',
+  twitter: dbUser?.twitter || '',
+  github: dbUser?.github || '',
+  linkedin: dbUser?.linkedin || '',
+  createdAt: dbUser?.createdAt || new Date(),
 };
 
 const publishedStories = await Story.find({ authorId: userId, status: 'PUBLISHED' }).sort({
   createdAt: -1,
 });
 const storyCount = publishedStories.length;
+
+const reposts = await Repost.find({ userId }).populate({
+  path: 'storyId',
+  populate: { path: 'authorId' },
+});
+
+const userComments = await comments.find({ userId }).lean();
+
+interface ActivityItem {
+  type: 'PUBLISHED_STORY' | 'REPOSTED_STORY' | 'COMMENTED';
+  title: string;
+  detail?: string;
+  slug?: string;
+  createdAt: Date;
+}
+
+const storyActivities: ActivityItem[] = publishedStories.map((story: any) => ({
+  type: 'PUBLISHED_STORY',
+  title: story.title,
+  slug: story.slug,
+  createdAt: story.publishedAt || story.createdAt,
+}));
+
+const repostActivities: ActivityItem[] = reposts
+  .filter((r: any) => r.storyId && (r.storyId as any).title)
+  .map((r: any) => ({
+    type: 'REPOSTED_STORY',
+    title: (r.storyId as any).title,
+    slug: (r.storyId as any).slug,
+    createdAt: r.createdAt,
+  }));
+
+const commentActivities: ActivityItem[] = userComments.map((c: any) => ({
+  type: 'COMMENTED',
+  title: `Commented on article (${c.articleSlug})`,
+  detail: c.content?.length > 80 ? c.content.slice(0, 80) + '...' : c.content,
+  slug: c.articleSlug,
+  createdAt: c.createdAt,
+}));
+
+const activities: ActivityItem[] = [
+  ...storyActivities,
+  ...repostActivities,
+  ...commentActivities,
+].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 ---
 
 <Layout title="Profile - BigBlog">
@@ -48,60 +102,33 @@ const storyCount = publishedStories.length;
           <img src={user.avatar} alt={user.name} class="profile-header-avatar" />
           <h1 class="profile-title">{user.name}</h1>
         </div>
-        <button class="profile-more-btn" aria-label="More options">
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          >
-            <circle cx="12" cy="12" r="1"></circle>
-            <circle cx="19" cy="12" r="1"></circle>
-            <circle cx="5" cy="12" r="1"></circle>
-          </svg>
-        </button>
+        <button type="button" class="profile-edit-link" data-open-edit-profile>Edit profile</button>
       </div>
 
       <nav class="profile-tabs">
-        <a href="#" class="profile-tab profile-tab--active">Home</a>
-        <a href="#" class="profile-tab">Reposts</a>
-        <a href="#" class="profile-tab">Activity</a>
-        <a href="#" class="profile-tab">About</a>
+        <button type="button" class="profile-tab profile-tab--active" data-tab="home">Home</button>
+        <button type="button" class="profile-tab" data-tab="reposts">Reposts</button>
+        <button type="button" class="profile-tab" data-tab="activity">Activity</button>
+        <button type="button" class="profile-tab" data-tab="about">About</button>
       </nav>
 
       <div class="profile-content">
-        <!-- Reading List Card matching the screenshot -->
-        <div class="reading-list-card">
-          <div class="reading-list-info">
-            <div class="reading-list-author">
-              <img src={user.avatar} alt={user.name} class="reading-list-avatar" />
-              <span>{user.name}</span>
-            </div>
-            <h2 class="reading-list-title">Reading list</h2>
-            <div class="reading-list-meta">
-              <span>{storyCount} stor{storyCount === 1 ? 'y' : 'ies'}</span>
-              <svg
-                class="lock-icon"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-              </svg>
-              <button class="reading-list-more" aria-label="More options">
+        <!-- Home Panel -->
+        <div id="tab-panel-home" class="tab-panel">
+          <!-- Reading List Card matching the screenshot -->
+          <div class="reading-list-card">
+            <div class="reading-list-info">
+              <div class="reading-list-author">
+                <img src={user.avatar} alt={user.name} class="reading-list-avatar" />
+                <span>{user.name}</span>
+              </div>
+              <h2 class="reading-list-title">Reading list</h2>
+              <div class="reading-list-meta">
+                <span>{storyCount} stor{storyCount === 1 ? 'y' : 'ies'}</span>
                 <svg
-                  width="16"
-                  height="16"
+                  class="lock-icon"
+                  width="14"
+                  height="14"
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -109,21 +136,410 @@ const storyCount = publishedStories.length;
                   stroke-linecap="round"
                   stroke-linejoin="round"
                 >
-                  <circle cx="12" cy="12" r="1"></circle>
-                  <circle cx="19" cy="12" r="1"></circle>
-                  <circle cx="5" cy="12" r="1"></circle>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
-              </button>
+                <button class="reading-list-more" aria-label="More options">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="1"></circle>
+                    <circle cx="19" cy="12" r="1"></circle>
+                    <circle cx="5" cy="12" r="1"></circle>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="reading-list-thumbnails">
+              <div
+                class="reading-list-thumb"
+                style="background-image: url('https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=400');"
+              >
+              </div>
+              <div class="reading-list-thumb placeholder"></div>
+              <div class="reading-list-thumb placeholder"></div>
             </div>
           </div>
-          <div class="reading-list-thumbnails">
-            <div
-              class="reading-list-thumb"
-              style="background-image: url('https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=400');"
-            >
+
+          <!-- Published Stories Section -->
+          {
+            publishedStories.length > 0 && (
+              <div class="published-stories-section">
+                <h3 class="section-title">Published Stories</h3>
+                <div class="story-card-list">
+                  {publishedStories.map((story) => (
+                    <article class="story-card">
+                      <div class="story-card-content">
+                        <h4 class="story-card-title">
+                          <a href={`/p/${story.slug}`}>{story.title}</a>
+                        </h4>
+                        <p class="story-card-excerpt">
+                          {story.content
+                            ? story.content.replace(/<[^>]+>/g, '').slice(0, 140) + '...'
+                            : ''}
+                        </p>
+                        <div class="story-card-meta">
+                          <span>
+                            {new Date(story.publishedAt || story.createdAt).toLocaleDateString(
+                              'en-US',
+                              { month: 'short', day: 'numeric', year: 'numeric' }
+                            )}
+                          </span>
+                          <span>·</span>
+                          <span>{story.views || 0} views</span>
+                        </div>
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </div>
+            )
+          }
+        </div>
+
+        <!-- Reposts Panel -->
+        <div id="tab-panel-reposts" class="tab-panel" hidden>
+          {
+            reposts.length > 0 ? (
+              <div class="reposts-list">
+                {reposts.map((repost: any) => {
+                  const story = repost.storyId;
+                  if (!story) return null;
+                  const author = story.authorId;
+                  return (
+                    <article class="story-card">
+                      <div class="story-card-content">
+                        <div class="repost-header">
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          >
+                            <path d="M17 1l4 4-4 4" />
+                            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                            <path d="M7 23l-4-4 4-4" />
+                            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                          </svg>
+                          <span>Reposted by {user.name}</span>
+                        </div>
+                        {author && (
+                          <div class="story-author-row">
+                            <img
+                              src={author.avatar || 'https://i.pravatar.cc/150?img=11'}
+                              class="author-avatar-sm"
+                              alt={author.name}
+                            />
+                            <span class="author-name-sm">{author.name || 'Anonymous'}</span>
+                          </div>
+                        )}
+                        <h4 class="story-card-title">
+                          <a href={`/p/${story.slug}`}>{story.title}</a>
+                        </h4>
+                        <p class="story-card-excerpt">
+                          {story.content
+                            ? story.content.replace(/<[^>]+>/g, '').slice(0, 140) + '...'
+                            : ''}
+                        </p>
+                        <div class="story-card-meta">
+                          <span>
+                            Reposted on{' '}
+                            {new Date(repost.createdAt).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric',
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div class="empty-state">
+                <p class="empty-state-title">No reposted stories yet</p>
+                <p class="empty-state-subtitle">
+                  Stories you repost will appear here on your profile.
+                </p>
+              </div>
+            )
+          }
+        </div>
+
+        <!-- Activity Panel -->
+        <div id="tab-panel-activity" class="tab-panel" hidden>
+          {
+            activities.length > 0 ? (
+              <div class="activity-timeline">
+                {activities.map((item) => (
+                  <div class="activity-item">
+                    <div class="activity-icon">
+                      {item.type === 'PUBLISHED_STORY' && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                        </svg>
+                      )}
+                      {item.type === 'REPOSTED_STORY' && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M17 1l4 4-4 4" />
+                          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
+                          <path d="M7 23l-4-4 4-4" />
+                          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
+                        </svg>
+                      )}
+                      {item.type === 'COMMENTED' && (
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                      )}
+                    </div>
+                    <div class="activity-body">
+                      <div class="activity-header">
+                        <span class="activity-type">
+                          {item.type === 'PUBLISHED_STORY' && 'Published a story'}
+                          {item.type === 'REPOSTED_STORY' && 'Reposted a story'}
+                          {item.type === 'COMMENTED' && 'Left a comment'}
+                        </span>
+                        <span class="activity-date">
+                          {new Date(item.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </span>
+                      </div>
+                      <div class="activity-title">
+                        {item.slug ? (
+                          <a href={`/p/${item.slug}`}>{item.title}</a>
+                        ) : (
+                          <span>{item.title}</span>
+                        )}
+                      </div>
+                      {item.detail && <p class="activity-detail">{item.detail}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="empty-state">
+                <p class="empty-state-title">No recent activity</p>
+                <p class="empty-state-subtitle">
+                  Your story publications, reposts, and comments will show up here.
+                </p>
+              </div>
+            )
+          }
+        </div>
+
+        <!-- About Panel -->
+        <div id="tab-panel-about" class="tab-panel" hidden>
+          <div class="about-card">
+            {
+              user.bio ? (
+                <div class="about-section">
+                  <h3 class="about-subtitle">Bio</h3>
+                  <p class="about-bio">{user.bio}</p>
+                </div>
+              ) : (
+                <div class="about-section">
+                  <p class="about-bio placeholder-text">No bio added yet.</p>
+                </div>
+              )
+            }
+
+            {
+              user.pronouns && (
+                <div class="about-section">
+                  <h3 class="about-subtitle">Pronouns</h3>
+                  <p class="about-text">{user.pronouns}</p>
+                </div>
+              )
+            }
+
+            <div class="about-section">
+              <h3 class="about-subtitle">Member Info</h3>
+              <p class="about-text">
+                Joined {
+                  new Date(user.createdAt).toLocaleDateString('en-US', {
+                    month: 'long',
+                    year: 'numeric',
+                  })
+                }
+              </p>
             </div>
-            <div class="reading-list-thumb placeholder"></div>
-            <div class="reading-list-thumb placeholder"></div>
+
+            <div class="about-section">
+              <h3 class="about-subtitle">Story Statistics</h3>
+              <div class="about-stats-grid">
+                <div class="stat-box">
+                  <span class="stat-number">{storyCount}</span>
+                  <span class="stat-label">Published Stories</span>
+                </div>
+                <div class="stat-box">
+                  <span class="stat-number">{reposts.length}</span>
+                  <span class="stat-label">Reposted Stories</span>
+                </div>
+              </div>
+            </div>
+
+            {
+              (user.website || user.twitter || user.github || user.linkedin) && (
+                <div class="about-section">
+                  <h3 class="about-subtitle">Social Links</h3>
+                  <div class="about-social-links">
+                    {user.website && (
+                      <a
+                        href={
+                          user.website.startsWith('http') ? user.website : `https://${user.website}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="social-badge"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="2" y1="12" x2="22" y2="12" />
+                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+                        </svg>
+                        <span>Website</span>
+                      </a>
+                    )}
+                    {user.twitter && (
+                      <a
+                        href={
+                          user.twitter.startsWith('http')
+                            ? user.twitter
+                            : `https://twitter.com/${user.twitter.replace('@', '')}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="social-badge"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
+                        </svg>
+                        <span>
+                          Twitter / X (
+                          {user.twitter.startsWith('@') ? user.twitter : `@${user.twitter}`})
+                        </span>
+                      </a>
+                    )}
+                    {user.github && (
+                      <a
+                        href={
+                          user.github.startsWith('http')
+                            ? user.github
+                            : `https://github.com/${user.github.replace('@', '')}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="social-badge"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                        </svg>
+                        <span>GitHub</span>
+                      </a>
+                    )}
+                    {user.linkedin && (
+                      <a
+                        href={
+                          user.linkedin.startsWith('http')
+                            ? user.linkedin
+                            : `https://linkedin.com/in/${user.linkedin}`
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="social-badge"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        >
+                          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                          <rect x="2" y="9" width="4" height="12" />
+                          <circle cx="4" cy="4" r="2" />
+                        </svg>
+                        <span>LinkedIn</span>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )
+            }
           </div>
         </div>
       </div>
@@ -134,11 +550,64 @@ const storyCount = publishedStories.length;
       <div class="profile-info-card">
         <img src={user.avatar} alt={user.name} class="profile-large-avatar" />
         <h2 class="profile-large-name">{user.name}</h2>
-        <a href="#" class="profile-edit-link">Edit profile</a>
+        {user.bio && <p class="profile-sidebar-bio">{user.bio}</p>}
+        <button type="button" id="open-edit-profile" class="profile-edit-link">Edit profile</button>
       </div>
     </aside>
   </div>
+
+  <EditProfileModal user={user} />
 </Layout>
+
+<script>
+  function setupProfileTabs() {
+    const tabs = document.querySelectorAll<HTMLElement>('.profile-tab');
+    const panels = document.querySelectorAll<HTMLElement>('.tab-panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', (e) => {
+        e.preventDefault();
+        const targetTab = tab.getAttribute('data-tab');
+
+        tabs.forEach((t) => t.classList.remove('profile-tab--active'));
+        tab.classList.add('profile-tab--active');
+
+        panels.forEach((panel) => {
+          if (panel.id === `tab-panel-${targetTab}`) {
+            panel.removeAttribute('hidden');
+          } else {
+            panel.setAttribute('hidden', '');
+          }
+        });
+      });
+    });
+
+    const openEditButtons = document.querySelectorAll(
+      '#open-edit-profile, [data-open-edit-profile]'
+    );
+    const modal = document.getElementById('edit-profile-modal');
+
+    openEditButtons.forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (modal) {
+          modal.removeAttribute('hidden');
+          modal.setAttribute('aria-hidden', 'false');
+          modal.classList.add('is-open');
+          const nameInput = document.getElementById('edit-name') as HTMLInputElement | null;
+          if (nameInput) nameInput.focus();
+        }
+      });
+    });
+  }
+
+  document.addEventListener('astro:page-load', setupProfileTabs);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupProfileTabs);
+  } else {
+    setupProfileTabs();
+  }
+</script>
 
 <style>
   .dashboard-layout {
@@ -218,15 +687,16 @@ const storyCount = publishedStories.length;
     font-family: var(--font-sans);
     font-size: var(--text-body-sm);
     color: var(--color-muted);
-    text-decoration: none;
-    padding-bottom: var(--space-md);
+    background: transparent;
+    border: none;
+    padding: 0 0 var(--space-md) 0;
+    cursor: pointer;
     position: relative;
     transition: color var(--duration-fast);
   }
 
   .profile-tab:hover {
     color: var(--color-ink);
-    text-decoration: none;
   }
 
   .profile-tab--active {
@@ -244,11 +714,16 @@ const storyCount = publishedStories.length;
     background: var(--color-ink);
   }
 
-  /* Reading List Card inside Profile */
   .profile-content {
     margin-top: var(--space-lg);
   }
 
+  /* Tab Panel Visibility */
+  .tab-panel[hidden] {
+    display: none !important;
+  }
+
+  /* Reading List Card inside Profile */
   .reading-list-card {
     display: flex;
     background: var(--bg-surface);
@@ -340,6 +815,303 @@ const storyCount = publishedStories.length;
     background-color: var(--bg-surface-soft);
   }
 
+  /* Published Stories & Cards */
+  .published-stories-section {
+    margin-top: var(--space-xl);
+  }
+
+  .section-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin-bottom: var(--space-md);
+  }
+
+  .story-card-list,
+  .reposts-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .story-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .story-card:hover {
+    border-color: var(--color-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+  }
+
+  .repost-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    margin-bottom: var(--space-xs);
+  }
+
+  .story-author-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-xs);
+  }
+
+  .author-avatar-sm {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+
+  .author-name-sm {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .story-card-title {
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 var(--space-xs) 0;
+    line-height: 1.3;
+  }
+
+  .story-card-title a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .story-card-title a:hover {
+    color: var(--color-primary);
+  }
+
+  .story-card-excerpt {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    line-height: 1.5;
+    margin-bottom: var(--space-sm);
+  }
+
+  .story-card-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  /* Activity Timeline */
+  .activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .activity-item {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+  }
+
+  .activity-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-surface-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    flex-shrink: 0;
+  }
+
+  .activity-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .activity-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+  }
+
+  .activity-type {
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  .activity-date {
+    color: var(--color-muted);
+  }
+
+  .activity-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+  }
+
+  .activity-title a {
+    color: var(--color-ink);
+    text-decoration: none;
+  }
+
+  .activity-title a:hover {
+    color: var(--color-primary);
+  }
+
+  .activity-detail {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+    margin: 0;
+    font-style: italic;
+  }
+
+  /* About Tab */
+  .about-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .about-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .about-subtitle {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption-uppercase);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin: 0;
+  }
+
+  .about-bio,
+  .about-text {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-md);
+    color: var(--color-ink);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  .placeholder-text {
+    color: var(--color-muted);
+    font-style: italic;
+  }
+
+  .about-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-md);
+    margin-top: var(--space-xs);
+  }
+
+  .stat-box {
+    background: var(--bg-surface-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .stat-number {
+    font-family: var(--font-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-ink);
+  }
+
+  .stat-label {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption);
+    color: var(--color-muted);
+  }
+
+  .about-social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-top: var(--space-xs);
+  }
+
+  .social-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    background: var(--bg-surface-soft);
+    border: 1px solid var(--color-hairline);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .social-badge:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+
+  /* Empty States */
+  .empty-state {
+    padding: var(--space-xxl) var(--space-md);
+    text-align: center;
+    background: var(--bg-surface);
+    border: 1px dashed var(--color-hairline);
+    border-radius: var(--radius-lg);
+  }
+
+  .empty-state-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-sm);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-xs) 0;
+  }
+
+  .empty-state-subtitle {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    margin: 0;
+  }
+
   /* ═══════════════════════════════════════════════════════════════════
      RIGHT SIDEBAR
      ═══════════════════════════════════════════════════════════════════ */
@@ -370,10 +1142,22 @@ const storyCount = publishedStories.length;
     letter-spacing: -0.5px;
   }
 
+  .profile-sidebar-bio {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-muted);
+    margin: 0 0 var(--space-md) 0;
+    line-height: 1.4;
+  }
+
   .profile-edit-link {
     font-family: var(--font-sans);
     font-size: var(--text-body-sm);
-    color: var(--color-primary); /* Uses green/primary color */
+    color: var(--color-primary);
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
     text-decoration: none;
     transition: opacity 0.2s;
   }
@@ -393,7 +1177,7 @@ const storyCount = publishedStories.length;
       display: flex;
     }
     .profile-header-avatar {
-      display: block; /* Show the avatar here when right sidebar is hidden */
+      display: block;
     }
     .profile-tabs {
       margin-top: var(--space-xl);
