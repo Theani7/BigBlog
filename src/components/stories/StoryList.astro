@@ -133,60 +133,57 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   .story-list {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
+    gap: 16px;
   }
 
   .story-card {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: var(--space-xl);
-    background: var(--bg-canvas);
-    border: 1px solid var(--color-hairline);
+    padding: 32px;
+    background: #efe9de;
+    border: 1px solid #e6dfd8;
     border-radius: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .story-card:hover {
-    transform: translateY(-2px);
-    box-shadow:
-      0 8px 24px -8px rgba(0, 0, 0, 0.08),
-      0 4px 12px -6px rgba(0, 0, 0, 0.04);
-    border-color: var(--color-muted);
+    border-color: #6c6a64;
   }
 
   .story-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 12px;
     max-width: 75%;
   }
 
   .story-title {
-    font-family: var(--font-sans);
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-family: 'StyreneB', 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 500;
     margin: 0;
     line-height: 1.4;
-    letter-spacing: -0.01em;
+    letter-spacing: 0;
   }
 
   .story-title a {
-    color: var(--color-ink);
+    color: #141413;
     text-decoration: none;
     transition: color 0.2s ease;
   }
 
   .story-title a:hover {
-    color: var(--color-primary);
+    color: #6c6a64;
   }
 
   .story-excerpt {
-    font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    color: var(--color-muted);
+    font-family: 'StyreneB', 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #3d3d3a;
     margin: 0;
-    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -196,26 +193,30 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   .story-meta {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    margin-top: var(--space-xs);
-    font-family: var(--font-sans);
-    font-size: 0.8125rem;
-    color: var(--color-muted);
+    gap: 12px;
+    margin-top: 8px;
+    font-family: 'StyreneB', 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #6c6a64;
   }
 
   .meta-item.badge {
-    background: var(--bg-surface-soft, #f3f4f6);
-    padding: 0.25rem 0.5rem;
-    border-radius: var(--radius-pill);
+    background: #faf9f5;
+    padding: 4px 12px;
+    border-radius: 9999px;
     font-weight: 500;
-    color: var(--color-ink);
+    color: #141413;
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 1.5px;
   }
 
   .story-actions {
     display: flex;
     align-items: center;
-    gap: var(--space-xs);
-    opacity: 0.4;
+    gap: 8px;
+    opacity: 0;
     transition: opacity 0.3s ease;
   }
 
@@ -229,7 +230,7 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     justify-content: center;
     background: transparent;
     border: none;
-    color: var(--color-muted);
+    color: #6c6a64;
     cursor: pointer;
     width: 36px;
     height: 36px;
@@ -238,19 +239,19 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .action-btn:hover {
-    color: var(--color-ink);
-    background: var(--bg-surface-soft, #f3f4f6);
+    color: #141413;
+    background: #e8e0d2;
   }
 
   .action-btn.delete:hover {
-    color: #ef4444;
-    background: #fee2e2;
+    color: #c64545;
+    background: #faf9f5;
   }
 
   .story-options {
     background: none;
     border: none;
-    color: var(--color-muted);
+    color: #6c6a64;
     cursor: pointer;
     width: 36px;
     height: 36px;
@@ -262,8 +263,8 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .story-options:hover {
-    color: var(--color-ink);
-    background: var(--bg-surface-soft, #f3f4f6);
+    color: #141413;
+    background: #e8e0d2;
   }
 
   .stories-empty-state {
@@ -272,62 +273,61 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 4rem 2rem;
-    background: var(--bg-surface-soft, #f9fafb);
-    border: 1px dashed var(--color-hairline);
-    border-radius: 16px;
-    margin-top: var(--space-xl);
+    padding: 64px 32px;
+    background: #faf9f5;
+    border: 1px solid #e6dfd8;
+    border-radius: 12px;
+    margin-top: 32px;
   }
 
   .empty-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 80px;
-    height: 80px;
-    background: var(--bg-canvas, #ffffff);
-    border-radius: 50%;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    color: var(--color-muted);
-    margin-bottom: var(--space-lg);
+    width: 64px;
+    height: 64px;
+    background: transparent;
+    color: #141413;
+    margin-bottom: 24px;
   }
 
   .empty-title {
-    font-family: var(--font-serif);
-    font-size: 1.5rem;
-    font-weight: 500;
-    color: var(--color-ink);
-    margin: 0 0 var(--space-sm) 0;
+    font-family: 'Copernicus', 'Tiempos Headline', serif;
+    font-size: 28px;
+    font-weight: 400;
+    color: #141413;
+    margin: 0 0 12px 0;
+    letter-spacing: -0.3px;
+    line-height: 1.2;
   }
 
   .empty-text {
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    color: var(--color-muted);
-    margin: 0 0 var(--space-xl) 0;
+    font-family: 'StyreneB', 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.55;
+    color: #3d3d3a;
+    margin: 0 0 32px 0;
     max-width: 400px;
   }
 
   .btn-primary.empty-cta {
+    font-family: 'StyreneB', 'Inter', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background: #181715;
+    border-radius: 8px;
+    padding: 0 20px;
+    height: 40px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-family: var(--font-sans);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: #fff;
-    background: #181715;
-    border: none;
-    border-radius: var(--radius-pill);
-    padding: 0.75rem 1.5rem;
     text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: background 0.2s;
   }
 
   .btn-primary.empty-cta:hover {
-    background: #2a2927;
-    transform: translateY(-2px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    background: #252320;
   }
 </style>
