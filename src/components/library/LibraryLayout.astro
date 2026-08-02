@@ -179,7 +179,7 @@ const { title, description, activeTab } = Astro.props;
   }
 
   .library-content {
-    padding: var(--space-xl) var(--space-xxl);
+    padding: var(--space-xl) clamp(1.5rem, 5vw, 4rem);
     width: 100%;
   }
 
@@ -210,11 +210,12 @@ const { title, description, activeTab } = Astro.props;
     font-weight: 500;
     padding: 10px 20px;
     border-radius: var(--radius-pill);
-    background: var(--color-success);
-    color: white;
+    background: var(--color-primary);
+    color: #ffffff;
     border: none;
     cursor: pointer;
     transition:
+      background var(--duration-fast),
       opacity var(--duration-fast),
       transform var(--duration-fast);
     white-space: nowrap;
@@ -225,12 +226,17 @@ const { title, description, activeTab } = Astro.props;
     transform: translateY(-1px);
   }
 
+  .new-list-btn:active {
+    background: #252320;
+  }
+
   /* Tabs */
   .library-tabs {
     display: flex;
-    gap: 0;
+    gap: 0.5rem;
     border-bottom: 1px solid var(--color-hairline);
     margin-bottom: var(--space-xl);
+    padding-bottom: var(--space-md);
     overflow-x: auto;
   }
 
@@ -244,30 +250,25 @@ const { title, description, activeTab } = Astro.props;
     font-weight: 400;
     color: var(--color-muted);
     text-decoration: none;
-    padding: var(--space-md) var(--space-lg);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-pill);
     position: relative;
-    transition: color var(--duration-fast);
+    transition:
+      background var(--duration-fast),
+      color var(--duration-fast);
     white-space: nowrap;
   }
 
   .library-tab:hover {
     color: var(--color-ink);
+    background: var(--bg-surface-soft);
     text-decoration: none;
   }
 
   .library-tab--active {
     color: var(--color-ink);
     font-weight: 500;
-  }
-
-  .library-tab--active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: var(--space-lg);
-    right: var(--space-lg);
-    height: 1px;
-    background: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .library-tab-content {
