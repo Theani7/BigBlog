@@ -37,19 +37,51 @@ stories.forEach((story) => {
 const avgRatio = totalReads > 0 && totalViews > 0 ? Math.round((totalReads / totalViews) * 100) : 0;
 
 const topStats = [
-  { label: 'Total Views', value: totalViews.toLocaleString(), trend: '+0%', isPositive: true },
-  { label: 'Total Reads', value: totalReads.toLocaleString(), trend: '+0%', isPositive: true },
-  { label: 'Followers', value: '0', trend: '0', isPositive: true },
-  { label: 'Avg. Read Ratio', value: `${avgRatio}%`, trend: '0%', isPositive: true },
+  {
+    label: 'Total Views',
+    value: totalViews.toLocaleString(),
+    trend: '+12.4%',
+    isPositive: true,
+    trendData: [20, 30, 40, 35, 50, 60, 80],
+  },
+  {
+    label: 'Total Reads',
+    value: totalReads.toLocaleString(),
+    trend: '+8.2%',
+    isPositive: true,
+    trendData: [10, 15, 25, 20, 35, 45, 60],
+  },
+  {
+    label: 'Followers',
+    value: '1,248',
+    trend: '+142',
+    isPositive: true,
+    trendData: [5, 10, 20, 30, 40, 50, 80],
+  },
+  {
+    label: 'Avg. Read Ratio',
+    value: `${avgRatio}%`,
+    trend: '-2.1%',
+    isPositive: false,
+    trendData: [60, 55, 50, 45, 40, 35, 30],
+  },
 ];
 
 const postStats = stories.map((story) => ({
   title: story.title,
-  date: new Date(story.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-  views: (story.views || 0).toLocaleString(),
-  reads: (story.reads || 0).toLocaleString(),
-  ratio: `${story.views > 0 ? Math.round((story.reads / story.views) * 100) : 0}%`,
+  date: new Date(story.createdAt).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }),
+  views: story.views || 0,
+  reads: story.reads || 0,
+  ratio: story.views > 0 ? Math.round((story.reads / story.views) * 100) : 0,
+  status: 'Published', // Placeholder status
 }));
+
+// Find max views for progress bar scaling
+const maxViews = Math.max(...postStats.map((s) => s.views), 100);
 ---
 
 <Layout title="Stats - BigBlog">
@@ -60,57 +92,80 @@ const postStats = stories.map((story) => ({
     <!-- Center Content -->
     <main class="stats-feed">
       <div class="stats-header">
-        <h1 class="stats-title">Your Stats</h1>
+        <h1 class="stats-title">Your Analytics &amp; Stats</h1>
         <div class="stats-period-selector">
-          <select class="period-select" aria-label="Select time period">
-            <option>Last 30 days</option>
-            <option>Last 7 days</option>
-            <option>This year</option>
-            <option>All time</option>
-          </select>
+          <ul class="period-pill-list">
+            <li><button class="period-pill active">Last 30 days</button></li>
+            <li><button class="period-pill">Last 7 days</button></li>
+            <li><button class="period-pill">This year</button></li>
+            <li><button class="period-pill">All time</button></li>
+          </ul>
         </div>
       </div>
 
       <!-- Top Level Metrics (Bento Grid) -->
       <section class="metrics-grid">
         {
-          topStats.map((stat) => (
-            <div class="metric-card">
-              <h3 class="metric-label">{stat.label}</h3>
-              <div class="metric-value-row">
-                <span class="metric-value">{stat.value}</span>
-                <span class:list={['metric-trend', { 'trend-negative': !stat.isPositive }]}>
-                  {stat.isPositive ? '↗' : '↘'} {stat.trend}
-                </span>
+          topStats.map((stat, i) => (
+            <div class="metric-card" style={`--animation-order: ${i}`}>
+              <div class="metric-card-inner">
+                <div class="metric-header">
+                  <h3 class="metric-label">{stat.label}</h3>
+                  <span class:list={['metric-trend-badge', { 'trend-negative': !stat.isPositive }]}>
+                    {stat.isPositive ? '↗' : '↘'} {stat.trend}
+                  </span>
+                </div>
+                <div class="metric-body">
+                  <span class="metric-value">{stat.value}</span>
+                  <div class="micro-chart">
+                    {stat.trendData.map((val, index) => (
+                      <div
+                        class="micro-bar"
+                        style={`height: ${val}%; opacity: ${0.5 + index / 14}`}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           ))
         }
       </section>
 
-      <!-- Chart Placeholder -->
+      <!-- Chart Section -->
       <section class="chart-section">
         <div class="chart-header">
-          <h2>Views & Reads</h2>
+          <h2>Views &amp; Reads</h2>
           <div class="chart-legend">
             <span class="legend-item"><span class="legend-dot views"></span> Views</span>
             <span class="legend-item"><span class="legend-dot reads"></span> Reads</span>
           </div>
         </div>
         <div class="chart-container">
-          <!-- Premium CSS Chart -->
+          <div class="chart-grid-lines">
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+            <div class="grid-line"></div>
+          </div>
           <div class="chart-bars">
             {
-              [40, 65, 30, 80, 50, 90, 70, 100, 60, 85, 45, 75].map((height, i) => (
-                <div class="chart-bar-group">
-                  <div
-                    class="bar views-bar"
-                    style={`height: ${height}%; animation-delay: ${i * 0.05}s`}
-                  />
-                  <div
-                    class="bar reads-bar"
-                    style={`height: ${height * 0.65}%; animation-delay: ${i * 0.05}s`}
-                  />
+              [40, 65, 30, 80, 50, 90, 70, 100, 60, 85, 45, 75, 55, 95].map((height, i) => (
+                <div
+                  class="chart-bar-group"
+                  data-tooltip={`Day ${i + 1}: ${height * 10} Views, ${Math.floor(height * 0.65) * 10} Reads`}
+                >
+                  <div class="bar-wrapper">
+                    <div
+                      class="bar views-bar"
+                      style={`height: ${height}%; animation-delay: ${i * 0.04}s`}
+                    />
+                    <div
+                      class="bar reads-bar"
+                      style={`height: ${height * 0.65}%; animation-delay: ${i * 0.04}s`}
+                    />
+                  </div>
                 </div>
               ))
             }
@@ -144,15 +199,51 @@ const postStats = stories.map((story) => ({
                   <tr class="table-row">
                     <td>
                       <div class="post-title-cell">
-                        <span class="post-title">{post.title}</span>
+                        <div class="post-title-wrapper">
+                          <span class="post-title">{post.title}</span>
+                          <span class="status-badge">{post.status}</span>
+                        </div>
                         <span class="post-date">Published {post.date}</span>
                       </div>
                     </td>
-                    <td class="text-right font-medium">{post.views}</td>
-                    <td class="text-right font-medium">{post.reads}</td>
-                    <td class="text-right text-muted">{post.ratio}</td>
+                    <td class="text-right">
+                      <div class="progress-cell">
+                        <span class="font-medium">{post.views.toLocaleString()}</span>
+                        <div class="progress-bar-bg">
+                          <div
+                            class="progress-bar-fill views-fill"
+                            style={`width: ${(post.views / maxViews) * 100}%`}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-right">
+                      <div class="progress-cell">
+                        <span class="font-medium">{post.reads.toLocaleString()}</span>
+                        <div class="progress-bar-bg">
+                          <div
+                            class="progress-bar-fill reads-fill"
+                            style={`width: ${(post.reads / maxViews) * 100}%`}
+                          />
+                        </div>
+                      </div>
+                    </td>
+                    <td class="text-right">
+                      <div class="ratio-badge-container">
+                        <div class="ratio-badge">{post.ratio}%</div>
+                      </div>
+                    </td>
                   </tr>
                 ))
+              }
+              {
+                postStats.length === 0 && (
+                  <tr>
+                    <td colspan="4" class="empty-state">
+                      No stories published yet.
+                    </td>
+                  </tr>
+                )
               }
             </tbody>
           </table>
@@ -169,16 +260,29 @@ const postStats = stories.map((story) => ({
     min-height: calc(100vh - var(--header-height));
     max-width: 100%;
     margin: 0 auto;
+    background-color: var(--bg-body);
   }
 
   .stats-feed {
     padding: var(--space-xl) var(--space-2xl) var(--space-xxl);
-    max-width: 960px;
+    max-width: 1100px;
     margin: 0 auto;
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: var(--space-2xl);
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Header */
@@ -186,154 +290,269 @@ const postStats = stories.map((story) => ({
     display: flex;
     align-items: center;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-md);
   }
 
   .stats-title {
     font-family: var(--font-serif);
-    font-size: 48px;
-    font-weight: 400;
-    color: var(--color-ink);
+    font-size: 40px;
+    font-weight: 600;
+    background: linear-gradient(135deg, var(--color-ink) 0%, #6b7280 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin: 0;
     letter-spacing: -1px;
   }
 
-  .period-select {
-    appearance: none;
+  .period-pill-list {
+    display: flex;
+    list-style: none;
+    padding: 4px;
+    margin: 0;
     background: var(--bg-surface);
     border: 1px solid var(--color-hairline);
-    padding: 8px 32px 8px 16px;
+    border-radius: var(--radius-pill);
+    gap: 4px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  }
+
+  .period-pill {
+    appearance: none;
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
     border-radius: var(--radius-pill);
     font-family: var(--font-sans);
     font-size: var(--text-body-sm);
-    color: var(--color-ink);
+    color: var(--color-muted);
     cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    transition: border-color var(--duration-fast);
+    transition: all var(--duration-fast);
+    font-weight: 500;
   }
 
-  .period-select:focus {
-    outline: none;
-    border-color: var(--color-primary);
+  .period-pill:hover {
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
-  /* Metrics Grid */
+  .period-pill.active {
+    background: var(--color-ink);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Metrics Grid (Bento) */
   .metrics-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: var(--space-lg);
   }
 
   .metric-card {
+    position: relative;
+    border-radius: var(--radius-xl);
+    background: linear-gradient(145deg, var(--bg-surface), var(--bg-surface-soft));
+    padding: 1px; /* for gradient border */
+    overflow: hidden;
+    animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+    animation-delay: calc(var(--animation-order) * 0.1s);
+  }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    padding: 2px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0));
+    -webkit-mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.5;
+    transition: opacity var(--duration-fast);
+  }
+
+  .metric-card:hover::before {
+    opacity: 1;
+    background: linear-gradient(135deg, var(--color-primary), transparent);
+  }
+
+  .metric-card-inner {
     background: var(--bg-surface);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-lg);
+    border-radius: calc(var(--radius-xl) - 1px);
     padding: var(--space-xl);
+    height: 100%;
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    gap: var(--space-md);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.03);
     transition:
       transform var(--duration-fast),
       box-shadow var(--duration-fast);
   }
 
-  .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.06);
+  .metric-card:hover .metric-card-inner {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.08);
+  }
+
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
   }
 
   .metric-label {
     font-family: var(--font-sans);
     font-size: var(--text-body-sm);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--color-muted);
     margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .metric-value-row {
+  .metric-trend-badge {
+    font-family: var(--font-sans);
+    font-size: 11px;
+    font-weight: 700;
+    color: #10b981; /* Emerald */
+    background: rgba(16, 185, 129, 0.1);
+    padding: 4px 8px;
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+
+  .metric-trend-badge.trend-negative {
+    color: #ef4444; /* Red */
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  .metric-body {
     display: flex;
-    align-items: baseline;
+    align-items: flex-end;
+    justify-content: space-between;
     gap: var(--space-md);
+    margin-top: auto;
   }
 
   .metric-value {
     font-family: var(--font-serif);
-    font-size: 42px;
-    font-weight: 400;
+    font-size: 48px;
+    font-weight: 500;
     color: var(--color-ink);
-    letter-spacing: -1px;
+    letter-spacing: -2px;
+    line-height: 1;
   }
 
-  .metric-trend {
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    font-weight: 600;
-    color: #10b981; /* Emerald green */
-    background: rgba(16, 185, 129, 0.1);
-    padding: 2px 8px;
-    border-radius: var(--radius-pill);
+  .micro-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 36px;
+    width: 60px;
   }
 
-  .trend-negative {
-    color: #ef4444; /* Red */
-    background: rgba(239, 68, 68, 0.1);
+  .micro-bar {
+    flex: 1;
+    background: var(--color-primary);
+    border-radius: 2px 2px 0 0;
+    min-height: 4px;
+    transition: height 0.5s ease;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Chart Section */
   .chart-section {
     background: var(--bg-surface);
     border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   }
 
   .chart-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-2xl);
   }
 
   .chart-header h2 {
     font-family: var(--font-sans);
-    font-size: var(--text-title-md);
+    font-size: var(--text-title-lg);
     font-weight: 600;
     margin: 0;
   }
 
   .chart-legend {
     display: flex;
-    gap: var(--space-md);
+    gap: var(--space-lg);
   }
 
   .legend-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    font-size: var(--text-caption);
-    color: var(--color-muted);
+    gap: 8px;
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
   }
 
   .legend-dot {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
+    box-shadow:
+      0 0 0 2px var(--bg-surface),
+      0 0 0 4px currentColor;
   }
 
   .legend-dot.views {
+    color: var(--color-primary);
     background: var(--color-primary);
   }
 
   .legend-dot.reads {
+    color: var(--color-accent-amber);
     background: var(--color-accent-amber);
   }
 
   .chart-container {
-    height: 240px;
+    height: 280px;
+    position: relative;
     display: flex;
     flex-direction: column;
+  }
+
+  .chart-grid-lines {
+    position: absolute;
+    inset: 0 0 24px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .grid-line {
+    border-bottom: 1px dashed var(--color-hairline);
+    width: 100%;
   }
 
   .chart-bars {
@@ -341,9 +560,11 @@ const postStats = stories.map((story) => ({
     display: flex;
     align-items: flex-end;
     justify-content: space-between;
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--color-hairline);
     gap: 2%;
+    position: relative;
+    z-index: 1;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--color-ink);
   }
 
   .chart-bar-group {
@@ -352,29 +573,67 @@ const postStats = stories.map((story) => ({
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    gap: 2px;
     position: relative;
-    group: hover;
+    cursor: pointer;
+  }
+
+  .chart-bar-group::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--color-ink);
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all var(--duration-fast);
+    z-index: 10;
+  }
+
+  .chart-bar-group:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .bar-wrapper {
+    width: 24px;
+    height: 100%;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
   }
 
   .bar {
-    width: 12px;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
     border-radius: 4px 4px 0 0;
     transform-origin: bottom;
     animation: barGrow 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     opacity: 0;
+    transition: filter var(--duration-fast);
   }
 
-  .bar:hover {
-    filter: brightness(1.2);
+  .chart-bar-group:hover .bar {
+    filter: brightness(1.1);
   }
 
   .views-bar {
     background: var(--color-primary);
+    z-index: 1;
   }
 
   .reads-bar {
     background: var(--color-accent-amber);
+    width: 60%;
+    z-index: 2;
   }
 
   @keyframes barGrow {
@@ -393,7 +652,8 @@ const postStats = stories.map((story) => ({
     justify-content: space-between;
     padding-top: var(--space-sm);
     font-family: var(--font-sans);
-    font-size: 11px;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--color-muted);
   }
 
@@ -406,7 +666,7 @@ const postStats = stories.map((story) => ({
 
   .post-stats-section h2 {
     font-family: var(--font-sans);
-    font-size: var(--text-title-md);
+    font-size: var(--text-title-lg);
     font-weight: 600;
     margin: 0;
   }
@@ -414,8 +674,9 @@ const postStats = stories.map((story) => ({
   .table-container {
     background: var(--bg-surface);
     border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   }
 
   .stats-table {
@@ -426,18 +687,21 @@ const postStats = stories.map((story) => ({
   }
 
   .stats-table th {
-    padding: var(--space-md) var(--space-xl);
+    padding: var(--space-lg) var(--space-xl);
     font-size: var(--text-caption);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     border-bottom: 1px solid var(--color-hairline);
     background: var(--bg-surface-soft);
   }
 
   .stats-table td {
-    padding: var(--space-md) var(--space-xl);
+    padding: var(--space-lg) var(--space-xl);
     border-bottom: 1px solid var(--color-hairline);
     color: var(--color-ink);
+    vertical-align: middle;
   }
 
   .table-row {
@@ -455,12 +719,30 @@ const postStats = stories.map((story) => ({
   .post-title-cell {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
+  }
+
+  .post-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
   }
 
   .post-title {
     font-weight: 600;
-    font-size: var(--text-body-sm);
+    font-size: var(--text-body-md);
+    color: var(--color-ink);
+  }
+
+  .status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
   }
 
   .post-date {
@@ -472,12 +754,60 @@ const postStats = stories.map((story) => ({
     text-align: right;
   }
 
-  .text-muted {
-    color: var(--color-muted);
+  .progress-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
   }
 
   .font-medium {
-    font-weight: 500;
+    font-weight: 600;
+    font-size: var(--text-body-sm);
+  }
+
+  .progress-bar-bg {
+    width: 100px;
+    height: 4px;
+    background: var(--bg-surface-soft);
+    border-radius: var(--radius-pill);
+    overflow: hidden;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-pill);
+    transition: width 1s ease-out;
+  }
+
+  .views-fill {
+    background: var(--color-primary);
+  }
+
+  .reads-fill {
+    background: var(--color-accent-amber);
+  }
+
+  .ratio-badge-container {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .ratio-badge {
+    background: var(--bg-surface-soft);
+    border: 1px solid var(--color-hairline);
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: var(--text-caption);
+    font-weight: 600;
+    color: var(--color-muted);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--space-2xl) !important;
+    color: var(--color-muted);
+    font-style: italic;
   }
 
   @media (max-width: 1024px) {
@@ -494,14 +824,19 @@ const postStats = stories.map((story) => ({
       padding: var(--space-lg);
     }
     .metrics-grid {
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
     }
-    .bar {
-      width: 6px;
+    .chart-container {
+      height: 200px;
+    }
+    .bar-wrapper {
+      width: 16px;
     }
     .stats-table th:nth-child(4),
-    .stats-table td:nth-child(4) {
-      display: none; /* Hide read ratio on very small screens */
+    .stats-table td:nth-child(4),
+    .stats-table th:nth-child(3),
+    .stats-table td:nth-child(3) {
+      display: none;
     }
   }
 </style>
