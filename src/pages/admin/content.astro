@@ -1,0 +1,569 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createDatabase, type Env } from '../../db';
+import { User } from '../../db/schema';
+import { verifyAuthToken } from '../../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) throw new Error('Environment not configured');
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let isAdmin = false;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  if (payload?.role === 'ADMIN' && payload?.userId) {
+    const dbUser = await User.findById(payload.userId).lean();
+    isAdmin = !!dbUser && dbUser.role === 'ADMIN' && !dbUser.suspended;
+  }
+}
+if (!isAdmin) return Astro.redirect('/dashboard');
+---
+
+<AdminLayout
+  title="Review Content - BigBlog"
+  description="Story and comment moderation"
+  activeNav="content"
+>
+  <header class="admin-page-head">
+    <div>
+      <h1 class="admin-page-title">Content</h1>
+      <p class="admin-page-subtitle">Moderate stories and comments across the platform.</p>
+    </div>
+  </header>
+
+  <div class="admin-tabs" role="tablist">
+    <button
+      type="button"
+      class="admin-tab admin-tab--active"
+      id="admin-tab-stories"
+      data-admin-tab="stories"
+      role="tab"
+      aria-selected="true"
+    >
+      Stories
+    </button>
+    <button
+      type="button"
+      class="admin-tab"
+      id="admin-tab-comments"
+      data-admin-tab="comments"
+      role="tab"
+      aria-selected="false"
+    >
+      Comments
+    </button>
+  </div>
+
+  <!-- Stories panel -->
+  <section id="admin-panel-stories" class="admin-card admin-card--canvas">
+    <h2 class="admin-card-title">Stories</h2>
+    <p class="admin-card-subtitle">All stories on the platform. Change status or remove content.</p>
+
+    <div class="admin-content-toolbar">
+      <input
+        type="search"
+        id="admin-story-search"
+        class="admin-input"
+        placeholder="Search by title…"
+        aria-label="Search stories"
+      />
+      <select id="admin-story-status" class="admin-select" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option value="PUBLISHED">Published</option>
+        <option value="DRAFT">Draft</option>
+        <option value="SCHEDULED">Scheduled</option>
+        <option value="UNLISTED">Unlisted</option>
+      </select>
+    </div>
+
+    <div id="admin-story-alert" class="admin-alert" style="display: none;"></div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Status</th>
+            <th>Views</th>
+            <th>Published</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-story-rows">
+          <tr><td colspan="6" class="admin-muted">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admin-pagination" id="admin-story-pagination" style="display: none;"></div>
+  </section>
+
+  <!-- Comments panel -->
+  <section id="admin-panel-comments" class="admin-card admin-card--canvas" hidden>
+    <h2 class="admin-card-title">Comments</h2>
+    <p class="admin-card-subtitle">Review and moderate comments. Pending items need approval.</p>
+
+    <div class="admin-content-toolbar">
+      <select id="admin-comment-status" class="admin-select" aria-label="Filter comments by status">
+        <option value="pending">Pending</option>
+        <option value="approved">Approved</option>
+        <option value="rejected">Rejected</option>
+        <option value="spam">Spam</option>
+      </select>
+    </div>
+
+    <div id="admin-comment-alert" class="admin-alert" style="display: none;"></div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Comment</th>
+            <th>Story</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-comment-rows">
+          <tr><td colspan="5" class="admin-muted">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admin-pagination" id="admin-comment-pagination" style="display: none;"></div>
+  </section>
+</AdminLayout>
+
+<script>
+  interface AdminStory {
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+    views: number;
+    publishedAt: string | null;
+    author: { id: string; name: string } | null;
+  }
+
+  interface AdminComment {
+    id: string;
+    articleSlug: string;
+    articleTitle: string;
+    authorName: string;
+    content: string;
+    status: string;
+    createdAt: string;
+  }
+
+  interface ListResponse {
+    success: boolean;
+    data: any[];
+    meta: { total: number; page: number; pages: number };
+    error?: string;
+  }
+
+  const tabBtns = document.querySelectorAll('[data-admin-tab]');
+  const storiesPanel = document.getElementById('admin-panel-stories');
+  const commentsPanel = document.getElementById('admin-panel-comments');
+  const storySearch = document.getElementById('admin-story-search') as HTMLInputElement;
+  const storyStatus = document.getElementById('admin-story-status') as HTMLSelectElement;
+  const commentStatus = document.getElementById('admin-comment-status') as HTMLSelectElement;
+  const storyRows = document.getElementById('admin-story-rows');
+  const commentRows = document.getElementById('admin-comment-rows');
+  const storyPagination = document.getElementById('admin-story-pagination');
+  const commentPagination = document.getElementById('admin-comment-pagination');
+  const storyAlert = document.getElementById('admin-story-alert');
+  const commentAlert = document.getElementById('admin-comment-alert');
+
+  let storyPage = 1;
+  let commentPage = 1;
+  let activeTab = 'stories';
+  let storyDebounce: number | undefined;
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fmtDate(iso: string | null): string {
+    if (!iso) return '-';
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  const STATUS_BADGES: Record<string, string> = {
+    PUBLISHED: 'admin-badge--success',
+    DRAFT: '',
+    SCHEDULED: 'admin-badge--warning',
+    UNLISTED: 'admin-badge--danger',
+  };
+
+  const COMMENT_BADGES: Record<string, string> = {
+    pending: 'admin-badge--warning',
+    approved: 'admin-badge--success',
+    rejected: 'admin-badge--danger',
+    spam: 'admin-badge--danger',
+  };
+
+  function showAlert(el: HTMLElement | null, message: string, type: 'success' | 'error') {
+    if (!el) return;
+    el.textContent = message;
+    el.className = 'admin-alert admin-alert--' + type;
+    el.style.display = 'block';
+    setTimeout(() => {
+      el.style.display = 'none';
+    }, 4000);
+  }
+
+  function switchTab(tab: string) {
+    activeTab = tab;
+    tabBtns.forEach((btn) => {
+      const active = btn.getAttribute('data-admin-tab') === tab;
+      btn.classList.toggle('admin-tab--active', active);
+      btn.setAttribute('aria-selected', String(active));
+    });
+    if (storiesPanel) storiesPanel.hidden = tab !== 'stories';
+    if (commentsPanel) commentsPanel.hidden = tab !== 'comments';
+  }
+
+  async function loadStories(page = 1) {
+    if (!storyRows) return;
+    storyPage = page;
+    storyRows.innerHTML = '<tr><td colspan="6" class="admin-muted">Loading&hellip;</td></tr>';
+
+    const params = new URLSearchParams({ page: String(page), limit: '25' });
+    if (storySearch?.value.trim()) params.set('search', storySearch.value.trim());
+    if (storyStatus?.value) params.set('status', storyStatus.value);
+
+    try {
+      const res = await fetch('/api/admin/stories?' + params.toString());
+      const json: ListResponse = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+
+      if (!json.data.length) {
+        storyRows.innerHTML = '<tr><td colspan="6" class="admin-muted">No stories found.</td></tr>';
+      } else {
+        storyRows.innerHTML = json.data
+          .map((s: AdminStory) => {
+            const statusBadge =
+              '<span class="admin-badge ' +
+              (STATUS_BADGES[s.status] || '') +
+              '">' +
+              s.status.toLowerCase() +
+              '</span>';
+            return (
+              '<tr>' +
+              '<td>' +
+              '<a href="/p/' +
+              encodeURIComponent(s.slug) +
+              '" target="_blank" style="color:inherit;text-decoration:none;font-weight:500;">' +
+              escapeHtml(s.title) +
+              '</a>' +
+              '<div class="admin-muted" style="font-size:12px;">/' +
+              escapeHtml(s.slug) +
+              '</div>' +
+              '</td>' +
+              '<td>' +
+              escapeHtml(s.author?.name || 'Unknown') +
+              '</td>' +
+              '<td>' +
+              statusBadge +
+              '</td>' +
+              '<td class="admin-muted">' +
+              s.views +
+              '</td>' +
+              '<td class="admin-muted">' +
+              fmtDate(s.publishedAt) +
+              '</td>' +
+              '<td style="text-align:right;white-space:nowrap;">' +
+              '<select class="admin-select" data-story-action="status" data-id="' +
+              s.id +
+              '" data-current="' +
+              s.status +
+              '" style="margin-right:8px;">' +
+              '<option value="PUBLISHED" ' +
+              (s.status === 'PUBLISHED' ? 'selected' : '') +
+              '>Published</option>' +
+              '<option value="DRAFT" ' +
+              (s.status === 'DRAFT' ? 'selected' : '') +
+              '>Draft</option>' +
+              '<option value="SCHEDULED" ' +
+              (s.status === 'SCHEDULED' ? 'selected' : '') +
+              '>Scheduled</option>' +
+              '<option value="UNLISTED" ' +
+              (s.status === 'UNLISTED' ? 'selected' : '') +
+              '>Unlisted</option>' +
+              '</select>' +
+              '<button class="admin-btn admin-btn--danger admin-btn--sm" data-story-action="delete" data-id="' +
+              s.id +
+              '" data-title="' +
+              escapeHtml(s.title) +
+              '">Delete</button>' +
+              '</td>' +
+              '</tr>'
+            );
+          })
+          .join('');
+      }
+      renderPagination(storyPagination, json.meta.pages, storyPage, loadStories);
+    } catch (err: any) {
+      storyRows.innerHTML =
+        '<tr><td colspan="6" class="admin-muted">Failed to load stories.</td></tr>';
+      showAlert(storyAlert, err.message || 'Failed to load stories', 'error');
+    }
+  }
+
+  async function loadComments(page = 1) {
+    if (!commentRows) return;
+    commentPage = page;
+    commentRows.innerHTML = '<tr><td colspan="5" class="admin-muted">Loading&hellip;</td></tr>';
+
+    const params = new URLSearchParams({ page: String(page), limit: '25' });
+    if (commentStatus?.value) params.set('status', commentStatus.value);
+
+    try {
+      const res = await fetch('/api/admin/comments?' + params.toString());
+      const json: ListResponse = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+
+      if (!json.data.length) {
+        commentRows.innerHTML =
+          '<tr><td colspan="5" class="admin-muted">No comments found.</td></tr>';
+      } else {
+        commentRows.innerHTML = json.data
+          .map((c: AdminComment) => {
+            const statusBadge =
+              '<span class="admin-badge ' +
+              (COMMENT_BADGES[c.status] || '') +
+              '">' +
+              c.status +
+              '</span>';
+            const isPending = c.status === 'pending';
+            return (
+              '<tr>' +
+              '<td style="max-width:320px;">' +
+              '<div style="font-weight:500;">' +
+              escapeHtml(c.authorName) +
+              '</div>' +
+              '<div class="admin-muted" style="font-size:13px;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">' +
+              escapeHtml(c.content) +
+              '</div>' +
+              '</td>' +
+              '<td>' +
+              '<a href="/p/' +
+              encodeURIComponent(c.articleSlug) +
+              '" target="_blank" style="color:inherit;text-decoration:none;">' +
+              escapeHtml(c.articleTitle) +
+              '</a>' +
+              '</td>' +
+              '<td>' +
+              statusBadge +
+              '</td>' +
+              '<td class="admin-muted">' +
+              fmtDate(c.createdAt) +
+              '</td>' +
+              '<td style="text-align:right;white-space:nowrap;">' +
+              (isPending
+                ? '<button class="admin-btn admin-btn--sm" data-comment-action="approve" data-id="' +
+                  c.id +
+                  '">Approve</button> ' +
+                  '<button class="admin-btn admin-btn--secondary admin-btn--sm" data-comment-action="reject" data-id="' +
+                  c.id +
+                  '">Reject</button> '
+                : '') +
+              '<button class="admin-btn admin-btn--secondary admin-btn--sm" data-comment-action="spam" data-id="' +
+              c.id +
+              '">Spam</button> ' +
+              '<button class="admin-btn admin-btn--danger admin-btn--sm" data-comment-action="delete" data-id="' +
+              c.id +
+              '">Delete</button>' +
+              '</td>' +
+              '</tr>'
+            );
+          })
+          .join('');
+      }
+      renderPagination(commentPagination, json.meta.pages, commentPage, loadComments);
+    } catch (err: any) {
+      commentRows.innerHTML =
+        '<tr><td colspan="5" class="admin-muted">Failed to load comments.</td></tr>';
+      showAlert(commentAlert, err.message || 'Failed to load comments', 'error');
+    }
+  }
+
+  function renderPagination(
+    el: HTMLElement | null,
+    pages: number,
+    current: number,
+    loader: (page: number) => void
+  ) {
+    if (!el) return;
+    if (pages <= 1) {
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = 'flex';
+    const buttons = [];
+    for (let i = 1; i <= pages; i++) {
+      buttons.push(
+        '<button class="admin-btn admin-btn--secondary admin-btn--sm' +
+          (i === current ? ' admin-page-active' : '') +
+          '" data-content-page="' +
+          i +
+          '">' +
+          i +
+          '</button>'
+      );
+    }
+    el.innerHTML = buttons.join('');
+    el.querySelectorAll('[data-content-page]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        loader(Number((btn as HTMLButtonElement).dataset.contentPage));
+      });
+    });
+  }
+
+  function bindActions() {
+    document.querySelectorAll('[data-story-action="status"]').forEach((sel) => {
+      sel.addEventListener('change', async (e) => {
+        const el = e.target as HTMLSelectElement;
+        try {
+          const res = await fetch('/api/admin/stories', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: el.dataset.id, status: el.value }),
+          });
+          const json = await res.json();
+          if (!json.success) {
+            el.value = el.dataset.current || 'DRAFT';
+            showAlert(storyAlert, json.error || 'Failed to update story', 'error');
+          } else {
+            el.dataset.current = el.value;
+            showAlert(storyAlert, 'Story updated', 'success');
+            loadStories(storyPage);
+          }
+        } catch {
+          showAlert(storyAlert, 'Failed to update story', 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-story-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const el = e.currentTarget as HTMLButtonElement;
+        if (!window.confirm('Delete story "' + el.dataset.title + '"? This cannot be undone.'))
+          return;
+        try {
+          const res = await fetch('/api/admin/stories', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: el.dataset.id }),
+          });
+          const json = await res.json();
+          if (!json.success) {
+            showAlert(storyAlert, json.error || 'Failed to delete story', 'error');
+          } else {
+            showAlert(storyAlert, 'Story deleted', 'success');
+            loadStories(storyPage);
+          }
+        } catch {
+          showAlert(storyAlert, 'Failed to delete story', 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-comment-action]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const el = e.currentTarget as HTMLButtonElement;
+        const action = el.dataset.commentAction as string;
+        const statusMap: Record<string, string> = {
+          approve: 'approved',
+          reject: 'rejected',
+          spam: 'spam',
+        };
+
+        if (action === 'delete' && !window.confirm('Delete this comment?')) return;
+
+        try {
+          let res: Response;
+          if (action === 'delete') {
+            res = await fetch('/api/admin/comments', {
+              method: 'DELETE',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: el.dataset.id }),
+            });
+          } else {
+            res = await fetch('/api/admin/comments', {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: el.dataset.id, status: statusMap[action] }),
+            });
+          }
+          const json = await res.json();
+          if (!json.success) {
+            showAlert(commentAlert, json.error || 'Failed to update comment', 'error');
+          } else {
+            showAlert(commentAlert, 'Comment updated', 'success');
+            loadComments(commentPage);
+          }
+        } catch {
+          showAlert(commentAlert, 'Failed to update comment', 'error');
+        }
+      });
+    });
+  }
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => switchTab(btn.getAttribute('data-admin-tab') || 'stories'));
+  });
+
+  if (storySearch) {
+    storySearch.addEventListener('input', () => {
+      window.clearTimeout(storyDebounce);
+      storyDebounce = window.setTimeout(() => loadStories(1), 300);
+    });
+  }
+  if (storyStatus) storyStatus.addEventListener('change', () => loadStories(1));
+  if (commentStatus) commentStatus.addEventListener('change', () => loadComments(1));
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tab') === 'comments') switchTab('comments');
+
+  loadStories(1);
+  loadComments(1);
+</script>
+
+<style>
+  .admin-content-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-lg, 24px);
+  }
+
+  .admin-content-toolbar .admin-input {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .admin-pagination {
+    display: flex;
+    gap: 6px;
+    margin-top: var(--space-md, 16px);
+  }
+
+  .admin-page-active {
+    background: var(--color-primary, #181715) !important;
+    color: #fff !important;
+    border-color: var(--color-primary, #181715) !important;
+  }
+</style>

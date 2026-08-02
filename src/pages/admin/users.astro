@@ -1,0 +1,393 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createDatabase, type Env } from '../../db';
+import { User } from '../../db/schema';
+import { verifyAuthToken } from '../../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) throw new Error('Environment not configured');
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let isAdmin = false;
+let currentUserId = '';
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  if (payload?.role === 'ADMIN' && payload?.userId) {
+    const dbUser = await User.findById(payload.userId).lean();
+    isAdmin = !!dbUser && dbUser.role === 'ADMIN' && !dbUser.suspended;
+    currentUserId = payload.userId;
+  }
+}
+if (!isAdmin) return Astro.redirect('/dashboard');
+---
+
+<AdminLayout title="Manage Users - BigBlog" description="User management" activeNav="users">
+  <header class="admin-page-head">
+    <div>
+      <h1 class="admin-page-title">Users</h1>
+      <p class="admin-page-subtitle">Manage roles, suspensions, and accounts.</p>
+    </div>
+  </header>
+
+  <div class="admin-card admin-card--canvas">
+    <div class="admin-user-toolbar">
+      <input
+        type="search"
+        id="admin-user-search"
+        class="admin-input"
+        placeholder="Search by name or email…"
+        aria-label="Search users"
+      />
+      <select id="admin-user-role" class="admin-select" aria-label="Filter by role">
+        <option value="">All roles</option>
+        <option value="ADMIN">Admins</option>
+        <option value="AUTHOR">Authors</option>
+      </select>
+      <select id="admin-user-status" class="admin-select" aria-label="Filter by status">
+        <option value="">All statuses</option>
+        <option value="true">Suspended</option>
+        <option value="false">Active</option>
+      </select>
+    </div>
+
+    <div id="admin-user-alert" class="admin-alert" style="display: none;"></div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Stories</th>
+            <th>Joined</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="admin-user-rows">
+          <tr><td colspan="5" class="admin-muted">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="admin-pagination" id="admin-user-pagination" style="display: none;"></div>
+  </div>
+</AdminLayout>
+
+<script define:vars={{ currentUserId }}>
+  interface AdminUser {
+    id: string;
+    email: string;
+    name: string;
+    avatar: string;
+    role: 'ADMIN' | 'AUTHOR';
+    suspended: boolean;
+    storyCount: number;
+    createdAt: string;
+  }
+
+  interface ListResponse {
+    success: boolean;
+    data: AdminUser[];
+    meta: { total: number; page: number; pages: number };
+    error?: string;
+  }
+
+  const searchInput = document.getElementById('admin-user-search') as HTMLInputElement;
+  const roleSelect = document.getElementById('admin-user-role') as HTMLSelectElement;
+  const statusSelect = document.getElementById('admin-user-status') as HTMLSelectElement;
+  const rowsEl = document.getElementById('admin-user-rows');
+  const paginationEl = document.getElementById('admin-user-pagination');
+  const alertEl = document.getElementById('admin-user-alert');
+
+  let currentPage = 1;
+  let debounceTimer: number | undefined;
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function fmtDate(iso: string): string {
+    return new Date(iso).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+
+  function getInitials(name: string): string {
+    if (!name) return '?';
+    return name
+      .trim()
+      .split(/\s+/)
+      .map((p: string) => p[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+  }
+
+  function showAlert(message: string, type: 'success' | 'error') {
+    if (!alertEl) return;
+    alertEl.textContent = message;
+    alertEl.className = 'admin-alert admin-alert--' + type;
+    alertEl.style.display = 'block';
+    setTimeout(() => {
+      alertEl.style.display = 'none';
+    }, 4000);
+  }
+
+  async function loadUsers(page = 1) {
+    if (!rowsEl) return;
+    currentPage = page;
+    rowsEl.innerHTML = '<tr><td colspan="5" class="admin-muted">Loading&hellip;</td></tr>';
+
+    const params = new URLSearchParams({
+      page: String(page),
+      limit: '25',
+    });
+    if (searchInput?.value.trim()) params.set('search', searchInput.value.trim());
+    if (roleSelect?.value) params.set('role', roleSelect.value);
+    if (statusSelect?.value) params.set('suspended', statusSelect.value);
+
+    try {
+      const res = await fetch('/api/admin/users?' + params.toString());
+      const json: ListResponse = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+
+      if (!json.data.length) {
+        rowsEl.innerHTML = '<tr><td colspan="5" class="admin-muted">No users found.</td></tr>';
+      } else {
+        rowsEl.innerHTML = json.data
+          .map((u) => {
+            const avatar = u.avatar
+              ? '<img src="' + escapeHtml(u.avatar) + '" alt="" class="admin-avatar" />'
+              : '<span class="admin-avatar-fallback">' + getInitials(u.name || u.email) + '</span>';
+
+            const roleBadge =
+              u.role === 'ADMIN'
+                ? '<span class="admin-badge admin-badge--dark">Admin</span>'
+                : '<span class="admin-badge">Author</span>';
+
+            const statusBadge = u.suspended
+              ? '<span class="admin-badge admin-badge--danger">Suspended</span>'
+              : '<span class="admin-badge admin-badge--success">Active</span>';
+
+            const isSelf = u.id === currentUserId;
+
+            return (
+              '<tr>' +
+              '<td>' +
+              '<div style="display:flex;align-items:center;gap:10px;min-width:200px;">' +
+              avatar +
+              '<div>' +
+              '<div style="font-weight:500;">' +
+              escapeHtml(u.name || u.email) +
+              '</div>' +
+              '<div class="admin-muted" style="font-size:12px;">' +
+              escapeHtml(u.email) +
+              '</div>' +
+              '</div>' +
+              '</div>' +
+              '</td>' +
+              '<td>' +
+              roleBadge +
+              ' ' +
+              statusBadge +
+              '</td>' +
+              '<td class="admin-muted">' +
+              u.storyCount +
+              '</td>' +
+              '<td class="admin-muted">' +
+              fmtDate(u.createdAt) +
+              '</td>' +
+              '<td style="text-align:right;white-space:nowrap;">' +
+              '<select class="admin-select" data-action="role" data-id="' +
+              u.id +
+              '" data-current="' +
+              u.role +
+              '" style="margin-right:8px;">' +
+              '<option value="AUTHOR" ' +
+              (u.role === 'AUTHOR' ? 'selected' : '') +
+              '>Author</option>' +
+              '<option value="ADMIN" ' +
+              (u.role === 'ADMIN' ? 'selected' : '') +
+              '>Admin</option>' +
+              '</select>' +
+              '<button class="admin-toggle' +
+              (u.suspended ? ' admin-toggle--on' : '') +
+              '" data-action="suspend" data-id="' +
+              u.id +
+              '" data-state="' +
+              u.suspended +
+              '" title="' +
+              (u.suspended ? 'Unsuspend' : 'Suspend') +
+              '"' +
+              (isSelf ? ' disabled' : '') +
+              '></button>' +
+              '<button class="admin-btn admin-btn--danger admin-btn--sm" data-action="delete" data-id="' +
+              u.id +
+              '" data-name="' +
+              escapeHtml(u.name || u.email) +
+              '"' +
+              (isSelf ? ' disabled' : '') +
+              '>Delete</button>' +
+              '</td>' +
+              '</tr>'
+            );
+          })
+          .join('');
+      }
+
+      renderPagination(json.meta.pages);
+    } catch (err: any) {
+      rowsEl.innerHTML = '<tr><td colspan="5" class="admin-muted">Failed to load users.</td></tr>';
+      showAlert(err.message || 'Failed to load users', 'error');
+    }
+  }
+
+  function renderPagination(pages: number) {
+    if (!paginationEl) return;
+    if (pages <= 1) {
+      paginationEl.style.display = 'none';
+      return;
+    }
+    paginationEl.style.display = 'flex';
+    const buttons = [];
+    for (let i = 1; i <= pages; i++) {
+      buttons.push(
+        '<button class="admin-btn admin-btn--secondary admin-btn--sm' +
+          (i === currentPage ? ' admin-page-active' : '') +
+          '" data-page="' +
+          i +
+          '">' +
+          i +
+          '</button>'
+      );
+    }
+    paginationEl.innerHTML = buttons.join('');
+  }
+
+  function bindActions() {
+    document.querySelectorAll('[data-action="role"]').forEach((sel) => {
+      sel.addEventListener('change', async (e) => {
+        const el = e.target as HTMLSelectElement;
+        try {
+          const res = await fetch('/api/admin/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: el.dataset.id, action: 'role', value: el.value }),
+          });
+          const json = await res.json();
+          if (!json.success) {
+            el.value = el.dataset.current || 'AUTHOR';
+            showAlert(json.error || 'Failed to change role', 'error');
+          } else {
+            el.dataset.current = el.value;
+            showAlert('Role updated', 'success');
+            loadUsers(currentPage);
+          }
+        } catch {
+          showAlert('Failed to change role', 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-action="suspend"]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const el = e.currentTarget as HTMLButtonElement;
+        const next = el.dataset.state !== 'true';
+        try {
+          const res = await fetch('/api/admin/users', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: el.dataset.id, action: 'suspend', value: next }),
+          });
+          const json = await res.json();
+          if (!json.success) {
+            showAlert(json.error || 'Failed to update user', 'error');
+          } else {
+            showAlert(next ? 'User suspended' : 'User unsuspended', 'success');
+            loadUsers(currentPage);
+          }
+        } catch {
+          showAlert('Failed to update user', 'error');
+        }
+      });
+    });
+
+    document.querySelectorAll('[data-action="delete"]').forEach((btn) => {
+      btn.addEventListener('click', async (e) => {
+        const el = e.currentTarget as HTMLButtonElement;
+        if (
+          !window.confirm(
+            'Delete user "' + el.dataset.name + '"? Their stories will be removed too.'
+          )
+        )
+          return;
+        try {
+          const res = await fetch('/api/admin/users', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: el.dataset.id }),
+          });
+          const json = await res.json();
+          if (!json.success) {
+            showAlert(json.error || 'Failed to delete user', 'error');
+          } else {
+            showAlert('User deleted', 'success');
+            loadUsers(currentPage);
+          }
+        } catch {
+          showAlert('Failed to delete user', 'error');
+        }
+      });
+    });
+
+    paginationEl?.querySelectorAll('[data-page]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        loadUsers(Number((btn as HTMLButtonElement).dataset.page));
+      });
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(() => loadUsers(1), 300);
+    });
+  }
+  if (roleSelect) roleSelect.addEventListener('change', () => loadUsers(1));
+  if (statusSelect) statusSelect.addEventListener('change', () => loadUsers(1));
+
+  loadUsers(1);
+</script>
+
+<style>
+  .admin-user-toolbar {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: var(--space-lg, 24px);
+  }
+
+  .admin-user-toolbar .admin-input {
+    flex: 1;
+    min-width: 220px;
+  }
+
+  .admin-pagination {
+    display: flex;
+    gap: 6px;
+    margin-top: var(--space-md, 16px);
+  }
+
+  .admin-page-active {
+    background: var(--color-primary, #181715) !important;
+    color: #fff !important;
+    border-color: var(--color-primary, #181715) !important;
+  }
+</style>

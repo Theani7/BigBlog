@@ -1,0 +1,194 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createDatabase, type Env } from '../../db';
+import { User } from '../../db/schema';
+import { verifyAuthToken } from '../../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) throw new Error('Environment not configured');
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let isAdmin = false;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  if (payload?.role === 'ADMIN' && payload?.userId) {
+    const dbUser = await User.findById(payload.userId).lean();
+    isAdmin = !!dbUser && dbUser.role === 'ADMIN' && !dbUser.suspended;
+  }
+}
+if (!isAdmin) return Astro.redirect('/dashboard');
+---
+
+<AdminLayout title="Site Settings - BigBlog" description="Site configuration" activeNav="settings">
+  <header class="admin-page-head">
+    <div>
+      <h1 class="admin-page-title">Settings</h1>
+      <p class="admin-page-subtitle">Site-wide configuration applied immediately.</p>
+    </div>
+  </header>
+
+  <div id="admin-settings-alert" class="admin-alert" style="display: none;"></div>
+
+  <section class="admin-card admin-card--canvas">
+    <h2 class="admin-card-title">General</h2>
+    <p class="admin-card-subtitle">Identity and description shown across the site.</p>
+
+    <div class="admin-form-row">
+      <label for="settings-site-name">Site name</label>
+      <input type="text" id="settings-site-name" class="admin-input" maxlength="80" />
+      <span class="admin-hint">Shown in the site header and browser title.</span>
+    </div>
+
+    <div class="admin-form-row">
+      <label for="settings-site-tagline">Tagline</label>
+      <input type="text" id="settings-site-tagline" class="admin-input" maxlength="200" />
+      <span class="admin-hint">A short description of the site.</span>
+    </div>
+  </section>
+
+  <section class="admin-card admin-card--canvas">
+    <h2 class="admin-card-title">Access &amp; moderation</h2>
+    <p class="admin-card-subtitle">Registration, comments, and maintenance controls.</p>
+
+    <div class="admin-form-toggle-row">
+      <div>
+        <div class="admin-toggle-label">Allow registrations</div>
+        <div class="admin-toggle-hint">When off, the signup form is disabled.</div>
+      </div>
+      <button
+        type="button"
+        class="admin-toggle"
+        id="settings-toggle-registrations"
+        role="switch"
+        aria-checked="true"></button>
+    </div>
+
+    <div class="admin-form-toggle-row">
+      <div>
+        <div class="admin-toggle-label">Newsletter</div>
+        <div class="admin-toggle-hint">Enable the newsletter signup widget.</div>
+      </div>
+      <button
+        type="button"
+        class="admin-toggle admin-toggle--on"
+        id="settings-toggle-newsletter"
+        role="switch"
+        aria-checked="true"></button>
+    </div>
+
+    <div class="admin-form-row">
+      <label for="settings-comments">Comment moderation</label>
+      <select id="settings-comments" class="admin-select">
+        <option value="approved">Require approval</option>
+        <option value="none">Publish immediately</option>
+      </select>
+      <span class="admin-hint">Whether new comments need admin approval before appearing.</span>
+    </div>
+
+    <div class="admin-form-toggle-row">
+      <div>
+        <div class="admin-toggle-label">Maintenance mode</div>
+        <div class="admin-toggle-hint">Warn visitors the site is under maintenance.</div>
+      </div>
+      <button
+        type="button"
+        class="admin-toggle"
+        id="settings-toggle-maintenance"
+        role="switch"
+        aria-checked="false"></button>
+    </div>
+  </section>
+
+  <div>
+    <button type="button" class="admin-btn" id="settings-save-btn">Save settings</button>
+  </div>
+</AdminLayout>
+
+<script>
+  const nameInput = document.getElementById('settings-site-name') as HTMLInputElement;
+  const taglineInput = document.getElementById('settings-site-tagline') as HTMLInputElement;
+  const regToggle = document.getElementById('settings-toggle-registrations');
+  const newsToggle = document.getElementById('settings-toggle-newsletter');
+  const maintToggle = document.getElementById('settings-toggle-maintenance');
+  const commentsSelect = document.getElementById('settings-comments') as HTMLSelectElement;
+  const saveBtn = document.getElementById('settings-save-btn');
+  const alertEl = document.getElementById('admin-settings-alert');
+
+  function showAlert(message: string, type: 'success' | 'error') {
+    if (!alertEl) return;
+    alertEl.textContent = message;
+    alertEl.className = 'admin-alert admin-alert--' + type;
+    alertEl.style.display = 'block';
+    setTimeout(() => {
+      alertEl.style.display = 'none';
+    }, 4000);
+  }
+
+  function toggleValue(el: HTMLElement | null): boolean {
+    if (!el) return false;
+    const on = el.classList.toggle('admin-toggle--on');
+    el.setAttribute('aria-checked', String(on));
+    return on;
+  }
+
+  async function loadSettings() {
+    try {
+      const res = await fetch('/api/admin/settings');
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+
+      const s = json.data;
+      if (nameInput) nameInput.value = s.siteName || '';
+      if (taglineInput) taglineInput.value = s.siteTagline || '';
+
+      const setToggle = (el: HTMLElement | null, on: boolean) => {
+        if (!el) return;
+        el.classList.toggle('admin-toggle--on', on);
+        el.setAttribute('aria-checked', String(on));
+      };
+      setToggle(regToggle, !!s.allowRegistrations);
+      setToggle(newsToggle, !!s.newsletterEnabled);
+      setToggle(maintToggle, !!s.maintenanceMode);
+      if (commentsSelect) commentsSelect.value = s.commentsModeration || 'approved';
+    } catch (err: any) {
+      showAlert(err.message || 'Failed to load settings', 'error');
+    }
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener('click', async () => {
+      saveBtn.disabled = true;
+      try {
+        const payload = {
+          siteName: nameInput?.value || '',
+          siteTagline: taglineInput?.value || '',
+          allowRegistrations: !!regToggle?.classList.contains('admin-toggle--on'),
+          newsletterEnabled: !!newsToggle?.classList.contains('admin-toggle--on'),
+          commentsModeration: commentsSelect?.value || 'approved',
+          maintenanceMode: !!maintToggle?.classList.contains('admin-toggle--on'),
+        };
+        const res = await fetch('/api/admin/settings', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (!json.success) throw new Error(json.error || 'Failed to save');
+        showAlert('Settings saved', 'success');
+      } catch (err: any) {
+        showAlert(err.message || 'Failed to save settings', 'error');
+      } finally {
+        saveBtn.disabled = false;
+      }
+    });
+  }
+
+  loadSettings();
+</script>
+
+<style>
+  #settings-save-btn {
+    min-width: 140px;
+  }
+</style>

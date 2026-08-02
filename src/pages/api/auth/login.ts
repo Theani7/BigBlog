@@ -48,6 +48,17 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       });
     }
 
+    // Suspended accounts cannot sign in
+    if (user.suspended) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'This account has been suspended' }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     // Create session token
     const token = await signAuthToken(
       {

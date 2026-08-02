@@ -271,3 +271,43 @@ auditLogsSchema.index({ createdAt: 1 });
 
 export const auditLogs =
   mongoose.models.AuditLog || mongoose.model<any>('AuditLog', auditLogsSchema);
+
+// =============================================================================
+// SITE SETTINGS
+// Key/value store for site-wide admin configuration
+// =============================================================================
+const siteSettingsSchema = new Schema({
+  key: { type: String, required: true, unique: true },
+  value: { type: Schema.Types.Mixed, required: true },
+  updatedAt: { type: Date, default: Date.now },
+});
+
+export const siteSettings =
+  mongoose.models.SiteSetting || mongoose.model<any>('SiteSetting', siteSettingsSchema);
+
+export const DEFAULT_SETTINGS = {
+  siteName: 'BigBlog',
+  siteTagline: 'A home for long-form writing.',
+  allowRegistrations: true,
+  newsletterEnabled: true,
+  commentsModeration: 'approved',
+  maintenanceMode: false,
+} as const;
+
+export async function getSiteSettings(): Promise<Record<string, any>> {
+  const rows: any[] = await siteSettings.find().lean();
+  const stored: Record<string, any> = {};
+  for (const row of rows) stored[row.key] = row.value;
+  return { ...DEFAULT_SETTINGS, ...stored };
+}
+
+export async function setSiteSettings(entries: Record<string, any>): Promise<void> {
+  for (const [key, value] of Object.entries(entries)) {
+    if (!(key in DEFAULT_SETTINGS)) continue;
+    await siteSettings.findOneAndUpdate(
+      { key },
+      { key, value, updatedAt: new Date() },
+      { upsert: true }
+    );
+  }
+}

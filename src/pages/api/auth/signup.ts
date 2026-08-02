@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
-import { User } from '../../../db/schema';
+import { User, getSiteSettings } from '../../../db/schema';
 import { hashPassword, signAuthToken } from '../../../lib/auth';
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
@@ -29,6 +29,18 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     // Connect to database
     await createDatabase(env);
+
+    // Registrations can be disabled by an admin
+    const settings = await getSiteSettings();
+    if (!settings.allowRegistrations) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'New registrations are currently disabled' }),
+        {
+          status: 403,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ email: email.toLowerCase() });

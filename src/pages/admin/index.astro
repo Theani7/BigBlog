@@ -1,0 +1,233 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { createDatabase, type Env } from '../../db';
+import { User } from '../../db/schema';
+import { verifyAuthToken } from '../../lib/auth';
+
+const env = (Astro.locals as { env: Env }).env;
+if (!env) throw new Error('Environment not configured');
+await createDatabase(env);
+
+const token = Astro.cookies.get('auth_token')?.value;
+let isAdmin = false;
+if (token) {
+  const payload = await verifyAuthToken(token, env);
+  if (payload?.role === 'ADMIN' && payload?.userId) {
+    const dbUser = await User.findById(payload.userId).lean();
+    isAdmin = !!dbUser && dbUser.role === 'ADMIN' && !dbUser.suspended;
+  }
+}
+if (!isAdmin) return Astro.redirect('/dashboard');
+---
+
+<AdminLayout
+  title="Admin Overview - BigBlog"
+  description="Platform overview and moderation queue"
+  activeNav="overview"
+>
+  <header class="admin-page-head">
+    <div>
+      <h1 class="admin-page-title">Overview</h1>
+      <p class="admin-page-subtitle">Platform health, moderation queue, and recent issues.</p>
+    </div>
+    <a href="/admin/content" class="admin-btn admin-btn--secondary">Open moderation queue</a>
+  </header>
+
+  <div class="admin-stats-grid" id="admin-stat-grid" aria-busy="true">
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Users</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Stories</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Published</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Page views</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Views (7d)</div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-value">&hellip;</div><div class="admin-stat-label">Follows</div>
+    </div>
+  </div>
+
+  <section class="admin-card admin-card--canvas">
+    <h2 class="admin-card-title">Moderation queue</h2>
+    <p class="admin-card-subtitle">Comments awaiting review, and the latest platform errors.</p>
+
+    <div id="admin-pending-row" class="admin-inline-stat">
+      <span class="admin-muted">Pending comments</span>
+      <strong id="admin-pending-count">-</strong>
+      <a href="/admin/content?tab=comments" class="admin-btn admin-btn--secondary admin-btn--sm"
+        >Review</a
+      >
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Level</th>
+            <th>Message</th>
+            <th>Page</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody id="admin-error-rows">
+          <tr><td colspan="4" class="admin-muted">Loading&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+</AdminLayout>
+
+<script>
+  interface OverviewData {
+    counts: {
+      users: number;
+      authors: number;
+      stories: number;
+      published: number;
+      pendingComments: number;
+      follows: number;
+      totalViews: number;
+      views7d: number;
+    };
+    recentErrors: Array<{
+      id: string;
+      message: string;
+      page: string;
+      level: string;
+      resolved: boolean;
+      createdAt: string;
+    }>;
+  }
+
+  function fmt(n: number): string {
+    if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+    return String(n);
+  }
+
+  function fmtDate(iso: string): string {
+    const d = new Date(iso);
+    const diff = Date.now() - d.getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'just now';
+    if (mins < 60) return mins + 'm ago';
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return hours + 'h ago';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async function loadOverview() {
+    const grid = document.getElementById('admin-stat-grid');
+    const pendingCount = document.getElementById('admin-pending-count');
+    const errorRows = document.getElementById('admin-error-rows');
+
+    try {
+      const res = await fetch('/api/admin/overview');
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || 'Failed to load');
+
+      const data: OverviewData = json.data;
+      if (grid) grid.setAttribute('aria-busy', 'false');
+
+      const stats: Array<[string, string]> = [
+        [fmt(data.counts.users), 'Users'],
+        [fmt(data.counts.stories), 'Stories'],
+        [fmt(data.counts.published), 'Published'],
+        [fmt(data.counts.totalViews), 'Page views'],
+        [fmt(data.counts.views7d), 'Views (7d)'],
+        [fmt(data.counts.follows), 'Follows'],
+      ];
+      if (grid) {
+        grid.innerHTML = stats
+          .map(
+            (s) =>
+              '<div class="admin-stat"><div class="admin-stat-value">' +
+              s[0] +
+              '</div><div class="admin-stat-label">' +
+              s[1] +
+              '</div></div>'
+          )
+          .join('');
+      }
+
+      if (pendingCount) pendingCount.textContent = fmt(data.counts.pendingComments);
+
+      if (errorRows) {
+        if (!data.recentErrors.length) {
+          errorRows.innerHTML =
+            '<tr><td colspan="4" class="admin-muted">No errors recorded in the last 7 days.</td></tr>';
+        } else {
+          errorRows.innerHTML = data.recentErrors
+            .map((e) => {
+              const badge =
+                e.level === 'error'
+                  ? '<span class="admin-badge admin-badge--danger">error</span>'
+                  : '<span class="admin-badge admin-badge--warning">warning</span>';
+              return (
+                '<tr>' +
+                '<td>' +
+                badge +
+                '</td>' +
+                '<td>' +
+                escapeHtml(e.message.slice(0, 90)) +
+                '</td>' +
+                '<td class="admin-muted">' +
+                escapeHtml(e.page || '-') +
+                '</td>' +
+                '<td class="admin-muted">' +
+                fmtDate(e.createdAt) +
+                '</td>' +
+                '</tr>'
+              );
+            })
+            .join('');
+        }
+      }
+    } catch (err) {
+      if (errorRows) {
+        errorRows.innerHTML =
+          '<tr><td colspan="4" class="admin-muted">Failed to load data.</td></tr>';
+      }
+      console.error('Admin overview failed:', err);
+    }
+  }
+
+  loadOverview();
+</script>
+
+<style>
+  .admin-inline-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans, 'Inter', sans-serif);
+    font-size: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-hairline-soft, #ebe6df);
+    margin-bottom: var(--space-md, 16px);
+  }
+
+  .admin-inline-stat strong {
+    font-size: 16px;
+    color: var(--color-ink, #141413);
+  }
+
+  .admin-inline-stat a {
+    margin-left: auto;
+  }
+</style>
