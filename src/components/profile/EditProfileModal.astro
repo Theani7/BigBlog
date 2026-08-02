@@ -1,0 +1,520 @@
+---
+import X from 'lucide-astro/X';
+
+export interface Props {
+  user?: {
+    name?: string;
+    bio?: string;
+    avatar?: string;
+    pronouns?: string;
+    website?: string;
+    twitter?: string;
+    github?: string;
+    linkedin?: string;
+  };
+}
+
+const { user = {} } = Astro.props;
+---
+
+<div
+  id="edit-profile-modal"
+  class="edit-profile-modal-overlay"
+  hidden
+  aria-hidden="true"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="edit-profile-modal-title"
+>
+  <div class="edit-profile-modal-dialog">
+    <div class="edit-profile-modal-header">
+      <h2 id="edit-profile-modal-title" class="edit-profile-modal-title">Edit profile</h2>
+      <button
+        type="button"
+        id="edit-profile-modal-close"
+        class="edit-profile-modal-close"
+        aria-label="Close modal"
+      >
+        <X size={20} />
+      </button>
+    </div>
+
+    <form id="edit-profile-form" class="edit-profile-form" novalidate>
+      <div class="form-row form-row--two-col">
+        <div class="form-group">
+          <label for="edit-name">Full Name</label>
+          <input
+            type="text"
+            id="edit-name"
+            name="name"
+            value={user.name || ''}
+            placeholder="Your full name"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-pronouns">Pronouns</label>
+          <input
+            type="text"
+            id="edit-pronouns"
+            name="pronouns"
+            value={user.pronouns || ''}
+            placeholder="e.g. they/them"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="edit-avatar">Avatar URL</label>
+        <input
+          type="text"
+          id="edit-avatar"
+          name="avatar"
+          value={user.avatar || ''}
+          placeholder="https://example.com/avatar.jpg"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="edit-bio">Bio</label>
+        <textarea
+          id="edit-bio"
+          name="bio"
+          placeholder="Write a short bio..."
+          rows="3"
+          maxlength="280">{user.bio || ''}</textarea
+        >
+      </div>
+
+      <div class="form-section-title">Social Links</div>
+
+      <div class="form-row form-row--two-col">
+        <div class="form-group">
+          <label for="edit-website">Website</label>
+          <input
+            type="text"
+            id="edit-website"
+            name="website"
+            value={user.website || ''}
+            placeholder="https://yourwebsite.com"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-twitter">Twitter / X handle</label>
+          <input
+            type="text"
+            id="edit-twitter"
+            name="twitter"
+            value={user.twitter || ''}
+            placeholder="@username"
+          />
+        </div>
+      </div>
+
+      <div class="form-row form-row--two-col">
+        <div class="form-group">
+          <label for="edit-github">GitHub handle/URL</label>
+          <input
+            type="text"
+            id="edit-github"
+            name="github"
+            value={user.github || ''}
+            placeholder="username or link"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="edit-linkedin">LinkedIn URL</label>
+          <input
+            type="text"
+            id="edit-linkedin"
+            name="linkedin"
+            value={user.linkedin || ''}
+            placeholder="https://linkedin.com/in/username"
+          />
+        </div>
+      </div>
+
+      <div id="edit-profile-error" class="edit-profile-error" style="display: none;" role="alert">
+      </div>
+
+      <div class="edit-profile-actions">
+        <button type="button" id="edit-profile-cancel" class="btn-cancel">Cancel</button>
+        <button type="submit" id="edit-profile-submit" class="btn-save">
+          <span class="btn-text">Save changes</span>
+          <span id="edit-profile-spinner" class="spinner" style="display: none;"></span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function setupEditProfileModal() {
+    const modal = document.getElementById('edit-profile-modal') as HTMLElement | null;
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('edit-profile-modal-close');
+    const cancelBtn = document.getElementById('edit-profile-cancel');
+    const form = document.getElementById('edit-profile-form') as HTMLFormElement | null;
+    const errorEl = document.getElementById('edit-profile-error');
+    const submitBtn = document.getElementById('edit-profile-submit') as HTMLButtonElement | null;
+    const spinner = document.getElementById('edit-profile-spinner');
+    const nameInput = document.getElementById('edit-name') as HTMLInputElement | null;
+
+    function openModal() {
+      if (!modal) return;
+      modal.removeAttribute('hidden');
+      modal.setAttribute('aria-hidden', 'false');
+      modal.classList.add('is-open');
+      if (nameInput) nameInput.focus();
+    }
+
+    function closeModal() {
+      if (!modal) return;
+      modal.setAttribute('hidden', '');
+      modal.setAttribute('aria-hidden', 'true');
+      modal.classList.remove('is-open');
+      if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+      }
+    }
+
+    // Event Delegation / Global Triggers
+    document.addEventListener('click', (e) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+      const trigger = target.closest('[data-open-edit-profile], #open-edit-profile-btn');
+      if (trigger) {
+        e.preventDefault();
+        openModal();
+      }
+    });
+
+    window.addEventListener('open-edit-profile-modal', openModal);
+
+    closeBtn?.addEventListener('click', closeModal);
+    cancelBtn?.addEventListener('click', closeModal);
+
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.hasAttribute('hidden')) {
+        closeModal();
+      }
+    });
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!form) return;
+
+      if (errorEl) {
+        errorEl.style.display = 'none';
+        errorEl.textContent = '';
+      }
+
+      if (submitBtn) submitBtn.disabled = true;
+      if (spinner) spinner.style.display = 'inline-block';
+
+      const nameVal = (document.getElementById('edit-name') as HTMLInputElement)?.value || '';
+      const pronounsVal =
+        (document.getElementById('edit-pronouns') as HTMLInputElement)?.value || '';
+      const avatarVal = (document.getElementById('edit-avatar') as HTMLInputElement)?.value || '';
+      const bioVal = (document.getElementById('edit-bio') as HTMLTextAreaElement)?.value || '';
+      const websiteVal = (document.getElementById('edit-website') as HTMLInputElement)?.value || '';
+      const twitterVal = (document.getElementById('edit-twitter') as HTMLInputElement)?.value || '';
+      const githubVal = (document.getElementById('edit-github') as HTMLInputElement)?.value || '';
+      const linkedinVal =
+        (document.getElementById('edit-linkedin') as HTMLInputElement)?.value || '';
+
+      const bodyData = {
+        name: nameVal,
+        pronouns: pronounsVal,
+        avatar: avatarVal,
+        bio: bioVal,
+        website: websiteVal,
+        twitter: twitterVal,
+        github: githubVal,
+        linkedin: linkedinVal,
+      };
+
+      try {
+        const response = await fetch('/api/user/profile', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(bodyData),
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+          closeModal();
+          window.location.reload();
+        } else {
+          if (errorEl) {
+            errorEl.textContent = result.error || 'Failed to save changes. Please try again.';
+            errorEl.style.display = 'block';
+          }
+        }
+      } catch (err) {
+        if (errorEl) {
+          errorEl.textContent = 'An unexpected network error occurred. Please try again.';
+          errorEl.style.display = 'block';
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (spinner) spinner.style.display = 'none';
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', setupEditProfileModal);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupEditProfileModal);
+  } else {
+    setupEditProfileModal();
+  }
+</script>
+
+<style>
+  .edit-profile-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-modal-backdrop, 400);
+    background: rgba(24, 23, 21, 0.45);
+    backdrop-filter: blur(8px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--space-md);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--duration-normal) var(--ease-default);
+  }
+
+  .edit-profile-modal-overlay[hidden] {
+    display: none;
+  }
+
+  .edit-profile-modal-overlay.is-open {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .edit-profile-modal-dialog {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--bg-canvas);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    padding: var(--space-xl);
+    transform: translateY(16px);
+    transition: transform var(--duration-normal) var(--ease-default);
+  }
+
+  .edit-profile-modal-overlay.is-open .edit-profile-modal-dialog {
+    transform: translateY(0);
+  }
+
+  .edit-profile-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-sm);
+    border-bottom: 1px solid var(--color-hairline);
+  }
+
+  .edit-profile-modal-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-title-lg);
+    font-weight: 600;
+    color: var(--color-ink);
+    margin: 0;
+  }
+
+  .edit-profile-modal-close {
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+      color var(--duration-fast),
+      background-color var(--duration-fast);
+  }
+
+  .edit-profile-modal-close:hover {
+    color: var(--color-ink);
+    background-color: var(--bg-surface-soft);
+  }
+
+  .edit-profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .form-row--two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md);
+  }
+
+  @media (max-width: 540px) {
+    .form-row--two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-group label {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    padding: 10px 14px;
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-ink);
+    transition:
+      border-color var(--duration-fast),
+      box-shadow var(--duration-fast);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 2px rgba(24, 23, 21, 0.08);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .form-section-title {
+    font-family: var(--font-sans);
+    font-size: var(--text-caption-uppercase);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+    margin-top: var(--space-xs);
+    padding-top: var(--space-xs);
+    border-top: 1px dashed var(--color-hairline);
+  }
+
+  .edit-profile-error {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    color: var(--color-error);
+    background: rgba(198, 69, 69, 0.08);
+    border: 1px solid rgba(198, 69, 69, 0.2);
+    border-radius: var(--radius-md);
+    padding: 10px 14px;
+  }
+
+  .edit-profile-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: var(--space-sm);
+    padding-top: var(--space-sm);
+  }
+
+  .btn-cancel {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: var(--radius-pill);
+    background: transparent;
+    color: var(--color-body);
+    border: 1px solid var(--color-hairline);
+    cursor: pointer;
+    transition:
+      background-color var(--duration-fast),
+      color var(--duration-fast);
+  }
+
+  .btn-cancel:hover {
+    background-color: var(--bg-surface-soft);
+    color: var(--color-ink);
+  }
+
+  .btn-save {
+    font-family: var(--font-sans);
+    font-size: var(--text-body-sm);
+    font-weight: 500;
+    padding: 10px 24px;
+    border-radius: var(--radius-pill);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition:
+      opacity var(--duration-fast),
+      transform var(--duration-fast);
+  }
+
+  .btn-save:hover {
+    opacity: 0.9;
+  }
+
+  .btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+</style>
