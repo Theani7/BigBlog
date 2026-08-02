@@ -241,6 +241,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     --bg-surface-card: #efe9de;
     --bg-surface-soft: #f5f0e8;
     --color-hairline: #e6dfd8;
+    --color-ink: #141413;
     --color-primary: #181715;
     --color-accent-teal: #5db8a6;
     --color-accent-amber: #e8a55a;
@@ -251,11 +252,11 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
   /* Typography Utilities */
   .stats-title {
     font-family: var(--font-serif);
-    font-size: 36px;
+    font-size: 48px;
     line-height: 48px;
     letter-spacing: -1px;
     font-weight: 400;
-    color: var(--color-primary);
+    color: var(--color-ink);
     margin: 0;
   }
 
@@ -264,7 +265,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-size: 36px;
     line-height: 48px;
     font-weight: 400;
-    color: var(--color-primary);
+    color: var(--color-ink);
     margin: 0;
   }
 
@@ -272,7 +273,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-family: var(--font-serif);
     font-size: 18px;
     font-weight: 400;
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   .caption-uppercase {
@@ -281,7 +282,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-weight: 500;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: var(--color-primary);
+    color: var(--color-ink);
     margin: 0;
   }
 
@@ -317,7 +318,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     appearance: none;
     background-color: var(--bg-canvas);
     border: 1px solid var(--color-hairline);
-    color: #141413;
+    color: var(--color-ink);
     padding: 8px 32px 8px 16px;
     border-radius: 4px;
     font-family: var(--font-sans);
@@ -424,7 +425,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-family: var(--font-sans);
     font-size: 12px;
     font-weight: 500;
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   .legend-dot {
@@ -517,7 +518,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     padding-top: 12px;
     font-family: var(--font-sans);
     font-size: 12px;
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   /* Table Section */
@@ -548,7 +549,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
   .stats-table td {
     padding: 16px 24px;
     border-bottom: 1px solid var(--color-hairline);
-    color: var(--color-primary);
+    color: var(--color-ink);
     vertical-align: middle;
   }
 
@@ -581,7 +582,7 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 14px;
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   .status-badge {
@@ -592,13 +593,13 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     padding: 2px 8px;
     border-radius: 12px;
     background: var(--color-hairline);
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   .post-date {
     font-family: var(--font-sans);
     font-size: 12px;
-    color: var(--color-primary);
+    color: var(--color-ink);
     opacity: 0.7;
   }
 
@@ -622,14 +623,14 @@ const maxViews = Math.max(...postStats.map((s) => s.views), 100);
     font-size: 12px;
     padding: 4px 12px;
     border-radius: 12px;
-    color: var(--color-primary);
+    color: var(--color-ink);
   }
 
   .empty-state {
     text-align: center;
     padding: 48px !important;
     font-family: var(--font-sans);
-    color: var(--color-primary);
+    color: var(--color-ink);
     opacity: 0.7;
   }
 

@@ -141,8 +141,8 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     align-items: flex-start;
     justify-content: space-between;
     padding: 32px;
-    background: #efe9de;
-    border: 1px solid #e6dfd8;
+    background: var(--bg-surface-card);
+    border: 1px solid var(--color-hairline);
     border-radius: 12px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
@@ -168,7 +168,7 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .story-title a {
-    color: #141413;
+    color: var(--color-ink);
     text-decoration: none;
     transition: color 0.2s ease;
   }
@@ -202,11 +202,11 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .meta-item.badge {
-    background: #faf9f5;
+    background: var(--bg-canvas);
     padding: 4px 12px;
     border-radius: 9999px;
     font-weight: 500;
-    color: #141413;
+    color: var(--color-ink);
     text-transform: uppercase;
     font-size: 12px;
     letter-spacing: 1.5px;
@@ -239,13 +239,13 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .action-btn:hover {
-    color: #141413;
-    background: #e8e0d2;
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .action-btn.delete:hover {
     color: #c64545;
-    background: #faf9f5;
+    background: var(--bg-canvas);
   }
 
   .story-options {
@@ -263,8 +263,8 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
   }
 
   .story-options:hover {
-    color: #141413;
-    background: #e8e0d2;
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .stories-empty-state {
@@ -274,8 +274,8 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     justify-content: center;
     text-align: center;
     padding: 64px 32px;
-    background: #faf9f5;
-    border: 1px solid #e6dfd8;
+    background: var(--bg-canvas);
+    border: 1px solid var(--color-hairline);
     border-radius: 12px;
     margin-top: 32px;
   }
@@ -287,15 +287,15 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     width: 64px;
     height: 64px;
     background: transparent;
-    color: #141413;
+    color: var(--color-ink);
     margin-bottom: 24px;
   }
 
   .empty-title {
-    font-family: 'Copernicus', 'Tiempos Headline', serif;
+    font-family: var(--font-serif);
     font-size: 28px;
     font-weight: 400;
-    color: #141413;
+    color: var(--color-ink);
     margin: 0 0 12px 0;
     letter-spacing: -0.3px;
     line-height: 1.2;
@@ -316,7 +316,7 @@ const { stories, emptyText = 'No stories yet' } = Astro.props;
     font-size: 14px;
     font-weight: 500;
     color: #ffffff;
-    background: #181715;
+    background: var(--color-primary);
     border-radius: 8px;
     padding: 0 20px;
     height: 40px;

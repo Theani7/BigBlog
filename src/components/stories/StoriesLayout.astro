@@ -72,7 +72,7 @@ const tabs = [
     min-height: calc(100vh - var(--header-height));
     max-width: 100%;
     margin: 0 auto;
-    background-color: #faf9f5;
+    background-color: var(--bg-canvas);
   }
 
   .stories-feed {
@@ -92,10 +92,10 @@ const tabs = [
   }
 
   .stories-title {
-    font-family: 'Copernicus', 'Tiempos Headline', serif;
+    font-family: var(--font-serif);
     font-size: 48px;
     font-weight: 400;
-    color: #141413;
+    color: var(--color-ink);
     margin: 0;
     letter-spacing: -1px;
     line-height: 1.1;
@@ -111,9 +111,9 @@ const tabs = [
     font-family: 'StyreneB', 'Inter', sans-serif;
     font-size: 14px;
     font-weight: 500;
-    color: #141413;
-    background: #faf9f5;
-    border: 1px solid #e6dfd8;
+    color: var(--color-ink);
+    background: var(--bg-canvas);
+    border: 1px solid var(--color-hairline);
     border-radius: 8px;
     padding: 0 20px;
     height: 40px;
@@ -126,7 +126,7 @@ const tabs = [
   }
 
   .btn-import:hover {
-    background: #efe9de;
+    background: var(--bg-surface-card);
   }
 
   .btn-write {
@@ -134,7 +134,7 @@ const tabs = [
     font-size: 14px;
     font-weight: 500;
     color: #ffffff;
-    background: #181715;
+    background: var(--color-primary);
     border: none;
     border-radius: 8px;
     padding: 0 20px;
@@ -156,7 +156,7 @@ const tabs = [
     display: flex;
     align-items: center;
     gap: 12px;
-    border-bottom: 1px solid #e6dfd8;
+    border-bottom: 1px solid var(--color-hairline);
     padding-bottom: 12px;
   }
 
@@ -167,8 +167,8 @@ const tabs = [
     line-height: 1.4;
     color: #6c6a64;
     text-decoration: none;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-pill);
     position: relative;
     transition: all 0.2s ease;
     display: flex;
@@ -178,18 +178,18 @@ const tabs = [
   }
 
   .stories-tab:hover {
-    color: #141413;
-    background: #f5f0e8;
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .stories-tab--active {
-    color: #141413;
-    background: #efe9de;
+    color: var(--color-ink);
+    background: var(--bg-surface-soft);
   }
 
   .tab-badge {
-    background: #efe9de;
-    color: #141413;
+    background: var(--bg-surface-card);
+    color: var(--color-ink);
     font-size: 12px;
     font-weight: 500;
     padding: 4px 12px;
@@ -200,13 +200,13 @@ const tabs = [
   }
 
   .stories-tab--active .tab-badge {
-    background: #e8e0d2;
+    background: var(--color-hairline);
   }
 
   .stories-tab-divider {
     height: 20px;
     width: 1px;
-    background: #e6dfd8;
+    background: var(--color-hairline);
     margin: 0 12px;
   }
 
