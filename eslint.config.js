@@ -47,6 +47,7 @@ export default [
         HTMLMetaElement: 'readonly',
         HTMLButtonElement: 'readonly',
         HTMLElement: 'readonly',
+        HTMLInputElement: 'readonly',
         HTMLFormElement: 'readonly',
         HTMLTextAreaElement: 'readonly',
         HTMLAnchorElement: 'readonly',

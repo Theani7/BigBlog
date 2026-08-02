@@ -22,7 +22,7 @@ const blog = defineCollection({
     tags: z.array(z.string()).min(1, 'At least one tag is required'),
     series: z.string().optional(),
     seriesOrder: z.number().int().positive().optional(),
-    canonical: z.string().url().optional(),
+    canonical: z.url().optional(),
     ogImage: z.string().optional(),
     readingTime: z.string().optional(),
     toc: z.boolean().default(true),
@@ -42,7 +42,7 @@ const authors = defineCollection({
     twitter: z.string().optional(),
     github: z.string().optional(),
     linkedin: z.string().optional(),
-    website: z.string().url().optional(),
+    website: z.url().optional(),
   }),
 });
 
@@ -84,7 +84,7 @@ const pages = defineCollection({
     coverWidth: z.number().int().positive().optional(),
     coverHeight: z.number().int().positive().optional(),
     coverCredit: z.string().optional(),
-    canonical: z.string().url().optional(),
+    canonical: z.url().optional(),
     ogImage: z.string().optional(),
     keywords: z.array(z.string()).optional(),
     language: z.string().default('en'),

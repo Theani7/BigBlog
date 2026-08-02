@@ -439,7 +439,7 @@ document.addEventListener('astro:page-load', () => {
 
       if (data.data.status === 'approved') {
         if (parentId) {
-          const parentEl = findCommentEl(parentId)?.querySelector('.comment-replies');
+          const parentEl = findCommentEl(parentId)?.querySelector<HTMLElement>('.comment-replies');
           if (parentEl) {
             parentEl.insertAdjacentHTML('beforeend', buildCommentHtml(data.data, true));
             parentEl.style.display = '';
@@ -750,7 +750,7 @@ document.addEventListener('astro:page-load', () => {
     if (postContent) {
       const observer = new IntersectionObserver(
         async (entries) => {
-          if (entries[0].isIntersecting && !readTracked) {
+          if (entries[0]?.isIntersecting && !readTracked) {
             readTracked = true;
             try {
               await fetch('/api/reading-history', {
