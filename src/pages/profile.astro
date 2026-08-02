@@ -4,7 +4,7 @@ import Sidebar from '../components/dashboard/Sidebar.astro';
 import EditProfileModal from '../components/profile/EditProfileModal.astro';
 
 import { createDatabase, type Env } from '../db';
-import { User, Story, Repost, comments, authorFollows } from '../db/schema';
+import { User, Story, Repost, comments, authorFollows, articleBookmarks } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
 import { formatCompactNumber } from '../lib/formatters';
 
@@ -57,6 +57,7 @@ const publishedStories = await Story.find({ authorId: userId, status: 'PUBLISHED
   createdAt: -1,
 });
 const storyCount = publishedStories.length;
+const totalViews = publishedStories.reduce((acc: number, s: any) => acc + (s.views || 0), 0);
 
 const reposts = await Repost.find({ userId }).populate({
   path: 'storyId',
@@ -65,43 +66,25 @@ const reposts = await Repost.find({ userId }).populate({
 
 const userComments = await comments.find({ userId }).lean();
 
-interface ActivityItem {
-  type: 'PUBLISHED_STORY' | 'REPOSTED_STORY' | 'COMMENTED';
-  title: string;
-  detail?: string;
-  slug?: string;
-  createdAt: Date;
+const sessionId = Astro.cookies.get('bb_session')?.value;
+let savedStories: any[] = [];
+if (sessionId) {
+  try {
+    const bookmarks = await articleBookmarks.find({ sessionId }).sort({ createdAt: -1 }).lean();
+    if (bookmarks.length) {
+      const slugs = bookmarks.map((b: any) => b.articleSlug);
+      const stories = await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
+        .populate('authorId', 'name avatar')
+        .lean();
+      const storyBySlug = new Map(stories.map((s: any) => [s.slug, s]));
+      savedStories = bookmarks
+        .map((b: any) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
+        .filter((s: any) => s.title);
+    }
+  } catch (err) {
+    console.error('Failed to load saved stories:', err);
+  }
 }
-
-const storyActivities: ActivityItem[] = publishedStories.map((story: any) => ({
-  type: 'PUBLISHED_STORY',
-  title: story.title,
-  slug: story.slug,
-  createdAt: story.publishedAt || story.createdAt,
-}));
-
-const repostActivities: ActivityItem[] = reposts
-  .filter((r: any) => r.storyId && (r.storyId as any).title)
-  .map((r: any) => ({
-    type: 'REPOSTED_STORY',
-    title: (r.storyId as any).title,
-    slug: (r.storyId as any).slug,
-    createdAt: r.createdAt,
-  }));
-
-const commentActivities: ActivityItem[] = userComments.map((c: any) => ({
-  type: 'COMMENTED',
-  title: `Commented on article (${c.articleSlug})`,
-  detail: c.content?.length > 80 ? c.content.slice(0, 80) + '...' : c.content,
-  slug: c.articleSlug,
-  createdAt: c.createdAt,
-}));
-
-const activities: ActivityItem[] = [
-  ...storyActivities,
-  ...repostActivities,
-  ...commentActivities,
-].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 ---
 
 <Layout title="Profile - BigBlog">
@@ -309,74 +292,81 @@ const activities: ActivityItem[] = [
         </div>
       </div>
 
-      <nav class="profile-tabs">
-        <button type="button" class="profile-tab profile-tab--active" data-tab="home">Home</button>
-        <button type="button" class="profile-tab" data-tab="reposts">Reposts</button>
-        <button type="button" class="profile-tab" data-tab="activity">Activity</button>
-        <button type="button" class="profile-tab" data-tab="about">About</button>
+      <!-- Instagram Workspace Tabs Bar -->
+      <nav class="profile-tabs instagram-tabs">
+        <button type="button" class="profile-tab active profile-tab--active" data-tab="posts">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="3" y1="9" x2="21" y2="9"></line>
+            <line x1="9" y1="21" x2="9" y2="9"></line>
+          </svg>
+          <span>Posts</span>
+        </button>
+        <button type="button" class="profile-tab" data-tab="edit">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span>Edit Profile</span>
+        </button>
+        <button type="button" class="profile-tab" data-tab="saved">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Saved</span>
+        </button>
+        <button type="button" class="profile-tab" data-tab="stats">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Stats</span>
+        </button>
       </nav>
 
       <div class="profile-content">
-        <!-- Home Panel -->
-        <div id="tab-panel-home" class="tab-panel">
-          <!-- Reading List Card matching the screenshot -->
-          <div class="reading-list-card">
-            <div class="reading-list-info">
-              <div class="reading-list-author">
-                <img src={user.avatar} alt={user.name} class="reading-list-avatar" />
-                <span>{user.name}</span>
-              </div>
-              <h2 class="reading-list-title">Reading list</h2>
-              <div class="reading-list-meta">
-                <span>{storyCount} stor{storyCount === 1 ? 'y' : 'ies'}</span>
-                <svg
-                  class="lock-icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                </svg>
-                <button class="reading-list-more" aria-label="More options">
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <circle cx="12" cy="12" r="1"></circle>
-                    <circle cx="19" cy="12" r="1"></circle>
-                    <circle cx="5" cy="12" r="1"></circle>
-                  </svg>
-                </button>
-              </div>
-            </div>
-            <div class="reading-list-thumbnails">
-              <div
-                class="reading-list-thumb"
-                style="background-image: url('https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=400');"
-              >
-              </div>
-              <div class="reading-list-thumb placeholder"></div>
-              <div class="reading-list-thumb placeholder"></div>
-            </div>
-          </div>
-
-          <!-- Published Stories Section -->
+        <!-- 1. Posts Panel (data-tab="posts") -->
+        <div id="tab-panel-posts" class="tab-content tab-content-posts tab-panel active">
           {
-            publishedStories.length > 0 && (
+            publishedStories.length > 0 ? (
               <div class="published-stories-section">
-                <h3 class="section-title">Published Stories</h3>
                 <div class="story-card-list">
                   {publishedStories.map((story) => (
                     <article class="story-card">
@@ -404,346 +394,231 @@ const activities: ActivityItem[] = [
                   ))}
                 </div>
               </div>
-            )
-          }
-        </div>
-
-        <!-- Reposts Panel -->
-        <div id="tab-panel-reposts" class="tab-panel" hidden>
-          {
-            reposts.length > 0 ? (
-              <div class="reposts-list">
-                {reposts.map((repost: any) => {
-                  const story = repost.storyId;
-                  if (!story) return null;
-                  const author = story.authorId;
-                  return (
-                    <article class="story-card">
-                      <div class="story-card-content">
-                        <div class="repost-header">
-                          <svg
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                          >
-                            <path d="M17 1l4 4-4 4" />
-                            <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                            <path d="M7 23l-4-4 4-4" />
-                            <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                          </svg>
-                          <span>Reposted by {user.name}</span>
-                        </div>
-                        {author && (
-                          <div class="story-author-row">
-                            <img
-                              src={author.avatar || 'https://i.pravatar.cc/150?img=11'}
-                              class="author-avatar-sm"
-                              alt={author.name}
-                            />
-                            <span class="author-name-sm">{author.name || 'Anonymous'}</span>
-                          </div>
-                        )}
-                        <h4 class="story-card-title">
-                          <a href={`/p/${story.slug}`}>{story.title}</a>
-                        </h4>
-                        <p class="story-card-excerpt">
-                          {story.content
-                            ? story.content.replace(/<[^>]+>/g, '').slice(0, 140) + '...'
-                            : ''}
-                        </p>
-                        <div class="story-card-meta">
-                          <span>
-                            Reposted on{' '}
-                            {new Date(repost.createdAt).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              year: 'numeric',
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
             ) : (
               <div class="empty-state">
-                <p class="empty-state-title">No reposted stories yet</p>
+                <p class="empty-state-title">No published posts yet</p>
                 <p class="empty-state-subtitle">
-                  Stories you repost will appear here on your profile.
+                  Share your stories with the world to see them listed here.
                 </p>
               </div>
             )
           }
         </div>
 
-        <!-- Activity Panel -->
-        <div id="tab-panel-activity" class="tab-panel" hidden>
+        <!-- 2. Dedicated In-Page Edit Profile Panel (data-tab="edit") -->
+        <div id="tab-panel-edit" class="tab-content tab-content-edit tab-panel" hidden>
+          <div class="inpage-edit-profile-card">
+            <div class="inpage-edit-header">
+              <h2 class="inpage-edit-title">Edit Profile</h2>
+              <p class="inpage-edit-subtitle">
+                Update your personal profile information and social presence.
+              </p>
+            </div>
+
+            <form id="inpage-edit-profile-form" class="inpage-edit-form" novalidate>
+              <div class="form-row form-row--two-col">
+                <div class="form-group">
+                  <label for="inpage-name">Full Name <span class="required-star">*</span></label>
+                  <input
+                    type="text"
+                    id="inpage-name"
+                    name="name"
+                    value={user.name}
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="inpage-pronouns">Pronouns</label>
+                  <input
+                    type="text"
+                    id="inpage-pronouns"
+                    name="pronouns"
+                    value={user.pronouns}
+                    placeholder="e.g. they/them"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="inpage-avatar">Avatar URL</label>
+                <div class="avatar-input-preview-group">
+                  <div class="avatar-preview-box">
+                    <img
+                      id="inpage-avatar-preview"
+                      src={user.avatar || 'https://i.pravatar.cc/150'}
+                      alt="Avatar preview"
+                      class="avatar-preview-img"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    id="inpage-avatar"
+                    name="avatar"
+                    value={user.avatar}
+                    placeholder="https://example.com/avatar.jpg"
+                    class="avatar-url-input"
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="inpage-bio">Bio</label>
+                <textarea
+                  id="inpage-bio"
+                  name="bio"
+                  placeholder="Write a short bio..."
+                  rows="3"
+                  maxlength="280">{user.bio}</textarea
+                >
+                <span class="field-hint">Maximum 280 characters.</span>
+              </div>
+
+              <div class="form-section-title">Social Links</div>
+
+              <div class="form-row form-row--two-col">
+                <div class="form-group">
+                  <label for="inpage-website">Website</label>
+                  <input
+                    type="text"
+                    id="inpage-website"
+                    name="website"
+                    value={user.website}
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="inpage-twitter">Twitter / X handle</label>
+                  <input
+                    type="text"
+                    id="inpage-twitter"
+                    name="twitter"
+                    value={user.twitter}
+                    placeholder="@username"
+                  />
+                </div>
+              </div>
+
+              <div class="form-row form-row--two-col">
+                <div class="form-group">
+                  <label for="inpage-github">GitHub handle/link</label>
+                  <input
+                    type="text"
+                    id="inpage-github"
+                    name="github"
+                    value={user.github}
+                    placeholder="username or link"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="inpage-linkedin">LinkedIn link</label>
+                  <input
+                    type="text"
+                    id="inpage-linkedin"
+                    name="linkedin"
+                    value={user.linkedin}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+              </div>
+
+              <div id="inpage-edit-alert" class="alert-message" style="display: none;" role="alert">
+              </div>
+
+              <div class="inpage-form-actions">
+                <button type="submit" id="inpage-edit-submit" class="btn-save">
+                  <span class="btn-text">Save changes</span>
+                  <span id="inpage-edit-spinner" class="spinner" style="display: none;"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- 3. Saved Panel (data-tab="saved") -->
+        <div id="tab-panel-saved" class="tab-content tab-content-saved tab-panel" hidden>
           {
-            activities.length > 0 ? (
-              <div class="activity-timeline">
-                {activities.map((item) => (
-                  <div class="activity-item">
-                    <div class="activity-icon">
-                      {item.type === 'PUBLISHED_STORY' && (
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-                        </svg>
+            savedStories.length > 0 ? (
+              <div class="story-card-list">
+                {savedStories.map((story) => (
+                  <article class="story-card">
+                    <div class="story-card-content">
+                      {story.authorId && (
+                        <div class="story-author-row">
+                          <img
+                            src={story.authorId.avatar || 'https://i.pravatar.cc/150'}
+                            class="author-avatar-sm"
+                            alt={story.authorId.name}
+                          />
+                          <span class="author-name-sm">{story.authorId.name || 'Anonymous'}</span>
+                        </div>
                       )}
-                      {item.type === 'REPOSTED_STORY' && (
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M17 1l4 4-4 4" />
-                          <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                          <path d="M7 23l-4-4 4-4" />
-                          <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-                        </svg>
-                      )}
-                      {item.type === 'COMMENTED' && (
-                        <svg
-                          width="16"
-                          height="16"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div class="activity-body">
-                      <div class="activity-header">
-                        <span class="activity-type">
-                          {item.type === 'PUBLISHED_STORY' && 'Published a story'}
-                          {item.type === 'REPOSTED_STORY' && 'Reposted a story'}
-                          {item.type === 'COMMENTED' && 'Left a comment'}
-                        </span>
-                        <span class="activity-date">
-                          {new Date(item.createdAt).toLocaleDateString('en-US', {
+                      <h4 class="story-card-title">
+                        <a href={`/p/${story.slug}`}>{story.title}</a>
+                      </h4>
+                      <p class="story-card-excerpt">
+                        {story.content
+                          ? story.content.replace(/<[^>]+>/g, '').slice(0, 140) + '...'
+                          : ''}
+                      </p>
+                      <div class="story-card-meta">
+                        <span>
+                          Saved on{' '}
+                          {new Date(story.savedAt).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
                             year: 'numeric',
                           })}
                         </span>
                       </div>
-                      <div class="activity-title">
-                        {item.slug ? (
-                          <a href={`/p/${item.slug}`}>{item.title}</a>
-                        ) : (
-                          <span>{item.title}</span>
-                        )}
-                      </div>
-                      {item.detail && <p class="activity-detail">{item.detail}</p>}
                     </div>
-                  </div>
+                  </article>
                 ))}
               </div>
             ) : (
               <div class="empty-state">
-                <p class="empty-state-title">No recent activity</p>
+                <p class="empty-state-title">No saved stories yet</p>
                 <p class="empty-state-subtitle">
-                  Your story publications, reposts, and comments will show up here.
+                  Articles you bookmark while reading will appear here.
                 </p>
               </div>
             )
           }
         </div>
 
-        <!-- About Panel -->
-        <div id="tab-panel-about" class="tab-panel" hidden>
-          <div class="about-card">
-            {
-              user.bio ? (
-                <div class="about-section">
-                  <h3 class="about-subtitle">Bio</h3>
-                  <p class="about-bio">{user.bio}</p>
-                </div>
-              ) : (
-                <div class="about-section">
-                  <p class="about-bio placeholder-text">No bio added yet.</p>
-                </div>
-              )
-            }
-
-            {
-              user.pronouns && (
-                <div class="about-section">
-                  <h3 class="about-subtitle">Pronouns</h3>
-                  <p class="about-text">{user.pronouns}</p>
-                </div>
-              )
-            }
-
-            <div class="about-section">
-              <h3 class="about-subtitle">Member Info</h3>
-              <p class="about-text">
-                Joined {
-                  new Date(user.createdAt).toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric',
-                  })
-                }
-              </p>
-            </div>
-
-            <div class="about-section">
-              <h3 class="about-subtitle">Story Statistics</h3>
-              <div class="about-stats-grid">
-                <div class="stat-box">
-                  <span class="stat-number">{storyCount}</span>
-                  <span class="stat-label">Published Stories</span>
-                </div>
-                <div class="stat-box">
-                  <span class="stat-number">{reposts.length}</span>
-                  <span class="stat-label">Reposted Stories</span>
-                </div>
+        <!-- 4. Stats Panel (data-tab="stats") -->
+        <div id="tab-panel-stats" class="tab-content tab-content-stats tab-panel" hidden>
+          <div class="stats-overview-card">
+            <h3 class="section-title">Analytics & Performance Overview</h3>
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(publishedCount)}</div>
+                <div class="stat-label">Published Posts</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(totalViews)}</div>
+                <div class="stat-label">Total Post Views</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(followerCount)}</div>
+                <div class="stat-label">Followers</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(followingCount)}</div>
+                <div class="stat-label">Following</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(reposts.length)}</div>
+                <div class="stat-label">Story Reposts</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{formatCompactNumber(userComments.length)}</div>
+                <div class="stat-label">Comments</div>
               </div>
             </div>
-
-            {
-              (user.website || user.twitter || user.github || user.linkedin) && (
-                <div class="about-section">
-                  <h3 class="about-subtitle">Social Links</h3>
-                  <div class="about-social-links">
-                    {user.website && (
-                      <a
-                        href={
-                          user.website.startsWith('http') ? user.website : `https://${user.website}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="social-badge"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <circle cx="12" cy="12" r="10" />
-                          <line x1="2" y1="12" x2="22" y2="12" />
-                          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-                        </svg>
-                        <span>Website</span>
-                      </a>
-                    )}
-                    {user.twitter && (
-                      <a
-                        href={
-                          user.twitter.startsWith('http')
-                            ? user.twitter
-                            : `https://twitter.com/${user.twitter.replace('@', '')}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="social-badge"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z" />
-                        </svg>
-                        <span>
-                          Twitter / X (
-                          {user.twitter.startsWith('@') ? user.twitter : `@${user.twitter}`})
-                        </span>
-                      </a>
-                    )}
-                    {user.github && (
-                      <a
-                        href={
-                          user.github.startsWith('http')
-                            ? user.github
-                            : `https://github.com/${user.github.replace('@', '')}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="social-badge"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
-                        </svg>
-                        <span>GitHub</span>
-                      </a>
-                    )}
-                    {user.linkedin && (
-                      <a
-                        href={
-                          user.linkedin.startsWith('http')
-                            ? user.linkedin
-                            : `https://linkedin.com/in/${user.linkedin}`
-                        }
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="social-badge"
-                      >
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          stroke-width="2"
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                        >
-                          <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
-                          <rect x="2" y="9" width="4" height="12" />
-                          <circle cx="4" cy="4" r="2" />
-                        </svg>
-                        <span>LinkedIn</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )
-            }
           </div>
         </div>
       </div>
@@ -754,45 +629,144 @@ const activities: ActivityItem[] = [
 </Layout>
 
 <script>
-  function setupProfileTabs() {
+  function setupProfileWorkspace() {
     const tabs = document.querySelectorAll<HTMLElement>('.profile-tab');
-    const panels = document.querySelectorAll<HTMLElement>('.tab-panel');
+    const panels = document.querySelectorAll<HTMLElement>('.tab-panel, .tab-content');
+
+    function switchTab(targetTab: string) {
+      tabs.forEach((t) => {
+        if (t.getAttribute('data-tab') === targetTab) {
+          t.classList.add('active', 'profile-tab--active');
+        } else {
+          t.classList.remove('active', 'profile-tab--active');
+        }
+      });
+
+      panels.forEach((panel) => {
+        const isTarget =
+          panel.id === `tab-panel-${targetTab}` ||
+          panel.classList.contains(`tab-content-${targetTab}`);
+        if (isTarget) {
+          panel.removeAttribute('hidden');
+          panel.classList.add('active');
+        } else {
+          panel.setAttribute('hidden', '');
+          panel.classList.remove('active');
+        }
+      });
+    }
 
     tabs.forEach((tab) => {
       tab.addEventListener('click', (e) => {
         e.preventDefault();
         const targetTab = tab.getAttribute('data-tab');
-
-        tabs.forEach((t) => t.classList.remove('profile-tab--active'));
-        tab.classList.add('profile-tab--active');
-
-        panels.forEach((panel) => {
-          if (panel.id === `tab-panel-${targetTab}`) {
-            panel.removeAttribute('hidden');
-          } else {
-            panel.setAttribute('hidden', '');
-          }
-        });
+        if (targetTab) switchTab(targetTab);
       });
     });
 
-    const openEditButtons = document.querySelectorAll(
-      '#open-edit-profile, #open-edit-profile-btn, [data-open-edit-profile], [data-tab-target="edit"]'
+    const editBtns = document.querySelectorAll(
+      '[data-tab-target="edit"], [data-open-edit-profile], #open-edit-profile-btn'
     );
-    const modal = document.getElementById('edit-profile-modal');
-
-    openEditButtons.forEach((btn) => {
+    editBtns.forEach((btn) => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
-        if (modal) {
-          modal.removeAttribute('hidden');
-          modal.setAttribute('aria-hidden', 'false');
-          modal.classList.add('is-open');
-          const nameInput = document.getElementById('edit-name') as HTMLInputElement | null;
-          if (nameInput) nameInput.focus();
-        }
+        switchTab('edit');
+        const nameInput = document.getElementById('inpage-name') as HTMLInputElement | null;
+        if (nameInput) nameInput.focus();
       });
     });
+
+    // In-page form submit handler
+    const form = document.getElementById('inpage-edit-profile-form') as HTMLFormElement | null;
+    const avatarInput = document.getElementById('inpage-avatar') as HTMLInputElement | null;
+    const avatarPreview = document.getElementById(
+      'inpage-avatar-preview'
+    ) as HTMLImageElement | null;
+
+    if (avatarInput && avatarPreview) {
+      avatarInput.addEventListener('input', () => {
+        const val = avatarInput.value.trim();
+        if (val) {
+          avatarPreview.src = val;
+        }
+      });
+    }
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const alertEl = document.getElementById('inpage-edit-alert');
+        const submitBtn = document.getElementById('inpage-edit-submit') as HTMLButtonElement | null;
+        const spinner = document.getElementById('inpage-edit-spinner');
+
+        if (alertEl) {
+          alertEl.style.display = 'none';
+          alertEl.className = 'alert-message';
+          alertEl.textContent = '';
+        }
+
+        const nameVal = (document.getElementById('inpage-name') as HTMLInputElement)?.value || '';
+        if (!nameVal.trim()) {
+          if (alertEl) {
+            alertEl.textContent = 'Full Name is required.';
+            alertEl.className = 'alert-message error';
+            alertEl.style.display = 'block';
+          }
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-block';
+
+        const payload = {
+          name: nameVal.trim(),
+          pronouns: (document.getElementById('inpage-pronouns') as HTMLInputElement)?.value || '',
+          avatar: (document.getElementById('inpage-avatar') as HTMLInputElement)?.value || '',
+          bio: (document.getElementById('inpage-bio') as HTMLTextAreaElement)?.value || '',
+          website: (document.getElementById('inpage-website') as HTMLInputElement)?.value || '',
+          twitter: (document.getElementById('inpage-twitter') as HTMLInputElement)?.value || '',
+          github: (document.getElementById('inpage-github') as HTMLInputElement)?.value || '',
+          linkedin: (document.getElementById('inpage-linkedin') as HTMLInputElement)?.value || '',
+        };
+
+        try {
+          const res = await fetch('/api/user/profile', {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (alertEl) {
+              alertEl.textContent = 'Profile updated successfully!';
+              alertEl.className = 'alert-message success';
+              alertEl.style.display = 'block';
+            }
+            setTimeout(() => {
+              window.location.reload();
+            }, 800);
+          } else {
+            if (alertEl) {
+              alertEl.textContent = data.error || 'Failed to update profile. Please try again.';
+              alertEl.className = 'alert-message error';
+              alertEl.style.display = 'block';
+            }
+          }
+        } catch (err) {
+          if (alertEl) {
+            alertEl.textContent = 'An unexpected network error occurred.';
+            alertEl.className = 'alert-message error';
+            alertEl.style.display = 'block';
+          }
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+          if (spinner) spinner.style.display = 'none';
+        }
+      });
+    }
 
     const shareBtn = document.getElementById('share-profile-btn');
     if (shareBtn) {
@@ -823,11 +797,11 @@ const activities: ActivityItem[] = [
     }
   }
 
-  document.addEventListener('astro:page-load', setupProfileTabs);
+  document.addEventListener('astro:page-load', setupProfileWorkspace);
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', setupProfileTabs);
+    document.addEventListener('DOMContentLoaded', setupProfileWorkspace);
   } else {
-    setupProfileTabs();
+    setupProfileWorkspace();
   }
 </script>
 
@@ -1049,6 +1023,49 @@ const activities: ActivityItem[] = [
   }
 
   /* ═══════════════════════════════════════════════════════════════════
+     WORKSPACE TABS (INSTAGRAM STYLE)
+     ═══════════════════════════════════════════════════════════════════ */
+  .profile-tabs.instagram-tabs {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-xl, 2rem);
+    border-top: 1px solid var(--color-hairline, #e6dfd8);
+    border-bottom: 1px solid var(--color-hairline, #e6dfd8);
+    margin-bottom: var(--space-xl, 1.5rem);
+    padding: 0;
+  }
+
+  .profile-tab {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--color-muted, #757575);
+    background: transparent;
+    border: none;
+    border-top: 2px solid transparent;
+    padding: 14px 16px;
+    margin-top: -1px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .profile-tab:hover {
+    color: var(--color-ink, #181715);
+  }
+
+  .profile-tab.active,
+  .profile-tab.profile-tab--active {
+    color: var(--color-ink, #181715);
+    border-top: 2px solid var(--color-ink, #181715);
+    font-weight: 700;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
      CENTER FEED
      ═══════════════════════════════════════════════════════════════════ */
   .profile-feed {
@@ -1059,86 +1076,8 @@ const activities: ActivityItem[] = [
     gap: var(--space-xl);
   }
 
-  .profile-header-main {
-    display: none; /* Hidden on desktop, shown on mobile */
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .profile-header-left {
-    display: flex;
-    align-items: center;
-    gap: var(--space-md);
-  }
-
-  .profile-header-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: 50%;
-    object-fit: cover;
-    display: none; /* Hidden on large screens because it's in the right sidebar */
-  }
-
-  .profile-title {
-    font-family: var(--font-serif);
-    font-size: 48px;
-    font-weight: 400;
-    color: var(--color-ink);
-    margin: 0;
-    letter-spacing: -1px;
-  }
-
-  .profile-more-btn {
-    background: none;
-    border: none;
-    color: var(--color-muted);
-    cursor: pointer;
-    padding: 8px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--duration-fast);
-  }
-
-  .profile-more-btn:hover {
-    color: var(--color-ink);
-    background: var(--bg-surface-soft);
-  }
-
-  .profile-tabs {
-    display: flex;
-    gap: var(--space-sm);
-    border-bottom: 1px solid var(--color-hairline);
-    margin-top: 0;
-    padding-bottom: var(--space-md);
-  }
-
-  .profile-tab {
-    font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
-    color: var(--color-muted);
-    background: transparent;
-    border: none;
-    padding: 0.375rem 0.75rem;
-    border-radius: var(--radius-pill);
-    cursor: pointer;
-    transition: all var(--duration-fast);
-  }
-
-  .profile-tab:hover {
-    color: var(--color-ink);
-    background: var(--bg-surface-soft);
-  }
-
-  .profile-tab--active {
-    color: var(--color-ink);
-    font-weight: 500;
-    background: var(--bg-surface-soft);
-  }
-
   .profile-content {
-    margin-top: var(--space-lg);
+    margin-top: var(--space-sm);
   }
 
   /* Tab Panel Visibility */
@@ -1146,101 +1085,9 @@ const activities: ActivityItem[] = [
     display: none !important;
   }
 
-  /* Reading List Card inside Profile */
-  .reading-list-card {
-    display: flex;
-    background: var(--bg-surface-card);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    height: 180px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
-  }
-
-  .reading-list-card:hover {
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
-    transform: translateY(-2px);
-    border-color: var(--color-primary);
-  }
-
-  .reading-list-info {
-    padding: var(--space-xl);
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    justify-content: center;
-  }
-
-  .reading-list-author {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-body);
-    margin-bottom: var(--space-md);
-  }
-
-  .reading-list-avatar {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-  }
-
-  .reading-list-title {
-    font-family: var(--font-sans);
-    font-size: var(--text-title-lg);
-    font-weight: 700;
-    color: var(--color-ink);
-    margin: 0 0 var(--space-sm) 0;
-    letter-spacing: -0.5px;
-  }
-
-  .reading-list-meta {
-    display: flex;
-    align-items: center;
-    gap: var(--space-sm);
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-muted);
-    margin-top: auto;
-  }
-
-  .reading-list-more {
-    margin-left: auto;
-    background: none;
-    border: none;
-    color: var(--color-muted);
-    cursor: pointer;
-    transition: color 0.2s;
-    display: flex;
-  }
-
-  .reading-list-more:hover {
-    color: var(--color-ink);
-  }
-
-  .reading-list-thumbnails {
-    display: flex;
-    width: 300px;
-  }
-
-  .reading-list-thumb {
-    flex: 1;
-    background-size: cover;
-    background-position: center;
-    border-left: 1px solid var(--color-hairline);
-  }
-
-  .reading-list-thumb.placeholder {
-    background-color: var(--bg-surface-soft);
-  }
-
   /* Published Stories & Cards */
   .published-stories-section {
-    margin-top: var(--space-xl);
+    margin-top: var(--space-sm);
   }
 
   .section-title {
@@ -1251,8 +1098,7 @@ const activities: ActivityItem[] = [
     margin-bottom: var(--space-md);
   }
 
-  .story-card-list,
-  .reposts-list {
+  .story-card-list {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
@@ -1271,16 +1117,6 @@ const activities: ActivityItem[] = [
   .story-card:hover {
     border-color: var(--color-primary);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
-  }
-
-  .repost-header {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-muted);
-    margin-bottom: var(--space-xs);
   }
 
   .story-author-row {
@@ -1338,177 +1174,254 @@ const activities: ActivityItem[] = [
     color: var(--color-muted);
   }
 
-  /* Activity Timeline */
-  .activity-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-md);
+  /* ═══════════════════════════════════════════════════════════════════
+     IN-PAGE DEDICATED EDIT PROFILE PANEL (tab-content-edit)
+     ═══════════════════════════════════════════════════════════════════ */
+  .inpage-edit-profile-card {
+    background: var(--bg-surface-card, #ffffff);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
   }
 
-  .activity-item {
-    display: flex;
-    gap: var(--space-md);
-    padding: var(--space-md);
-    background: var(--bg-surface-card);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-md);
+  .inpage-edit-header {
+    margin-bottom: var(--space-xl, 1.5rem);
+    padding-bottom: var(--space-md, 1rem);
+    border-bottom: 1px solid var(--color-hairline, #e6dfd8);
   }
 
-  .activity-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: var(--bg-surface-soft);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-    flex-shrink: 0;
-  }
-
-  .activity-body {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
-
-  .activity-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .inpage-edit-title {
     font-family: var(--font-sans);
-    font-size: var(--text-caption);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--color-ink, #181715);
+    margin: 0 0 4px 0;
   }
 
-  .activity-type {
-    font-weight: 600;
-    color: var(--color-ink);
-  }
-
-  .activity-date {
-    color: var(--color-muted);
-  }
-
-  .activity-title {
+  .inpage-edit-subtitle {
     font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
-    font-weight: 500;
-  }
-
-  .activity-title a {
-    color: var(--color-ink);
-    text-decoration: none;
-  }
-
-  .activity-title a:hover {
-    color: var(--color-primary);
-  }
-
-  .activity-detail {
-    font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-muted);
+    font-size: 14px;
+    color: var(--color-muted, #757575);
     margin: 0;
-    font-style: italic;
   }
 
-  /* About Tab */
-  .about-card {
-    background: var(--bg-surface-card);
-    border: 1px solid var(--color-hairline);
-    border-radius: var(--radius-lg);
-    padding: var(--space-xl);
+  .inpage-edit-form {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xl);
+    gap: var(--space-lg, 1.25rem);
   }
 
-  .about-section {
+  .form-row--two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-md, 1rem);
+  }
+
+  @media (max-width: 540px) {
+    .form-row--two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-group {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 6px;
   }
 
-  .about-subtitle {
+  .form-group label {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--color-ink, #181715);
+  }
+
+  .form-group input,
+  .form-group textarea {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-ink, #181715);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus {
+    outline: none;
+    border-color: var(--color-ink, #181715);
+    box-shadow: 0 0 0 2px rgba(24, 23, 21, 0.08);
+  }
+
+  .form-group textarea {
+    resize: vertical;
+    min-height: 90px;
+  }
+
+  .avatar-input-preview-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .avatar-preview-box {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    border: 2px solid var(--color-hairline, #e6dfd8);
+    background: var(--bg-surface-soft, #f4f0eb);
+  }
+
+  .avatar-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-url-input {
+    flex: 1;
+  }
+
+  .field-hint {
     font-family: var(--font-sans);
     font-size: 12px;
-    font-weight: 500;
+    color: var(--color-muted, #757575);
+    margin-top: 4px;
+  }
+
+  .required-star {
+    color: var(--color-error, #c64545);
+  }
+
+  .form-section-title {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 1.5px;
-    color: var(--color-muted);
-    margin: 0;
-  }
-
-  .about-bio,
-  .about-text {
-    font-family: var(--font-sans);
-    font-size: var(--text-body-md);
-    color: var(--color-ink);
-    line-height: 1.6;
-    margin: 0;
-  }
-
-  .placeholder-text {
-    color: var(--color-muted);
-    font-style: italic;
-  }
-
-  .about-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: var(--space-md);
+    color: var(--color-muted, #757575);
     margin-top: var(--space-xs);
+    padding-top: var(--space-xs);
+    border-top: 1px dashed var(--color-hairline, #e6dfd8);
   }
 
-  .stat-box {
-    background: var(--bg-surface-soft);
-    border-radius: var(--radius-md);
-    padding: var(--space-md);
+  .alert-message {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-top: 8px;
+  }
+
+  .alert-message.error {
+    background: rgba(198, 69, 69, 0.08);
+    border: 1px solid rgba(198, 69, 69, 0.25);
+    color: #c64545;
+  }
+
+  .alert-message.success {
+    background: rgba(46, 125, 50, 0.08);
+    border: 1px solid rgba(46, 125, 50, 0.25);
+    color: #2e7d32;
+  }
+
+  .inpage-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--color-hairline, #e6dfd8);
+  }
+
+  .btn-save {
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 24px;
+    border-radius: 8px;
+    background: #181715;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .btn-save:hover {
+    opacity: 0.9;
+  }
+
+  .btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     STATS OVERVIEW PANEL (tab-content-stats)
+     ═══════════════════════════════════════════════════════════════════ */
+  .stats-overview-card {
+    background: var(--bg-surface-card, #ffffff);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 12px;
+    padding: 28px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+
+  .stat-card {
+    background: var(--bg-surface-soft, #f4f0eb);
+    border: 1px solid var(--color-hairline, #e6dfd8);
+    border-radius: 10px;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    text-align: center;
   }
 
-  .stat-number {
-    font-family: var(--font-serif);
-    font-size: 1.75rem;
+  .stat-value {
+    font-family: var(--font-sans);
+    font-size: 26px;
     font-weight: 700;
-    color: var(--color-ink);
+    color: var(--color-ink, #181715);
   }
 
   .stat-label {
     font-family: var(--font-sans);
-    font-size: var(--text-caption);
-    color: var(--color-muted);
-  }
-
-  .about-social-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-xs);
-    margin-top: var(--space-xs);
-  }
-
-  .social-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: var(--radius-pill);
-    background: var(--bg-surface-soft);
-    border: 1px solid var(--color-hairline);
-    color: var(--color-ink);
-    font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
-
-  .social-badge:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    font-size: 13px;
+    color: var(--color-muted, #757575);
+    margin-top: 4px;
   }
 
   /* Empty States */
@@ -1535,78 +1448,6 @@ const activities: ActivityItem[] = [
     margin: 0;
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     RIGHT SIDEBAR
-     ═══════════════════════════════════════════════════════════════════ */
-  .profile-sidebar-right {
-    padding: var(--space-xxl) var(--space-xl);
-  }
-
-  .profile-info-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .profile-large-avatar {
-    width: 88px;
-    height: 88px;
-    border-radius: 50%;
-    margin-bottom: var(--space-md);
-    object-fit: cover;
-  }
-
-  .profile-large-name {
-    font-family: var(--font-serif);
-    font-size: var(--text-title-md);
-    font-weight: 400;
-    color: var(--color-ink);
-    margin: 0 0 4px 0;
-    letter-spacing: -0.5px;
-  }
-
-  .profile-sidebar-bio {
-    font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
-    color: var(--color-muted);
-    margin: 0 0 var(--space-md) 0;
-    line-height: 1.4;
-  }
-
-  .profile-edit-link {
-    font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
-    color: var(--color-primary);
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    text-decoration: none;
-    transition: opacity 0.2s;
-  }
-
-  .profile-edit-link:hover {
-    opacity: 0.8;
-  }
-
-  @media (max-width: 1024px) {
-    .dashboard-layout {
-      grid-template-columns: 240px 1fr;
-    }
-    .profile-sidebar-right {
-      display: none;
-    }
-    .profile-header-main {
-      display: flex;
-    }
-    .profile-header-avatar {
-      display: block;
-    }
-    .profile-tabs {
-      margin-top: var(--space-xl);
-    }
-  }
-
   @media (max-width: 768px) {
     .dashboard-layout {
       grid-template-columns: 1fr;
@@ -1614,17 +1455,11 @@ const activities: ActivityItem[] = [
     .profile-feed {
       padding: var(--space-lg);
     }
-    .reading-list-card {
-      flex-direction: column;
-      height: auto;
+    .profile-tabs.instagram-tabs {
+      gap: 0.5rem;
     }
-    .reading-list-thumbnails {
-      width: 100%;
-      height: 120px;
-    }
-    .reading-list-thumb {
-      border-left: none;
-      border-top: 1px solid var(--color-hairline);
+    .profile-tab span {
+      display: none;
     }
   }
 </style>
