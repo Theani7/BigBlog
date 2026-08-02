@@ -282,6 +282,8 @@ const logoHref = isLoggedIn ? '/dashboard' : '/';
     z-index: var(--z-sticky);
     height: var(--header-height);
     transition: box-shadow var(--duration-fast) var(--ease-default);
+    padding-left: clamp(1.5rem, 5vw, 4rem);
+    padding-right: clamp(1.5rem, 5vw, 4rem);
   }
 
   .site-header--scrolled {
