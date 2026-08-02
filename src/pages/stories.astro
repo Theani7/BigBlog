@@ -25,6 +25,8 @@ if (!userId) {
 
 const dbDrafts = await Story.find({ authorId: userId, status: 'DRAFT' }).sort({ updatedAt: -1 });
 
+const draftsCount = dbDrafts.length;
+
 const drafts = dbDrafts.map((draft) => {
   const plainText = draft.content ? draft.content.replace(/<[^>]+>/g, '') : 'No content yet';
   return {
@@ -35,8 +37,12 @@ const drafts = dbDrafts.map((draft) => {
     meta2: `${plainText.split(/\\s+/).filter(Boolean).length} words`,
   };
 });
+
+const counts = {
+  drafts: draftsCount,
+};
 ---
 
-<StoriesLayout activeTab="drafts">
-  <StoryList stories={drafts} emptyText="No stories in draft." />
+<StoriesLayout activeTab="drafts" counts={counts}>
+  <StoryList stories={drafts} emptyText="You haven't written any drafts yet." />
 </StoriesLayout>

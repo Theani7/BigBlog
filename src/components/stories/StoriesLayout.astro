@@ -4,9 +4,10 @@ import Sidebar from '../dashboard/Sidebar.astro';
 
 interface Props {
   activeTab?: 'drafts' | 'scheduled' | 'published' | 'unlisted' | 'submissions';
+  counts?: Record<string, number>;
 }
 
-const { activeTab = 'drafts' } = Astro.props;
+const { activeTab = 'drafts', counts = {} } = Astro.props;
 
 const tabs = [
   { id: 'drafts', label: 'Drafts', href: '/stories' },
@@ -39,6 +40,7 @@ const tabs = [
               class:list={['stories-tab', { 'stories-tab--active': activeTab === tab.id }]}
             >
               {tab.label}
+              {counts[tab.id] !== undefined && <span class="tab-badge">{counts[tab.id]}</span>}
             </a>
           ))
         }
@@ -48,6 +50,11 @@ const tabs = [
           class:list={['stories-tab', { 'stories-tab--active': activeTab === 'submissions' }]}
         >
           Submissions
+          {
+            counts['submissions'] !== undefined && (
+              <span class="tab-badge">{counts['submissions']}</span>
+            )
+          }
         </a>
       </nav>
 
@@ -65,11 +72,12 @@ const tabs = [
     min-height: calc(100vh - var(--header-height));
     max-width: 100%;
     margin: 0 auto;
+    background-color: var(--bg-canvas);
   }
 
   .stories-feed {
-    padding: var(--space-xl) var(--space-2xl) var(--space-xxl);
-    max-width: 960px;
+    padding: clamp(1.5rem, 5vw, 4rem);
+    max-width: 1040px;
     margin: 0 auto;
     width: 100%;
     display: flex;
@@ -85,11 +93,11 @@ const tabs = [
 
   .stories-title {
     font-family: var(--font-serif);
-    font-size: 48px;
-    font-weight: 400;
+    font-size: 3rem;
+    font-weight: 500;
     color: var(--color-ink);
     margin: 0;
-    letter-spacing: -1px;
+    letter-spacing: -0.02em;
   }
 
   .stories-actions {
@@ -104,41 +112,51 @@ const tabs = [
     font-weight: 500;
     color: var(--color-ink);
     background: transparent;
-    border: 1px solid var(--color-ink);
+    border: 1px solid var(--color-hairline);
     border-radius: var(--radius-pill);
-    padding: 8px 16px;
+    padding: 0.5rem 1rem;
     cursor: pointer;
-    transition: all var(--duration-fast);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .btn-import:hover {
     background: var(--bg-surface-soft);
+    border-color: var(--color-muted);
+    transform: translateY(-1px);
   }
 
   .btn-write {
     font-family: var(--font-sans);
     font-size: var(--text-body-sm);
     font-weight: 500;
-    color: var(--bg-canvas);
-    background: var(--color-primary);
-    border: none;
+    color: #fff;
+    background: #181715;
+    border: 1px solid #181715;
     border-radius: var(--radius-pill);
-    padding: 8px 20px;
+    padding: 0.5rem 1.25rem;
     cursor: pointer;
     text-decoration: none;
-    transition: all var(--duration-fast);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow:
+      0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
   }
 
   .btn-write:hover {
-    background: var(--color-primary-dark, #1d4ed8);
-    text-decoration: none;
+    background: #2a2927;
+    border-color: #2a2927;
+    transform: translateY(-2px);
+    box-shadow:
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -2px rgba(0, 0, 0, 0.05);
   }
 
   .stories-tabs {
     display: flex;
     align-items: center;
-    gap: var(--space-xl);
+    gap: var(--space-sm);
     border-bottom: 1px solid var(--color-hairline);
+    padding-bottom: var(--space-sm);
   }
 
   .stories-tab {
@@ -146,36 +164,58 @@ const tabs = [
     font-size: var(--text-body-sm);
     color: var(--color-muted);
     text-decoration: none;
-    padding-bottom: var(--space-md);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-pill);
     position: relative;
-    transition: color var(--duration-fast);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
   }
 
   .stories-tab:hover {
     color: var(--color-ink);
-    text-decoration: none;
+    background: var(--bg-surface-soft);
   }
 
   .stories-tab--active {
     color: var(--color-ink);
     font-weight: 500;
+    background: var(--bg-surface-soft);
   }
 
   .stories-tab--active::after {
     content: '';
     position: absolute;
-    bottom: -1px;
+    bottom: calc(var(--space-sm) * -1 - 1px);
     left: 0;
     width: 100%;
-    height: 1px;
+    height: 2px;
     background: var(--color-ink);
+    border-radius: 2px 2px 0 0;
+  }
+
+  .tab-badge {
+    background: var(--bg-surface-hover, #e5e7eb);
+    color: var(--color-ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.125rem 0.375rem;
+    border-radius: var(--radius-pill);
+    min-width: 1.25rem;
+    text-align: center;
+  }
+
+  .stories-tab--active .tab-badge {
+    background: var(--color-ink);
+    color: var(--bg-canvas);
   }
 
   .stories-tab-divider {
-    height: 16px;
+    height: 20px;
     width: 1px;
     background: var(--color-hairline);
-    margin: 0 var(--space-xs);
+    margin: 0 var(--space-sm);
   }
 
   .stories-content {
@@ -187,7 +227,7 @@ const tabs = [
 
   @media (max-width: 1024px) {
     .stories-feed {
-      padding: var(--space-xl) var(--space-2xl);
+      padding: clamp(1.5rem, 5vw, 3rem);
     }
   }
 
@@ -195,18 +235,15 @@ const tabs = [
     .stories-layout {
       grid-template-columns: 1fr;
     }
-    .stories-feed {
-      padding: var(--space-lg);
-    }
     .stories-header {
       flex-direction: column;
       align-items: flex-start;
-      gap: var(--space-md);
+      gap: var(--space-lg);
     }
     .stories-tabs {
       overflow-x: auto;
       white-space: nowrap;
-      padding-bottom: 1px;
+      padding-bottom: var(--space-sm);
     }
     .stories-tab-divider {
       display: none;

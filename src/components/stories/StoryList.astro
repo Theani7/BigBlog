@@ -9,10 +9,10 @@ interface Story {
 
 interface Props {
   stories: Story[];
-  emptyText: string;
+  emptyText?: string;
 }
 
-const { stories, emptyText } = Astro.props;
+const { stories, emptyText = 'No stories yet' } = Astro.props;
 ---
 
 {
@@ -26,41 +26,105 @@ const { stories, emptyText } = Astro.props;
             </h2>
             {story.excerpt && <p class="story-excerpt">{story.excerpt}</p>}
             <div class="story-meta">
-              <span class="meta-item">{story.meta1}</span>
+              <span class="meta-item timestamp">{story.meta1}</span>
               {story.meta2 && (
                 <>
                   <span class="meta-divider">·</span>
-                  <span class="meta-item">{story.meta2}</span>
+                  <span class="meta-item badge">{story.meta2}</span>
                 </>
               )}
             </div>
           </div>
-          <button class="story-options" aria-label="Story options">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
-          </button>
+
+          <div class="story-actions">
+            <button class="action-btn" title="Edit">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+              </svg>
+            </button>
+            <button class="action-btn" title="Publish">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            </button>
+            <button class="action-btn delete" title="Delete">
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="3 6 5 6 21 6" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+            <button class="story-options" aria-label="Story options">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
         </article>
       ))}
     </div>
   ) : (
     <div class="stories-empty-state">
+      <div class="empty-icon">
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+          <polyline points="14 2 14 8 20 8" />
+          <line x1="16" y1="13" x2="8" y2="13" />
+          <line x1="16" y1="17" x2="8" y2="17" />
+          <line x1="10" y1="9" x2="8" y2="9" />
+        </svg>
+      </div>
+      <h3 class="empty-title">Nothing to see here</h3>
       <p class="empty-text">{emptyText}</p>
-      <p class="empty-subtext">
-        Why not{' '}
-        <a href="/write" class="empty-link">
-          start writing one?
-        </a>
-      </p>
+      <a href="/write" class="btn-primary empty-cta">
+        Start writing
+      </a>
     </div>
   )
 }
@@ -69,50 +133,60 @@ const { stories, emptyText } = Astro.props;
   .story-list {
     display: flex;
     flex-direction: column;
+    gap: var(--space-md);
   }
 
   .story-card {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    padding: var(--space-xl) 0;
-    border-bottom: 1px solid var(--color-hairline);
-    transition: transform var(--duration-fast);
+    padding: var(--space-xl);
+    background: var(--bg-canvas);
+    border: 1px solid var(--color-hairline);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .story-card:hover {
-    transform: translateX(4px);
+    transform: translateY(-2px);
+    box-shadow:
+      0 8px 24px -8px rgba(0, 0, 0, 0.08),
+      0 4px 12px -6px rgba(0, 0, 0, 0.04);
+    border-color: var(--color-muted);
   }
 
   .story-content {
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
-    max-width: 80%;
+    gap: var(--space-sm);
+    max-width: 75%;
   }
 
   .story-title {
     font-family: var(--font-sans);
-    font-size: var(--text-title-md);
-    font-weight: 700;
+    font-size: 1.25rem;
+    font-weight: 600;
     margin: 0;
-    line-height: 1.3;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
   }
 
   .story-title a {
     color: var(--color-ink);
     text-decoration: none;
+    transition: color 0.2s ease;
   }
 
   .story-title a:hover {
-    text-decoration: underline;
+    color: var(--color-primary);
   }
 
   .story-excerpt {
     font-family: var(--font-sans);
-    font-size: var(--text-body-sm);
+    font-size: 0.9375rem;
     color: var(--color-muted);
     margin: 0;
+    line-height: 1.5;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
@@ -123,10 +197,54 @@ const { stories, emptyText } = Astro.props;
     display: flex;
     align-items: center;
     gap: var(--space-sm);
-    margin-top: var(--space-sm);
+    margin-top: var(--space-xs);
     font-family: var(--font-sans);
-    font-size: var(--text-caption);
+    font-size: 0.8125rem;
     color: var(--color-muted);
+  }
+
+  .meta-item.badge {
+    background: var(--bg-surface-soft, #f3f4f6);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-pill);
+    font-weight: 500;
+    color: var(--color-ink);
+  }
+
+  .story-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    opacity: 0.4;
+    transition: opacity 0.3s ease;
+  }
+
+  .story-card:hover .story-actions {
+    opacity: 1;
+  }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .action-btn:hover {
+    color: var(--color-ink);
+    background: var(--bg-surface-soft, #f3f4f6);
+  }
+
+  .action-btn.delete:hover {
+    color: #ef4444;
+    background: #fee2e2;
   }
 
   .story-options {
@@ -134,45 +252,82 @@ const { stories, emptyText } = Astro.props;
     border: none;
     color: var(--color-muted);
     cursor: pointer;
-    padding: 8px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     border-radius: 50%;
-    transition: all var(--duration-fast);
+    transition: all 0.2s ease;
   }
 
   .story-options:hover {
     color: var(--color-ink);
-    background: var(--bg-surface-soft);
+    background: var(--bg-surface-soft, #f3f4f6);
   }
 
   .stories-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
-    font-family: var(--font-sans);
-    margin-top: var(--space-32);
+    padding: 4rem 2rem;
+    background: var(--bg-surface-soft, #f9fafb);
+    border: 1px dashed var(--color-hairline);
+    border-radius: 16px;
+    margin-top: var(--space-xl);
+  }
+
+  .empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: var(--bg-canvas, #ffffff);
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-title {
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+    font-weight: 500;
+    color: var(--color-ink);
+    margin: 0 0 var(--space-sm) 0;
   }
 
   .empty-text {
-    font-size: var(--text-body-lg);
-    color: var(--color-ink);
-    margin: 0 0 var(--space-xs) 0;
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    color: var(--color-muted);
+    margin: 0 0 var(--space-xl) 0;
+    max-width: 400px;
+  }
+
+  .btn-primary.empty-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-sans);
+    font-size: 0.9375rem;
     font-weight: 500;
+    color: #fff;
+    background: #181715;
+    border: none;
+    border-radius: var(--radius-pill);
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
   }
 
-  .empty-subtext {
-    font-size: var(--text-body-lg);
-    color: var(--color-ink);
-    margin: 0;
-  }
-
-  .empty-link {
-    color: var(--color-ink);
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 4px;
-    transition: color var(--duration-fast);
-  }
-
-  .empty-link:hover {
-    color: var(--color-primary);
-    text-decoration-color: var(--color-primary);
+  .btn-primary.empty-cta:hover {
+    background: #2a2927;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 </style>
