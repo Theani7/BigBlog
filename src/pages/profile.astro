@@ -156,19 +156,11 @@ if (sessionId) {
               <span class="instagram-metric-value">{formatCompactNumber(publishedCount)}</span>
               <span class="instagram-metric-label">Posts</span>
             </div>
-            <div
-              class="instagram-metric-item follows-trigger"
-              data-open-follows="followers"
-              style="cursor:pointer;"
-            >
+            <div class="instagram-metric-item follows-trigger" data-open-follows="followers">
               <span class="instagram-metric-value">{formatCompactNumber(followerCount)}</span>
               <span class="instagram-metric-label">Followers</span>
             </div>
-            <div
-              class="instagram-metric-item follows-trigger"
-              data-open-follows="following"
-              style="cursor:pointer;"
-            >
+            <div class="instagram-metric-item follows-trigger" data-open-follows="following">
               <span class="instagram-metric-value">{formatCompactNumber(followingCount)}</span>
               <span class="instagram-metric-label">Following</span>
             </div>
@@ -587,6 +579,60 @@ if (sessionId) {
                 </button>
               </div>
             </form>
+
+            <form id="inpage-edit-password-form" class="inpage-edit-form" novalidate>
+              <div class="form-section-title">Password</div>
+
+              <div class="form-group">
+                <label for="inpage-current-password">Current password</label>
+                <input
+                  type="password"
+                  id="inpage-current-password"
+                  name="currentPassword"
+                  placeholder="Enter your current password"
+                  autocomplete="current-password"
+                />
+              </div>
+
+              <div class="form-row form-row--two-col">
+                <div class="form-group">
+                  <label for="inpage-new-password">New password</label>
+                  <input
+                    type="password"
+                    id="inpage-new-password"
+                    name="newPassword"
+                    placeholder="At least 8 characters"
+                    autocomplete="new-password"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="inpage-confirm-password">Confirm new password</label>
+                  <input
+                    type="password"
+                    id="inpage-confirm-password"
+                    name="confirmPassword"
+                    placeholder="Repeat new password"
+                    autocomplete="new-password"
+                  />
+                </div>
+              </div>
+
+              <div
+                id="inpage-password-message"
+                class="alert-message"
+                style="display: none;"
+                role="alert"
+              >
+              </div>
+
+              <div class="inpage-form-actions">
+                <button type="submit" id="inpage-password-submit" class="btn-save">
+                  <span class="btn-text">Update password</span>
+                  <span id="inpage-password-spinner" class="spinner" style="display: none;"></span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
 
@@ -889,6 +935,73 @@ if (sessionId) {
       });
     }
 
+    const passwordForm = document.getElementById('inpage-edit-password-form');
+
+    function showPasswordMessage(message, isError) {
+      const msgEl = document.getElementById('inpage-password-message');
+      if (!msgEl) return;
+      msgEl.textContent = message;
+      msgEl.className = isError ? 'alert-message error' : 'alert-message success';
+      msgEl.style.display = 'block';
+    }
+
+    if (passwordForm) {
+      passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const msgEl = document.getElementById('inpage-password-message');
+        const submitBtn = document.getElementById('inpage-password-submit');
+        const spinner = document.getElementById('inpage-password-spinner');
+
+        if (msgEl) {
+          msgEl.style.display = 'none';
+          msgEl.textContent = '';
+        }
+
+        const currentPassword = document.getElementById('inpage-current-password')?.value || '';
+        const newPassword = document.getElementById('inpage-new-password')?.value || '';
+        const confirmPassword = document.getElementById('inpage-confirm-password')?.value || '';
+
+        if (!currentPassword || !newPassword) {
+          showPasswordMessage('Current and new password are required', true);
+          return;
+        }
+        if (newPassword.length < 8) {
+          showPasswordMessage('New password must be at least 8 characters', true);
+          return;
+        }
+        if (newPassword !== confirmPassword) {
+          showPasswordMessage('New passwords do not match', true);
+          return;
+        }
+
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.style.display = 'inline-block';
+
+        try {
+          const res = await fetch('/api/auth/change-password', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ currentPassword, newPassword }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            showPasswordMessage('Password updated successfully', false);
+            passwordForm.reset();
+          } else {
+            showPasswordMessage(data.error || 'Failed to update password. Please try again.', true);
+          }
+        } catch (err) {
+          showPasswordMessage('An unexpected network error occurred.', true);
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
+          if (spinner) spinner.style.display = 'none';
+        }
+      });
+    }
+
     const shareBtn = document.getElementById('share-profile-btn');
     if (shareBtn) {
       shareBtn.addEventListener('click', async () => {
@@ -1101,6 +1214,21 @@ if (sessionId) {
     align-items: baseline;
     gap: 0.35rem;
     font-family: var(--font-sans);
+  }
+
+  .instagram-metric-item.follows-trigger {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .instagram-metric-item.follows-trigger:hover {
+    opacity: 0.6;
+  }
+
+  .instagram-metric-item.follows-trigger:focus-visible {
+    outline: 2px solid var(--color-primary, #181715);
+    outline-offset: 4px;
+    border-radius: 4px;
   }
 
   .instagram-metric-value {

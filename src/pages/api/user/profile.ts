@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { Story, User } from '../../../db/schema';
@@ -33,7 +34,7 @@ export const PUT: APIRoute = async ({ locals, cookies, request }) => {
     void Story;
     const body = await request.json();
 
-    const updateData: Record<string, any> = {};
+    const updateData: Record<string, unknown> = {};
 
     if (body.name !== undefined) {
       if (typeof body.name !== 'string') {
@@ -136,13 +137,10 @@ export const PUT: APIRoute = async ({ locals, cookies, request }) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Internal error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import mongoose from 'mongoose';
 import { createDatabase, type Env } from '../../../db';
@@ -30,8 +31,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const reposted = (await storyReposts.exists({ articleSlug: slug, sessionId })) !== null;
 
     return json({ success: true, data: { count, reposted } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -59,12 +60,16 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (existing) {
       await storyReposts.deleteOne({ _id: existing._id });
     } else {
-      await storyReposts.create({ articleSlug: slug, sessionId, userId });
+      await storyReposts.create({
+        articleSlug: slug,
+        sessionId,
+        ...(userId ? { userId } : {}),
+      });
     }
 
     const count = await storyReposts.countDocuments({ articleSlug: slug });
     return json({ success: true, data: { reposted: !existing, count } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

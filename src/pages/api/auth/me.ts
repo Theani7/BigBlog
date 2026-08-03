@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User } from '../../../db/schema';
@@ -43,6 +44,15 @@ export const GET: APIRoute = async ({ locals, cookies }) => {
       });
     }
 
+    // Suspended accounts are not treated as authenticated
+    if (user.suspended) {
+      cookies.delete('auth_token', { path: '/' });
+      return new Response(JSON.stringify({ success: false, user: null }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
@@ -53,8 +63,8 @@ export const GET: APIRoute = async ({ locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

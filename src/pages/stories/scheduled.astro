@@ -33,7 +33,7 @@ const scheduled = dbScheduled.map((story) => {
     slug: story.slug,
     excerpt: plainText.length > 100 ? plainText.substring(0, 100) + '...' : plainText,
     meta1: `Scheduled for ${new Date(story.publishedAt || story.createdAt).toLocaleDateString()}`,
-    meta2: `${plainText.split(/\\s+/).filter(Boolean).length} words`,
+    meta2: `${plainText.split(/\s+/).filter(Boolean).length} words`,
   };
 });
 ---

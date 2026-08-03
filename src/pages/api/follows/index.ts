@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import mongoose from 'mongoose';
 import { createDatabase, type Env } from '../../../db';
@@ -50,8 +51,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       following,
       isFollowing: following,
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -91,7 +92,11 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (existing) {
       await authorFollows.deleteOne({ _id: existing._id });
     } else {
-      await authorFollows.create({ authorId: authorObjectId, sessionId, userId });
+      await authorFollows.create({
+        authorId: authorObjectId,
+        sessionId,
+        ...(userId ? { userId } : {}),
+      });
     }
 
     const count = await authorFollows.countDocuments({ authorId: authorObjectId });
@@ -104,7 +109,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       following: isFollowing,
       isFollowing,
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

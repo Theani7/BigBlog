@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../../db';
 import { comments, Story } from '../../../../db/schema';
@@ -26,7 +27,7 @@ export const GET: APIRoute = async (context) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '25', 10), 1), 100);
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
     if (VALID_STATUSES.includes(status)) filter.status = status;
 
     const [items, total] = await Promise.all([
@@ -39,15 +40,15 @@ export const GET: APIRoute = async (context) => {
       comments.countDocuments(filter),
     ]);
 
-    const slugs = [...new Set(items.map((c: any) => c.articleSlug))];
+    const slugs = [...new Set(items.map((c) => c.articleSlug))];
     const stories = await Story.find({ slug: { $in: slugs } })
       .select('title slug')
       .lean();
-    const titleBySlug = new Map(stories.map((s: any) => [s.slug, s.title]));
+    const titleBySlug = new Map(stories.map((s) => [s.slug, s.title]));
 
     return json({
       success: true,
-      data: items.map((c: any) => ({
+      data: items.map((c) => ({
         id: c._id.toString(),
         articleSlug: c.articleSlug,
         articleTitle: titleBySlug.get(c.articleSlug) || c.articleSlug,
@@ -61,8 +62,8 @@ export const GET: APIRoute = async (context) => {
       })),
       meta: { total, page, limit, pages: Math.max(Math.ceil(total / limit), 1) },
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -88,8 +89,8 @@ export const PATCH: APIRoute = async (context) => {
     comment.status = status;
     await comment.save();
     return json({ success: true, data: { id, status } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -112,7 +113,7 @@ export const DELETE: APIRoute = async (context) => {
 
     await comments.deleteOne({ _id: id });
     return json({ success: true, data: { id } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

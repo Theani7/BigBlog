@@ -1,10 +1,20 @@
 import type { APIRoute } from 'astro';
+import { createDatabase, type Env } from '../../../db';
+import { analyticsEvents, pageViews, scrollDepth } from '../../../db/schema';
 
 // =============================================================================
 // POST /api/analytics/track
-// Track analytics events from client
+// Persist analytics events (page views, scroll depth, custom events)
 // =============================================================================
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, locals }) => {
+  const env = (locals as { env: Env }).env;
+  if (!env) {
+    return new Response(JSON.stringify({ error: 'Environment not configured' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const body = (await request.json()) as {
       event?: string;
@@ -21,23 +31,43 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    // Parse user agent for device/browser detection
     const userAgent = request.headers.get('user-agent') || '';
-
-    // Get session from cookie
     const cookieHeader = request.headers.get('cookie') || '';
-    const sessionId = parseCookie(cookieHeader, 'bb_session');
+    const sessionId = parseCookie(cookieHeader, 'bb_session') || '';
 
-    // In a real implementation, you would store this in the database
-    // For now, we just log it
-    console.log('[Analytics]', {
+    await createDatabase(env);
+
+    const referrerValue = referrer ? referrer.slice(0, 500) : undefined;
+    const userAgentValue = userAgent.slice(0, 300);
+    const metadataValue = JSON.stringify(metadata || {}).slice(0, 2000);
+
+    await analyticsEvents.create({
       event,
       page,
       sessionId,
-      referrer,
-      userAgent: userAgent.slice(0, 100),
-      metadata,
+      ...(referrerValue !== undefined ? { referrer: referrerValue } : {}),
+      userAgent: userAgentValue,
+      metadata: metadataValue,
     });
+
+    if (event === 'page_view') {
+      await pageViews.create({
+        page,
+        sessionId,
+        ...(referrerValue !== undefined ? { referrer: referrerValue } : {}),
+        createdAt: new Date(),
+      });
+    } else if (event === 'scroll_depth') {
+      const depth = Number(metadata?.depth ?? 0);
+      if (sessionId && Number.isFinite(depth) && depth >= 0 && depth <= 1) {
+        await scrollDepth.create({
+          page,
+          sessionId,
+          maxDepth: depth,
+          createdAt: new Date(),
+        });
+      }
+    }
 
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

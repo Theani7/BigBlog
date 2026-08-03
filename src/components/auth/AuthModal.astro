@@ -339,12 +339,6 @@ import X from 'lucide-astro/X';
   });
 
   // Open/Close logic
-  document.querySelectorAll('[data-auth-modal]').forEach((trigger) => {
-    trigger.addEventListener('click', (e) => {
-      e.preventDefault();
-    });
-  });
-
   window.addEventListener('click', (e) => {
     const target = e.target as HTMLElement;
     // Check if clicked element has data-auth-modal or if its parent has it
@@ -433,7 +427,9 @@ import X from 'lucide-astro/X';
 
       const result = await res.json();
       if (result.success) {
-        window.location.href = '/dashboard'; // Redirect to dashboard after auth
+        const redirect = sessionStorage.getItem('bb_auth_redirect');
+        sessionStorage.removeItem('bb_auth_redirect');
+        window.location.href = redirect || '/dashboard'; // Redirect after auth
       } else {
         if (errorMsg) {
           errorMsg.textContent = result.error || 'Authentication failed';

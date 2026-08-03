@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../../db';
 import { getSiteSettings, setSiteSettings } from '../../../../db/schema';
@@ -20,8 +21,8 @@ export const GET: APIRoute = async (context) => {
     await createDatabase(env);
     const settings = await getSiteSettings();
     return json({ success: true, data: settings });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -36,7 +37,7 @@ export const PUT: APIRoute = async (context) => {
     await createDatabase(env);
 
     const body = await context.request.json();
-    const entries: Record<string, any> = {};
+    const entries: Record<string, unknown> = {};
 
     if (typeof body.siteName === 'string') entries.siteName = body.siteName.slice(0, 80);
     if (typeof body.siteTagline === 'string') entries.siteTagline = body.siteTagline.slice(0, 200);
@@ -56,7 +57,7 @@ export const PUT: APIRoute = async (context) => {
     await setSiteSettings(entries);
     const settings = await getSiteSettings();
     return json({ success: true, data: settings });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { Repost, Story, User } from '../../../db/schema';
@@ -40,14 +41,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
-  } catch (error: any) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Internal error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };
 
@@ -110,13 +108,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       });
     }
-  } catch (error: any) {
-    return new Response(
-      JSON.stringify({ success: false, error: error.message || 'Internal error' }),
-      {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      }
-    );
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 };

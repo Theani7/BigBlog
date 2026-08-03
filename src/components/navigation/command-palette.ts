@@ -10,7 +10,6 @@
   interface CategoryItem {
     name: string;
     count: number;
-    url: string;
   }
 
   interface ArticleItem {
@@ -80,7 +79,6 @@
       return Array.from(cats.entries()).map(([cat, count]) => ({
         name: cat,
         count,
-        url: `/category/${cat.toLowerCase()}`,
       }));
     };
 
@@ -88,13 +86,21 @@
       return index.map((post) => ({
         title: post.title,
         description: post.description,
-        url: `/blog/${post.slug}`,
+        url: `/p/${post.slug}`,
         tags: post.tags,
         category: post.category,
         _content:
           `${post.title} ${post.description} ${post.tags.join(' ')} ${post.category}`.toLowerCase(),
       }));
     };
+
+    const escapeHtml = (value: string): string =>
+      value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
     const ensureCategories = () => {
       if (!categoriesList) return;
@@ -108,15 +114,18 @@
         const li = document.createElement('li');
         li.className = 'command-item';
         li.dataset.type = 'category';
-        li.dataset.url = cat.url;
         li.innerHTML = `
           <span class="command-item-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           </span>
-          <span class="command-item-label">${cat.name}</span>
+          <span class="command-item-label">${escapeHtml(cat.name)}</span>
           <span class="command-item-hint">${cat.count} article${cat.count !== 1 ? 's' : ''}</span>
         `;
-        li.addEventListener('click', () => executeItem(li));
+        li.addEventListener('click', () => {
+          input.value = cat.name;
+          filterCommands(cat.name);
+          input.focus();
+        });
         categoriesList.appendChild(li);
       });
     };
@@ -187,12 +196,12 @@
           articlesList.innerHTML = matched
             .map(
               (a) => `
-            <li class="command-item" data-type="article" data-url="${a.url}">
+            <li class="command-item" data-type="article" data-url="${escapeHtml(a.url)}">
               <span class="command-item-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
               </span>
-              <span class="command-item-label">${a.title}</span>
-              <span class="command-item-hint">${a.category}</span>
+              <span class="command-item-label">${escapeHtml(a.title)}</span>
+              <span class="command-item-hint">${escapeHtml(a.category)}</span>
             </li>
           `
             )
@@ -210,11 +219,11 @@
         recentList.innerHTML = recent
           .map(
             (r) => `
-          <li class="command-item" data-type="recent" data-url="${r.url}">
+          <li class="command-item" data-type="recent" data-url="${escapeHtml(r.url)}">
             <span class="command-item-icon">
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </span>
-            <span class="command-item-label">${r.title}</span>
+            <span class="command-item-label">${escapeHtml(r.title)}</span>
             <span class="command-item-hint">Recent</span>
           </li>
         `

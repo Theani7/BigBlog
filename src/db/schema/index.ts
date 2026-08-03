@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
 // Re-export analytics tables
 export * from './analytics';
@@ -9,6 +9,15 @@ export * from './repost';
 // =============================================================================
 // ANONYMOUS SESSIONS
 // =============================================================================
+export interface IAnonymousSession extends Document {
+  fingerprint: string;
+  userAgent: string;
+  ipHash: string;
+  createdAt: Date;
+  updatedAt: Date;
+  lastActiveAt: Date;
+}
+
 const anonymousSessionsSchema = new Schema({
   _id: { type: String, required: true },
   fingerprint: { type: String, required: true },
@@ -23,12 +32,20 @@ anonymousSessionsSchema.index({ fingerprint: 1 });
 anonymousSessionsSchema.index({ createdAt: 1 });
 
 export const anonymousSessions =
-  mongoose.models.AnonymousSession ||
-  mongoose.model<any>('AnonymousSession', anonymousSessionsSchema);
+  (mongoose.models.AnonymousSession as Model<IAnonymousSession>) ||
+  mongoose.model<IAnonymousSession>('AnonymousSession', anonymousSessionsSchema);
 
 // =============================================================================
 // ARTICLE VIEWS
 // =============================================================================
+export interface IArticleView extends Document {
+  articleSlug: string;
+  sessionId: string;
+  viewedAt: Date;
+  duration: number;
+  referrer: string;
+}
+
 const articleViewsSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -44,11 +61,18 @@ articleViewsSchema.index({ articleSlug: 1, viewedAt: 1 });
 articleViewsSchema.index({ articleSlug: 1, sessionId: 1, viewedAt: 1 }, { unique: true });
 
 export const articleViews =
-  mongoose.models.ArticleView || mongoose.model<any>('ArticleView', articleViewsSchema);
+  (mongoose.models.ArticleView as Model<IArticleView>) ||
+  mongoose.model<IArticleView>('ArticleView', articleViewsSchema);
 
 // =============================================================================
 // ARTICLE LIKES
 // =============================================================================
+export interface IArticleLike extends Document {
+  articleSlug: string;
+  sessionId: string;
+  createdAt: Date;
+}
+
 const articleLikesSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -60,11 +84,19 @@ articleLikesSchema.index({ sessionId: 1 });
 articleLikesSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
 export const articleLikes =
-  mongoose.models.ArticleLike || mongoose.model<any>('ArticleLike', articleLikesSchema);
+  (mongoose.models.ArticleLike as Model<IArticleLike>) ||
+  mongoose.model<IArticleLike>('ArticleLike', articleLikesSchema);
 
 // =============================================================================
 // ARTICLE BOOKMARKS
 // =============================================================================
+export interface IArticleBookmark extends Document {
+  articleSlug: string;
+  sessionId: string;
+  createdAt: Date;
+  syncedAt: Date;
+}
+
 const articleBookmarksSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -77,11 +109,27 @@ articleBookmarksSchema.index({ sessionId: 1 });
 articleBookmarksSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
 export const articleBookmarks =
-  mongoose.models.ArticleBookmark || mongoose.model<any>('ArticleBookmark', articleBookmarksSchema);
+  (mongoose.models.ArticleBookmark as Model<IArticleBookmark>) ||
+  mongoose.model<IArticleBookmark>('ArticleBookmark', articleBookmarksSchema);
 
 // =============================================================================
 // COMMENTS
 // =============================================================================
+export interface IComment extends Document {
+  articleSlug: string;
+  sessionId: string;
+  userId: mongoose.Types.ObjectId;
+  parentId: mongoose.Types.ObjectId;
+  content: string;
+  authorName: string;
+  authorEmail: string;
+  status: string;
+  isEdited: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt: Date;
+}
+
 const commentsSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -108,11 +156,20 @@ commentsSchema.index({ parentId: 1 });
 commentsSchema.index({ status: 1 });
 commentsSchema.index({ createdAt: 1 });
 
-export const comments = mongoose.models.Comment || mongoose.model<any>('Comment', commentsSchema);
+export const comments =
+  (mongoose.models.Comment as Model<IComment>) ||
+  mongoose.model<IComment>('Comment', commentsSchema);
 
 // =============================================================================
 // COMMENT REACTIONS
 // =============================================================================
+export interface ICommentReaction extends Document {
+  commentId: mongoose.Types.ObjectId;
+  sessionId: string;
+  emoji: string;
+  createdAt: Date;
+}
+
 const commentReactionsSchema = new Schema({
   commentId: { type: Schema.Types.ObjectId, required: true, ref: 'Comment' },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -125,11 +182,22 @@ commentReactionsSchema.index({ sessionId: 1 });
 commentReactionsSchema.index({ commentId: 1, sessionId: 1, emoji: 1 }, { unique: true });
 
 export const commentReactions =
-  mongoose.models.CommentReaction || mongoose.model<any>('CommentReaction', commentReactionsSchema);
+  (mongoose.models.CommentReaction as Model<ICommentReaction>) ||
+  mongoose.model<ICommentReaction>('CommentReaction', commentReactionsSchema);
 
 // =============================================================================
 // COMMENT REPORTS
 // =============================================================================
+export interface ICommentReport extends Document {
+  commentId: mongoose.Types.ObjectId;
+  sessionId: string;
+  reason: string;
+  details: string;
+  status: string;
+  createdAt: Date;
+  reviewedAt: Date;
+}
+
 const commentReportsSchema = new Schema({
   commentId: { type: Schema.Types.ObjectId, required: true, ref: 'Comment' },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -149,11 +217,19 @@ commentReportsSchema.index({ commentId: 1 });
 commentReportsSchema.index({ status: 1 });
 
 export const commentReports =
-  mongoose.models.CommentReport || mongoose.model<any>('CommentReport', commentReportsSchema);
+  (mongoose.models.CommentReport as Model<ICommentReport>) ||
+  mongoose.model<ICommentReport>('CommentReport', commentReportsSchema);
 
 // =============================================================================
 // STORY REPOSTS
 // =============================================================================
+export interface IStoryRepost extends Document {
+  articleSlug: string;
+  sessionId: string;
+  userId: mongoose.Types.ObjectId;
+  createdAt: Date;
+}
+
 const storyRepostsSchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -166,11 +242,19 @@ storyRepostsSchema.index({ sessionId: 1 });
 storyRepostsSchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
 export const storyReposts =
-  mongoose.models.StoryRepost || mongoose.model<any>('StoryRepost', storyRepostsSchema);
+  (mongoose.models.StoryRepost as Model<IStoryRepost>) ||
+  mongoose.model<IStoryRepost>('StoryRepost', storyRepostsSchema);
 
 // =============================================================================
 // AUTHOR FOLLOWS
 // =============================================================================
+export interface IAuthorFollow extends Document {
+  authorId: mongoose.Types.ObjectId;
+  sessionId: string;
+  userId: mongoose.Types.ObjectId;
+  createdAt: Date;
+}
+
 const authorFollowsSchema = new Schema({
   authorId: { type: Schema.Types.ObjectId, required: true, ref: 'User' },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -183,11 +267,22 @@ authorFollowsSchema.index({ sessionId: 1 });
 authorFollowsSchema.index({ authorId: 1, sessionId: 1 }, { unique: true });
 
 export const authorFollows =
-  mongoose.models.AuthorFollow || mongoose.model<any>('AuthorFollow', authorFollowsSchema);
+  (mongoose.models.AuthorFollow as Model<IAuthorFollow>) ||
+  mongoose.model<IAuthorFollow>('AuthorFollow', authorFollowsSchema);
 
 // =============================================================================
 // NEWSLETTER SUBSCRIBERS
 // =============================================================================
+export interface INewsletterSubscriber extends Document {
+  email: string;
+  sessionId: string;
+  status: string;
+  confirmationToken: string;
+  subscribedAt: Date;
+  confirmedAt: Date;
+  unsubscribedAt: Date;
+}
+
 const newsletterSubscribersSchema = new Schema({
   email: { type: String, required: true },
   sessionId: { type: String, ref: 'AnonymousSession' },
@@ -208,12 +303,22 @@ newsletterSubscribersSchema.index({ status: 1 });
 newsletterSubscribersSchema.index({ confirmationToken: 1 });
 
 export const newsletterSubscribers =
-  mongoose.models.NewsletterSubscriber ||
-  mongoose.model<any>('NewsletterSubscriber', newsletterSubscribersSchema);
+  (mongoose.models.NewsletterSubscriber as Model<INewsletterSubscriber>) ||
+  mongoose.model<INewsletterSubscriber>('NewsletterSubscriber', newsletterSubscribersSchema);
 
 // =============================================================================
 // READING HISTORY
 // =============================================================================
+export interface IReadingHistory extends Document {
+  articleSlug: string;
+  sessionId: string;
+  progress: number;
+  readTime: number;
+  completedAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const readingHistorySchema = new Schema({
   articleSlug: { type: String, required: true },
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
@@ -230,11 +335,23 @@ readingHistorySchema.index({ updatedAt: 1 });
 readingHistorySchema.index({ articleSlug: 1, sessionId: 1 }, { unique: true });
 
 export const readingHistory =
-  mongoose.models.ReadingHistory || mongoose.model<any>('ReadingHistory', readingHistorySchema);
+  (mongoose.models.ReadingHistory as Model<IReadingHistory>) ||
+  mongoose.model<IReadingHistory>('ReadingHistory', readingHistorySchema);
 
 // =============================================================================
 // USER PREFERENCES
 // =============================================================================
+export interface IUserPreference extends Document {
+  sessionId: string;
+  theme: string;
+  fontSize: number;
+  contentWidth: number;
+  lineHeight: number;
+  readingMode: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 const userPreferencesSchema = new Schema({
   sessionId: { type: String, required: true, ref: 'AnonymousSession' },
   theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
@@ -249,11 +366,22 @@ const userPreferencesSchema = new Schema({
 userPreferencesSchema.index({ sessionId: 1 }, { unique: true });
 
 export const userPreferences =
-  mongoose.models.UserPreference || mongoose.model<any>('UserPreference', userPreferencesSchema);
+  (mongoose.models.UserPreference as Model<IUserPreference>) ||
+  mongoose.model<IUserPreference>('UserPreference', userPreferencesSchema);
 
 // =============================================================================
 // AUDIT LOGS
 // =============================================================================
+export interface IAuditLog extends Document {
+  sessionId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  metadata: string;
+  ipHash: string;
+  createdAt: Date;
+}
+
 const auditLogsSchema = new Schema({
   sessionId: { type: String, ref: 'AnonymousSession' },
   action: { type: String, required: true },
@@ -270,12 +398,19 @@ auditLogsSchema.index({ entityType: 1, entityId: 1 });
 auditLogsSchema.index({ createdAt: 1 });
 
 export const auditLogs =
-  mongoose.models.AuditLog || mongoose.model<any>('AuditLog', auditLogsSchema);
+  (mongoose.models.AuditLog as Model<IAuditLog>) ||
+  mongoose.model<IAuditLog>('AuditLog', auditLogsSchema);
 
 // =============================================================================
 // SITE SETTINGS
 // Key/value store for site-wide admin configuration
 // =============================================================================
+export interface ISiteSetting extends Document {
+  key: string;
+  value: unknown;
+  updatedAt: Date;
+}
+
 const siteSettingsSchema = new Schema({
   key: { type: String, required: true, unique: true },
   value: { type: Schema.Types.Mixed, required: true },
@@ -283,7 +418,8 @@ const siteSettingsSchema = new Schema({
 });
 
 export const siteSettings =
-  mongoose.models.SiteSetting || mongoose.model<any>('SiteSetting', siteSettingsSchema);
+  (mongoose.models.SiteSetting as Model<ISiteSetting>) ||
+  mongoose.model<ISiteSetting>('SiteSetting', siteSettingsSchema);
 
 export const DEFAULT_SETTINGS = {
   siteName: 'BigBlog',
@@ -294,14 +430,14 @@ export const DEFAULT_SETTINGS = {
   maintenanceMode: false,
 } as const;
 
-export async function getSiteSettings(): Promise<Record<string, any>> {
-  const rows: any[] = await siteSettings.find().lean();
-  const stored: Record<string, any> = {};
+export async function getSiteSettings(): Promise<Record<string, unknown>> {
+  const rows: ISiteSetting[] = await siteSettings.find().lean();
+  const stored: Record<string, unknown> = {};
   for (const row of rows) stored[row.key] = row.value;
   return { ...DEFAULT_SETTINGS, ...stored };
 }
 
-export async function setSiteSettings(entries: Record<string, any>): Promise<void> {
+export async function setSiteSettings(entries: Record<string, unknown>): Promise<void> {
   for (const [key, value] of Object.entries(entries)) {
     if (!(key in DEFAULT_SETTINGS)) continue;
     await siteSettings.findOneAndUpdate(

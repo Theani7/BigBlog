@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import mongoose from 'mongoose';
 import { createDatabase, type Env } from '../../../db';
@@ -49,47 +50,43 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const payload = token ? await verifyAuthToken(token, env) : null;
     const currentUserId = payload?.userId ? new mongoose.Types.ObjectId(payload.userId) : null;
 
-    let items: any[] = [];
-    if (type === 'followers') {
-      items = await authorFollows
-        .find({ authorId: authorObjectId })
-        .populate('userId', 'name avatar bio pronouns role')
-        .lean();
-    } else {
-      items = await authorFollows
-        .find({ userId: authorObjectId })
-        .populate('authorId', 'name avatar bio pronouns role')
-        .lean();
-    }
+    const leanItems = (await authorFollows
+      .find(type === 'followers' ? { authorId: authorObjectId } : { userId: authorObjectId })
+      .populate(type === 'followers' ? 'userId' : 'authorId', 'name avatar bio pronouns role')
+      .lean()) as unknown as Array<Record<string, unknown>>;
+    const items = leanItems;
 
     // Extract populated user/author objects
-    const rawAuthors: any[] = [];
+    const rawAuthors: Array<Record<string, unknown>> = [];
     for (const item of items) {
-      const populated = type === 'followers' ? item.userId : item.authorId;
-      if (populated && typeof populated === 'object' && populated._id) {
+      const populated = (type === 'followers' ? item.userId : item.authorId) as
+        Record<string, unknown> | undefined;
+      if (populated && populated._id) {
         rawAuthors.push(populated);
       }
     }
 
     // Collect ObjectIds of extracted authors to check follow status in bulk
-    const targetAuthorIds = rawAuthors.map((a) => a._id);
+    const targetAuthorIds = rawAuthors
+      .map((a) => a._id)
+      .filter((id): id is mongoose.Types.ObjectId => id instanceof mongoose.Types.ObjectId);
 
     const followedAuthorIdSet = new Set<string>();
     if (targetAuthorIds.length > 0) {
-      const followConditions: any[] = [{ sessionId }];
+      const followConditions: Array<Record<string, unknown>> = [{ sessionId }];
       if (currentUserId) {
         followConditions.push({ userId: currentUserId });
       }
 
-      const myFollows = await authorFollows
+      const myFollows = (await authorFollows
         .find({
           authorId: { $in: targetAuthorIds },
           $or: followConditions,
         })
         .select('authorId')
-        .lean();
+        .lean()) as unknown as Array<Record<string, unknown>>;
 
-      myFollows.forEach((f: any) => {
+      myFollows.forEach((f) => {
         if (f.authorId) {
           followedAuthorIdSet.add(f.authorId.toString());
         }
@@ -97,7 +94,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const data = rawAuthors.map((author) => {
-      const id = author._id.toString();
+      const id =
+        author._id instanceof mongoose.Types.ObjectId ? author._id.toString() : String(author._id);
       return {
         id,
         name: author.name || 'Anonymous',
@@ -113,7 +111,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       success: true,
       data,
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

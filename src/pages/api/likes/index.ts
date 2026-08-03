@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { articleLikes } from '../../../db/schema';
@@ -28,8 +29,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const liked = (await articleLikes.exists({ articleSlug: slug, sessionId })) !== null;
 
     return json({ success: true, data: { count, liked } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -58,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     const count = await articleLikes.countDocuments({ articleSlug: slug });
     return json({ success: true, data: { liked: !existing, count } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { Story } from '../../../db/schema/story';
+import { readingHistory } from '../../../db/schema';
+import { getOrCreateSessionId } from '../../../lib/session';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   const env = (locals as { env: Env }).env;
@@ -25,12 +27,17 @@ export const GET: APIRoute = async ({ locals, url }) => {
     try {
       await createDatabase(env);
       const story = await Story.findOne({ slug });
-      return new Response(JSON.stringify({ success: true, data: { progress: story ? story.reads : 0 } }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ success: true, data: { progress: story ? story.reads : 0 } }),
+        {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
     } catch {
-      return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), { status: 500 });
+      return new Response(JSON.stringify({ success: false, error: 'Internal server error' }), {
+        status: 500,
+      });
     }
   }
 
@@ -40,7 +47,7 @@ export const GET: APIRoute = async ({ locals, url }) => {
   });
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
   if (!env) {
     return new Response(JSON.stringify({ success: false, error: 'Database not configured' }), {
@@ -55,7 +62,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
       progress?: number;
       readTime?: number;
     };
-    const { articleSlug, progress, readTime: _readTime } = body;
+    const { articleSlug, progress, readTime } = body;
 
     if (!articleSlug || progress === undefined) {
       return new Response(JSON.stringify({ success: false, error: 'Missing required fields' }), {
@@ -64,10 +71,35 @@ export const POST: APIRoute = async ({ request, locals }) => {
       });
     }
 
+    if (typeof progress !== 'number' || progress < 0 || progress > 100) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Progress must be a number between 0 and 100' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     await createDatabase(env);
-    
-    // If progress is substantial (e.g., 100%), count as a read
-    if (progress >= 100) {
+    const sessionId = getOrCreateSessionId(cookies);
+
+    // Persist progress per session per story (unique index) and count a
+    // completed read at most once per session.
+    const isFirstEntry = !(await readingHistory.exists({ articleSlug, sessionId }));
+    await readingHistory.findOneAndUpdate(
+      { articleSlug, sessionId },
+      {
+        $set: {
+          progress,
+          readTime: typeof readTime === 'number' ? readTime : 0,
+          updatedAt: new Date(),
+        },
+      },
+      { upsert: true, new: true }
+    );
+
+    if (progress >= 100 && isFirstEntry) {
       await Story.updateOne({ slug: articleSlug }, { $inc: { reads: 1 } });
     }
 

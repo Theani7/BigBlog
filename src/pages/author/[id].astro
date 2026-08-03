@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Sidebar from '../../components/dashboard/Sidebar.astro';
 import FollowsModal from '../../components/profile/FollowsModal.astro';
 import { createDatabase, type Env } from '../../db';
-import { User, Story } from '../../db/schema';
+import { User, Story, authorFollows } from '../../db/schema';
 import { formatCompactNumber } from '../../lib/formatters';
 import mongoose from 'mongoose';
 
@@ -44,6 +44,9 @@ const authorWebsite = authorUser.website || '';
 const authorTwitter = authorUser.twitter || '';
 const authorGithub = authorUser.github || '';
 const authorLinkedin = authorUser.linkedin || '';
+
+const authorFollowerCount = await authorFollows.countDocuments({ authorId: authorUser._id });
+const authorFollowingCount = await authorFollows.countDocuments({ userId: authorUser._id });
 
 // Fetch all published stories by this author
 const storiesDocs = await Story.find({
@@ -119,13 +122,6 @@ function getInitials(name: string): string {
               <button class="author-follow-btn" id="author-follow-btn" data-author-id={authorIdStr}>
                 Follow
               </button>
-              <span
-                class="author-follower-badge follows-trigger"
-                id="author-follower-count"
-                data-open-follows="followers"
-                data-author-id={authorIdStr}
-                style="cursor:pointer;">0 followers</span
-              >
             </div>
 
             <!-- Social Links -->
@@ -245,6 +241,29 @@ function getInitials(name: string): string {
             <span class="metric-value">{formatCompactNumber(totalReads)}</span>
             <span class="metric-label">Total Reads</span>
           </div>
+          <div class="metric-divider"></div>
+          <div
+            class="metric-item follows-trigger"
+            data-open-follows="followers"
+            data-author-id={authorIdStr}
+            role="button"
+            tabindex="0"
+          >
+            <span class="metric-value" id="author-follower-count">
+              {formatCompactNumber(authorFollowerCount)}
+            </span>
+            <span class="metric-label">Followers</span>
+          </div>
+          <div
+            class="metric-item follows-trigger"
+            data-open-follows="following"
+            data-author-id={authorIdStr}
+            role="button"
+            tabindex="0"
+          >
+            <span class="metric-value">{formatCompactNumber(authorFollowingCount)}</span>
+            <span class="metric-label">Following</span>
+          </div>
         </div>
       </section>
 
@@ -330,7 +349,7 @@ function getInitials(name: string): string {
           const count = data.count ?? data.data?.count ?? 0;
           const following = data.following ?? data.isFollowing ?? data.data?.following ?? false;
           if (followerCountEl) {
-            followerCountEl.textContent = `${formatCompact(count)} follower${count === 1 ? '' : 's'}`;
+            followerCountEl.textContent = formatCompact(count);
           }
           if (following) {
             followBtn.textContent = 'Following';
@@ -358,7 +377,7 @@ function getInitials(name: string): string {
           const count = data.count ?? data.data?.count ?? 0;
           const following = data.following ?? data.isFollowing ?? data.data?.following ?? false;
           if (followerCountEl) {
-            followerCountEl.textContent = `${formatCompact(count)} follower${count === 1 ? '' : 's'}`;
+            followerCountEl.textContent = formatCompact(count);
           }
           if (following) {
             followBtn.textContent = 'Following';
@@ -383,6 +402,12 @@ function getInitials(name: string): string {
         var type = el.getAttribute('data-open-follows') || 'followers';
         if (typeof window.openFollowsModal === 'function') {
           window.openFollowsModal(type);
+        }
+      });
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
         }
       });
     });
@@ -518,12 +543,6 @@ function getInitials(name: string): string {
     border: 1px solid var(--color-hairline, #e6dfd8);
   }
 
-  .author-follower-badge {
-    font-family: var(--font-sans, 'StyreneB', 'Inter', sans-serif);
-    font-size: 13px;
-    color: var(--color-muted, #6c6a64);
-  }
-
   .author-social-links {
     display: flex;
     gap: 16px;
@@ -579,6 +598,21 @@ function getInitials(name: string): string {
     width: 1px;
     height: 32px;
     background-color: var(--color-hairline, #e6dfd8);
+  }
+
+  .metric-item.follows-trigger {
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+  }
+
+  .metric-item.follows-trigger:hover {
+    opacity: 0.6;
+  }
+
+  .metric-item.follows-trigger:focus-visible {
+    outline: 2px solid var(--color-primary, #181715);
+    outline-offset: 4px;
+    border-radius: 4px;
   }
 
   /* Stories Feed Section */

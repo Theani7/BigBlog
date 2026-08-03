@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User, getSiteSettings } from '../../../db/schema';
@@ -20,6 +21,29 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (!email || !password) {
       return new Response(
         JSON.stringify({ success: false, error: 'Email and password are required' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'A valid email address is required' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
+    if (typeof password !== 'string' || password.length < 8) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Password must be at least 8 characters long',
+        }),
         {
           status: 400,
           headers: { 'Content-Type': 'application/json' },
@@ -93,8 +117,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

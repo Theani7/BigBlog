@@ -1,7 +1,3 @@
-declare global {
-  type D1Database = any;
-}
-
 import type { InferSchemaType } from 'mongoose';
 
 import {
@@ -59,7 +55,6 @@ export type InsertComment = Partial<Comment>;
 export type CommentStatus = 'pending' | 'approved' | 'rejected' | 'spam';
 
 export interface CommentWithReplies extends Comment {
-  _id: string;
   replies?: CommentWithReplies[];
   reactionCounts?: Record<string, number>;
 }

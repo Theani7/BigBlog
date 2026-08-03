@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../../db';
 import { User, Story } from '../../../../db/schema';
@@ -26,7 +27,7 @@ export const GET: APIRoute = async (context) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '25', 10), 1), 100);
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
     if (search) {
       const re = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       filter.$or = [{ name: re }, { email: re }];
@@ -48,11 +49,11 @@ export const GET: APIRoute = async (context) => {
     const storyCounts = await Story.aggregate([
       { $group: { _id: '$authorId', count: { $sum: 1 } } },
     ]);
-    const countByAuthor = new Map(storyCounts.map((s: any) => [s._id.toString(), s.count]));
+    const countByAuthor = new Map(storyCounts.map((s) => [s._id.toString(), s.count]));
 
     return json({
       success: true,
-      data: users.map((u: any) => ({
+      data: users.map((u) => ({
         id: u._id.toString(),
         email: u.email,
         name: u.name || '',
@@ -65,8 +66,8 @@ export const GET: APIRoute = async (context) => {
       })),
       meta: { total, page, limit, pages: Math.max(Math.ceil(total / limit), 1) },
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -116,8 +117,8 @@ export const PATCH: APIRoute = async (context) => {
     }
 
     return json({ success: false, error: 'Unknown action' }, 400);
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -151,7 +152,7 @@ export const DELETE: APIRoute = async (context) => {
     await Story.deleteMany({ authorId: id });
 
     return json({ success: true, data: { id } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

@@ -103,6 +103,15 @@ const { authorId } = Astro.props;
       return (parts[0][0] + (parts[1] ? parts[1][0] : '')).toUpperCase();
     }
 
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
     function updateTitle(type) {
       if (titleEl) titleEl.textContent = type === 'followers' ? 'Followers' : 'Following';
     }
@@ -124,17 +133,20 @@ const { authorId } = Astro.props;
     }
 
     function renderAuthorItem(author) {
+      var nameHtml = escapeHtml(author.name);
       var avatarHtml = author.avatar
         ? '<img src="' +
-          author.avatar +
+          escapeHtml(author.avatar) +
           '" alt="' +
-          author.name +
+          nameHtml +
           '" class="follows-author-avatar" />'
-        : '<div class="follows-author-avatar-fallback">' + getInitials(author.name) + '</div>';
+        : '<div class="follows-author-avatar-fallback">' +
+          escapeHtml(getInitials(author.name)) +
+          '</div>';
 
       var bioHtml = author.bio
         ? '<p class="follows-author-bio">' +
-          author.bio.slice(0, 80) +
+          escapeHtml(author.bio.slice(0, 80)) +
           (author.bio.length > 80 ? '…' : '') +
           '</p>'
         : '';
@@ -146,15 +158,15 @@ const { authorId } = Astro.props;
 
       return (
         '<div class="follows-author-item" data-author-id="' +
-        author.id +
+        escapeHtml(author.id) +
         '">' +
         '<a href="/author/' +
-        author.id +
+        encodeURIComponent(author.id) +
         '" class="follows-author-left">' +
         avatarHtml +
         '<div class="follows-author-info">' +
         '<span class="follows-author-name">' +
-        author.name +
+        nameHtml +
         '</span>' +
         bioHtml +
         '</div>' +
@@ -162,7 +174,7 @@ const { authorId } = Astro.props;
         '<button class="' +
         followClass +
         '" data-author-id="' +
-        author.id +
+        escapeHtml(author.id) +
         '" data-following="' +
         author.isFollowing +
         '">' +
@@ -210,7 +222,7 @@ const { authorId } = Astro.props;
                 })
                 .then(function (result) {
                   if (result.success) {
-                    var nowFollowing = result.action === 'follow';
+                    var nowFollowing = result.data ? result.data.following : result.following;
                     btn.dataset.following = String(nowFollowing);
                     btn.textContent = nowFollowing ? 'Following' : 'Follow';
                     btn.classList.toggle('is-following', nowFollowing);

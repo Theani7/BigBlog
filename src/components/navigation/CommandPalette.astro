@@ -74,7 +74,7 @@ const { searchIndex } = Astro.props as CommandPaletteProps;
             <span class="command-item-label">Home</span>
             <span class="command-item-hint">Go to homepage</span>
           </li>
-          <li class="command-item" data-type="nav" data-url="/blog">
+          <li class="command-item" data-type="nav" data-url="/write">
             <span class="command-item-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -90,10 +90,10 @@ const { searchIndex } = Astro.props as CommandPaletteProps;
                   d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg
               >
             </span>
-            <span class="command-item-label">Blog</span>
-            <span class="command-item-hint">Browse all articles</span>
+            <span class="command-item-label">Write</span>
+            <span class="command-item-hint">Start a new story</span>
           </li>
-          <li class="command-item" data-type="nav" data-url="/search">
+          <li class="command-item" data-type="nav" data-url="/library">
             <span class="command-item-icon">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -105,12 +105,12 @@ const { searchIndex } = Astro.props as CommandPaletteProps;
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                ><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"
-                ></line></svg
+                ><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path
+                  d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg
               >
             </span>
-            <span class="command-item-label">Search</span>
-            <span class="command-item-hint">Open search page</span>
+            <span class="command-item-label">Library</span>
+            <span class="command-item-hint">Saved stories and history</span>
           </li>
           <li class="command-item" data-type="nav" data-url="/about">
             <span class="command-item-icon">
@@ -130,46 +130,6 @@ const { searchIndex } = Astro.props as CommandPaletteProps;
             </span>
             <span class="command-item-label">About</span>
             <span class="command-item-hint">Learn about us</span>
-          </li>
-          <li class="command-item" data-type="nav" data-url="/projects">
-            <span class="command-item-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                ><path
-                  d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"
-                ></path></svg
-              >
-            </span>
-            <span class="command-item-label">Projects</span>
-            <span class="command-item-hint">View our projects</span>
-          </li>
-          <li class="command-item" data-type="nav" data-url="/contact">
-            <span class="command-item-icon">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                ><path
-                  d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
-                ></path><polyline points="22,6 12,13 2,6"></polyline></svg
-              >
-            </span>
-            <span class="command-item-label">Contact</span>
-            <span class="command-item-hint">Get in touch</span>
           </li>
         </ul>
       </div>

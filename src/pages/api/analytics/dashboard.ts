@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { requireAdmin, json } from '../../../lib/admin';
@@ -104,7 +105,7 @@ export const GET: APIRoute = async (context) => {
       },
       { $sort: { _id: 1 } },
     ]);
-    const byDayMap = new Map(byDay.map((d: any) => [d._id, d.count]));
+    const byDayMap = new Map(byDay.map((d) => [d._id, d.count]));
     const viewsByDay = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000);
@@ -116,7 +117,7 @@ export const GET: APIRoute = async (context) => {
       { $match: { createdAt: { $gte: start } } },
       { $group: { _id: '$level', count: { $sum: 1 } } },
     ]);
-    const errByLevel = errCounts.map((e: any) => ({ level: e._id, count: e.count }));
+    const errByLevel = errCounts.map((e) => ({ level: e._id, count: e.count }));
 
     return json({
       success: true,
@@ -125,20 +126,20 @@ export const GET: APIRoute = async (context) => {
         traffic: {
           totalViews: views,
           uniqueVisitors: uniqueSessions.length,
-          viewsByPage: viewsByPage.map((v: any) => ({ page: v._id, count: v.count })),
+          viewsByPage: viewsByPage.map((v) => ({ page: v._id, count: v.count })),
           viewsByDay,
         },
         performance: {
-          coreWebVitals: perf.map((p: any) => ({
+          coreWebVitals: perf.map((p) => ({
             metric: p._id,
             avg: Math.round(p.avg * 100) / 100,
             count: p.count,
           })),
         },
         errors: {
-          total: errByLevel.reduce((sum: number, e: any) => sum + e.count, 0),
+          total: errByLevel.reduce((sum, e) => sum + e.count, 0),
           byLevel: errByLevel,
-          recent: errors.map((e: any) => ({
+          recent: errors.map((e) => ({
             id: e._id.toString(),
             level: e.level,
             message: e.message,
@@ -148,22 +149,22 @@ export const GET: APIRoute = async (context) => {
           })),
         },
         search: {
-          totalQueries: search.reduce((sum: number, s: any) => sum + s.count, 0),
-          popularQueries: search.map((s: any) => ({
+          totalQueries: search.reduce((sum, s) => sum + s.count, 0),
+          popularQueries: search.map((s) => ({
             query: s._id,
             count: s.count,
             noResult: s.noResults > 0,
           })),
         },
         engagement: {
-          scrollDepth: scroll.map((s: any) => ({
+          scrollDepth: scroll.map((s) => ({
             page: s._id,
             avgDepth: Math.round(s.avgDepth * 100) / 100,
             avgTime: Math.round(s.avgTime || 0),
           })),
         },
         api: {
-          latencyByEndpoint: latency.map((l: any) => ({
+          latencyByEndpoint: latency.map((l) => ({
             endpoint: `${l._id.method} ${l._id.endpoint}`,
             avgMs: Math.round(l.avgMs * 100) / 100,
             count: l.count,
@@ -172,7 +173,7 @@ export const GET: APIRoute = async (context) => {
         },
       },
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

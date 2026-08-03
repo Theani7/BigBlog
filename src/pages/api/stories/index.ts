@@ -2,6 +2,10 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { Story } from '../../../db/schema';
 import { verifyAuthToken } from '../../../lib/auth';
+import { getErrorMessage } from '../../../lib/errors';
+
+const VALID_STATUSES = ['DRAFT', 'PUBLISHED', 'SCHEDULED', 'UNLISTED'];
+const VALID_CATEGORIES = ['Technology', 'Design', 'Business', 'Culture', 'Life', 'Other'];
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
@@ -36,6 +40,20 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     if (!title) {
       return new Response(JSON.stringify({ success: false, error: 'Title is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid status' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    if (category !== undefined && category !== '' && !VALID_CATEGORIES.includes(category)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid category' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -95,8 +113,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });
@@ -132,6 +150,13 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
       return new Response(JSON.stringify({ success: false, error: 'Story ID required' }), {
         status: 400,
       });
+
+    if (status !== undefined && !VALID_STATUSES.includes(status)) {
+      return new Response(JSON.stringify({ success: false, error: 'Invalid status' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     await createDatabase(env);
     const story = await Story.findOne({ _id: storyId, authorId: payload.userId });
@@ -171,7 +196,9 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), { status: 500 });
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
+      status: 500,
+    });
   }
 };

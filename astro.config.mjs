@@ -6,7 +6,7 @@ import vercel from '@astrojs/vercel';
 export default defineConfig({
   output: 'server',
   adapter: vercel(),
-  integrations: [mdx(), tailwind()],
+  integrations: [mdx()],
   vite: {
     plugins: [tailwind()],
   },

@@ -1,4 +1,6 @@
-import type { APIRoute } from 'astro';
+import type { ReportReason } from '../../../db/types';
+import { getErrorMessage } from '../../../lib/errors';
+import type { APIRoute, AstroCookies } from 'astro';
 import mongoose from 'mongoose';
 import { createDatabase, type Env } from '../../../db';
 import { comments, commentReactions, commentReports, User } from '../../../db/schema';
@@ -20,13 +22,13 @@ const json = (body: unknown, status = 200) =>
 const toId = (value: string) => new mongoose.Types.ObjectId(value);
 
 async function getAuthedUser(
-  cookies: any,
+  cookies: AstroCookies,
   env: Env
-): Promise<{ userId?: string; sessionId: string }> {
+): Promise<{ userId: string | undefined; sessionId: string }> {
   const sessionId = getOrCreateSessionId(cookies);
   const token = cookies.get('auth_token')?.value;
   const payload = token ? await verifyAuthToken(token, env) : null;
-  return { userId: payload?.userId || undefined, sessionId };
+  return { userId: payload?.userId, sessionId };
 }
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
@@ -60,14 +62,14 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       .sort({ createdAt: 1 })
       .lean();
 
-    const ids = items.map((c: any) => c._id);
+    const ids = items.map((c) => c._id);
     const reactions = ids.length
       ? await commentReactions.find({ commentId: { $in: ids } }).lean()
       : [];
 
     const reactionMap = new Map<string, Record<string, number>>();
     const myReactionMap = new Map<string, string[]>();
-    for (const r of reactions as any[]) {
+    for (const r of reactions) {
       const key = r.commentId.toString();
       const counts = reactionMap.get(key) || {};
       counts[r.emoji] = (counts[r.emoji] || 0) + 1;
@@ -79,7 +81,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       }
     }
 
-    const data = (items as any[]).map((c) => ({
+    const data = items.map((c) => ({
       id: c._id.toString(),
       articleSlug: c.articleSlug,
       content: c.content,
@@ -96,8 +98,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     }));
 
     return json({ success: true, data: { comments: data, count } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -111,7 +113,15 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const action = url.searchParams.get('action') || 'create';
 
   try {
-    const body = (await request.json()) as Record<string, any>;
+    const body = (await request.json()) as {
+      articleSlug?: unknown;
+      content?: unknown;
+      parentId?: unknown;
+      commentId?: unknown;
+      emoji?: unknown;
+      reason?: unknown;
+      details?: unknown;
+    };
     await createDatabase(env);
     const sessionId = getOrCreateSessionId(cookies);
     const token = cookies.get('auth_token')?.value;
@@ -125,26 +135,26 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         }
 
         const input = {
-          articleSlug: body.articleSlug,
-          content: body.content,
-          parentId: body.parentId,
+          articleSlug: typeof body.articleSlug === 'string' ? body.articleSlug : '',
+          content: typeof body.content === 'string' ? body.content : '',
+          parentId: typeof body.parentId === 'string' ? body.parentId : undefined,
         };
 
         if (!input.articleSlug || !input.content) {
           return json({ success: false, error: 'Missing required fields' }, 400);
         }
 
-        const user = await (User as any).findById(userId).select('name email');
+        const user = await User.findById(userId).select('name email').lean();
         if (!user) {
           return json({ success: false, error: 'Account not found' }, 401);
         }
-        const authorName = (user as any).name || (user as any).email?.split('@')[0] || 'Reader';
+        const authorName = user?.name || user?.email?.split('@')[0] || 'Reader';
 
         const validation = validateComment({
           articleSlug: input.articleSlug,
           content: input.content,
           authorName,
-          authorEmail: (user as any).email,
+          authorEmail: user?.email,
         });
         if (!validation.valid) {
           return json({ success: false, error: validation.errors[0] }, 400);
@@ -157,10 +167,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
           articleSlug: input.articleSlug,
           sessionId,
           userId: toId(userId),
-          parentId: input.parentId ? toId(input.parentId) : undefined,
+          ...(input.parentId ? { parentId: toId(input.parentId) } : {}),
           content: sanitizeContent(input.content.trim()),
           authorName: sanitizeContent(authorName.trim()),
-          authorEmail: (user as any).email?.trim().toLowerCase(),
+          ...(user?.email ? { authorEmail: user.email.trim().toLowerCase() } : {}),
           status,
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -190,7 +200,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       }
 
       case 'edit': {
-        const { commentId, content } = body;
+        const commentId = typeof body.commentId === 'string' ? body.commentId : '';
+        const content = typeof body.content === 'string' ? body.content : '';
         if (!commentId || !content) {
           return json({ success: false, error: 'Comment ID and content required' }, 400);
         }
@@ -228,7 +239,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       }
 
       case 'delete': {
-        const { commentId } = body;
+        const commentId = typeof body.commentId === 'string' ? body.commentId : '';
         if (!commentId) {
           return json({ success: false, error: 'Comment ID required' }, 400);
         }
@@ -252,7 +263,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       }
 
       case 'react': {
-        const { commentId, emoji } = body;
+        const commentId = typeof body.commentId === 'string' ? body.commentId : '';
+        const emoji = typeof body.emoji === 'string' ? body.emoji : '';
         if (!commentId || !emoji) {
           return json({ success: false, error: 'Comment ID and emoji required' }, 400);
         }
@@ -282,8 +294,16 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       }
 
       case 'report': {
-        const input = { commentId: body.commentId, reason: body.reason, details: body.details };
-        const validation = validateReport(input as any);
+        const input = {
+          commentId: typeof body.commentId === 'string' ? body.commentId : '',
+          reason: typeof body.reason === 'string' ? body.reason : '',
+          details: typeof body.details === 'string' ? body.details : undefined,
+        };
+        const validation = validateReport({
+          commentId: String(input.commentId),
+          reason: input.reason as ReportReason,
+          ...(typeof input.details === 'string' ? { details: input.details } : {}),
+        });
         if (!validation.valid) {
           return json({ success: false, error: validation.errors[0] }, 400);
         }
@@ -305,7 +325,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
           commentId: comment._id,
           sessionId,
           reason: input.reason,
-          details: input.details,
+          ...(input.details ? { details: input.details } : {}),
         });
 
         return json({ success: true, message: 'Report submitted' });
@@ -314,7 +334,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       default:
         return json({ success: false, error: 'Invalid action' }, 400);
     }
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

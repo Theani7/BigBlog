@@ -1,0 +1,56 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+// Dedicated login route. Auth itself lives in the AuthModal (included via
+// Layout); this page simply opens it, so server-side redirects to /login
+// no longer 404.
+const redirect = Astro.url.searchParams.get('redirect') || '/dashboard';
+const mode = Astro.url.searchParams.get('mode') === 'signup' ? 'signup' : 'login';
+---
+
+<Layout title="Sign in — BigBlog" description="Sign in to BigBlog to start publishing.">
+  <div
+    class="login-page"
+    style="min-height: 60vh; display: flex; align-items: center; justify-content: center;"
+  >
+    <div style="text-align: center; max-width: 420px; padding: 3rem 1.5rem;">
+      <h1 style="font-family: var(--font-serif, serif); font-size: 1.75rem; margin-bottom: 0.5rem;">
+        {mode === 'login' ? 'Welcome back.' : 'Join BigBlog.'}
+      </h1>
+      <p style="color: var(--color-muted, #6c6a64); margin-bottom: 1.5rem;">
+        {
+          mode === 'login'
+            ? 'Continue your reading journey.'
+            : 'Create an account to start publishing.'
+        }
+      </p>
+      <button
+        type="button"
+        data-auth-modal={mode}
+        id="login-open-modal"
+        class="btn"
+        style="display: inline-flex; padding: 0.7rem 1.6rem; border-radius: 999px; background: var(--color-primary, #181715); color: #fff; border: none; cursor: pointer; font-weight: 600;"
+      >
+        Open sign in
+      </button>
+      <script is:inline>
+        document.addEventListener('astro:page-load', () => {
+          const btn = document.getElementById('login-open-modal');
+          if (!btn) return;
+          setTimeout(() => {
+            btn.click();
+            btn.style.display = 'none';
+          }, 50);
+        });
+      </script>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Keep the requested redirect in memory so the auth modal can honor it.
+  (() => {
+    const raw = new URLSearchParams(window.location.search).get('redirect');
+    if (raw) sessionStorage.setItem('bb_auth_redirect', raw);
+  })();
+</script>

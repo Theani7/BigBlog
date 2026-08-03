@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { articleBookmarks } from '../../../db/schema';
@@ -27,7 +28,7 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       return json({
         success: true,
         data: {
-          bookmarks: items.map((b: any) => ({
+          bookmarks: items.map((b) => ({
             articleSlug: b.articleSlug,
             createdAt: b.createdAt,
           })),
@@ -38,8 +39,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     const bookmarked = (await articleBookmarks.exists({ articleSlug: slug, sessionId })) !== null;
 
     return json({ success: true, data: { bookmarked } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -67,7 +68,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     return json({ success: true, data: { bookmarked: !existing } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

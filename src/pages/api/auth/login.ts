@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User } from '../../../db/schema';
@@ -88,8 +89,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         headers: { 'Content-Type': 'application/json' },
       }
     );
-  } catch (error: any) {
-    return new Response(JSON.stringify({ success: false, error: error.message }), {
+  } catch (error: unknown) {
+    return new Response(JSON.stringify({ success: false, error: getErrorMessage(error) }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

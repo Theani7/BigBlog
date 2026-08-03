@@ -2,6 +2,15 @@
  * Custom error classes for the API layer
  */
 
+/**
+ * Safely extract a message from an unknown error.
+ * Never throws; never leaks non-message internals.
+ */
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) return error.message;
+  return 'Internal error';
+}
+
 export class AppError extends Error {
   public readonly statusCode: number;
   public readonly isOperational: boolean;

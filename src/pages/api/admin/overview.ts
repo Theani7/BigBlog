@@ -1,3 +1,4 @@
+import { getErrorMessage } from '../../../lib/errors';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User, Story, comments, authorFollows, pageViews } from '../../../db/schema';
@@ -54,7 +55,7 @@ export const GET: APIRoute = async (context) => {
           totalViews,
           views7d,
         },
-        recentErrors: recentErrors.map((e: any) => ({
+        recentErrors: recentErrors.map((e) => ({
           id: e._id.toString(),
           message: e.message,
           page: e.page || '',
@@ -64,7 +65,7 @@ export const GET: APIRoute = async (context) => {
         })),
       },
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };

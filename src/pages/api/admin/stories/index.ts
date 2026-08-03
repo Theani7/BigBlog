@@ -1,6 +1,8 @@
+import { getErrorMessage } from '../../../../lib/errors';
+import mongoose from 'mongoose';
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../../db';
-import { Story } from '../../../../db/schema';
+import { Story, type IStory } from '../../../../db/schema';
 import { requireAdmin, json } from '../../../../lib/admin';
 
 const VALID_STATUSES = ['DRAFT', 'PUBLISHED', 'SCHEDULED', 'UNLISTED'];
@@ -26,11 +28,14 @@ export const GET: APIRoute = async (context) => {
     const page = Math.max(parseInt(url.searchParams.get('page') || '1', 10), 1);
     const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') || '25', 10), 1), 100);
 
-    const filter: any = {};
+    const filter: Record<string, unknown> = {};
     if (VALID_STATUSES.includes(status)) filter.status = status;
     if (search) filter.title = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
 
-    const [stories, total] = await Promise.all([
+    type PopulatedStory = IStory & {
+      authorId: { _id: mongoose.Types.ObjectId; name?: string; email?: string };
+    };
+    const [storiesRaw, total] = await Promise.all([
       Story.find(filter)
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
@@ -40,9 +45,11 @@ export const GET: APIRoute = async (context) => {
       Story.countDocuments(filter),
     ]);
 
+    const stories = storiesRaw as unknown as PopulatedStory[];
+
     return json({
       success: true,
-      data: stories.map((s: any) => ({
+      data: stories.map((s) => ({
         id: s._id.toString(),
         title: s.title,
         slug: s.slug,
@@ -59,8 +66,8 @@ export const GET: APIRoute = async (context) => {
       })),
       meta: { total, page, limit, pages: Math.max(Math.ceil(total / limit), 1) },
     });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -88,8 +95,8 @@ export const PATCH: APIRoute = async (context) => {
     await story.save();
 
     return json({ success: true, data: { id, status } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
 
@@ -112,7 +119,7 @@ export const DELETE: APIRoute = async (context) => {
 
     await Story.deleteOne({ _id: id });
     return json({ success: true, data: { id } });
-  } catch (error: any) {
-    return json({ success: false, error: error.message }, 500);
+  } catch (error: unknown) {
+    return json({ success: false, error: getErrorMessage(error) }, 500);
   }
 };
