@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User } from '../../../db/schema';
 import { verifyPassword, signAuthToken } from '../../../lib/auth';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
@@ -13,6 +14,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  const limited = checkRateLimit(request, {
+    key: 'auth:login',
+    limit: 10,
+    windowMs: 15 * 60_000,
+  });
+  if (limited) return limited;
 
   try {
     const body = await request.json();
@@ -66,6 +74,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
         userId: user._id.toString(),
         email: user.email,
         role: user.role,
+        name: user.name || '',
       },
       env
     );

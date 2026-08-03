@@ -7,6 +7,7 @@ export interface AuthTokenPayload {
   userId: string;
   role: string;
   email: string;
+  name?: string;
 }
 
 type SecretEnv = Record<string, unknown> & { JWT_SECRET?: string };
@@ -63,6 +64,7 @@ export async function verifyAuthToken(
       userId: payload.userId,
       role: typeof payload.role === 'string' ? payload.role : 'AUTHOR',
       email: typeof payload.email === 'string' ? payload.email : '',
+      name: typeof payload.name === 'string' ? payload.name : '',
     };
   } catch {
     return null;

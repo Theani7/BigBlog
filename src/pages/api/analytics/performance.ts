@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { performanceMetrics } from '../../../db/schema/analytics';
 import { requireAdmin, json } from '../../../lib/admin';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 // =============================================================================
 // POST /api/analytics/performance
@@ -13,40 +14,60 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ success: false, error: 'Environment not configured' }, 503);
   }
 
+  const limited = checkRateLimit(request, {
+    key: 'analytics:performance',
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as {
       metric?: string;
       value?: number;
       page?: string;
       connection?: string;
+      sessionId?: string;
+      events?: Array<{
+        metric?: string;
+        value?: number;
+        page?: string;
+        connection?: string;
+        sessionId?: string;
+      }>;
     };
-    const { metric, value, page, connection } = body;
-
-    if (!metric || value === undefined || !page) {
-      return json({ error: 'metric, value, and page are required' }, 400);
-    }
-
-    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100000) {
-      return json({ error: 'value must be a finite number' }, 400);
-    }
+    const rawEvents = Array.isArray(body.events) ? body.events : [body];
 
     const cookieHeader = request.headers.get('cookie') || '';
-    const sessionId = parseCookie(cookieHeader, 'bb_session');
+    const cookieSession = parseCookie(cookieHeader, 'bb_session');
     const userAgent = request.headers.get('user-agent') || '';
 
     await createDatabase(env);
-    const entry: Record<string, unknown> = {
-      metric: String(metric).slice(0, 64),
-      value,
-      page: page.slice(0, 500),
-      userAgent: userAgent.slice(0, 300),
-      createdAt: new Date(),
-    };
-    if (sessionId) entry.sessionId = sessionId;
-    if (connection) entry.connection = String(connection).slice(0, 64);
-    await performanceMetrics.create(entry);
 
-    return json({ success: true });
+    const docs: Array<Record<string, unknown>> = [];
+    for (const raw of rawEvents) {
+      const { metric, value, page } = raw;
+      if (!metric || value === undefined || !page) continue;
+
+      if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100000) {
+        continue;
+      }
+
+      const entry: Record<string, unknown> = {
+        metric: String(metric).slice(0, 64),
+        value,
+        page: page.slice(0, 500),
+        userAgent: userAgent.slice(0, 300),
+        createdAt: new Date(),
+      };
+      const sessionId = raw.sessionId || cookieSession || '';
+      if (sessionId) entry.sessionId = sessionId;
+      if (raw.connection) entry.connection = String(raw.connection).slice(0, 64);
+      docs.push(entry);
+    }
+
+    if (docs.length > 0) await performanceMetrics.insertMany(docs);
+    return json({ success: true, recorded: docs.length });
   } catch (error) {
     console.error('Failed to track performance metric', error);
     return json({ error: 'Internal server error' }, 500);

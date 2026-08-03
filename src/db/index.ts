@@ -15,7 +15,13 @@ export interface Env {
  * @returns Mongoose instance
  */
 export const createDatabase = async (env: Env) => {
-  if (mongoose.connection.readyState >= 1) {
+  if (mongoose.connection.readyState === 1) {
+    return mongoose;
+  }
+  // Another request in this isolate is already connecting — wait for it
+  // instead of racing a second connect() on the same connection.
+  if (mongoose.connection.readyState === 2) {
+    await mongoose.connection.asPromise();
     return mongoose;
   }
   await mongoose.connect(env.MONGO_URI);

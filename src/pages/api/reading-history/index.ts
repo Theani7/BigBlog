@@ -2,7 +2,8 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { Story } from '../../../db/schema/story';
 import { readingHistory } from '../../../db/schema';
-import { getOrCreateSessionId } from '../../../lib/session';
+import { getOrCreateSessionId, registerSession } from '../../../lib/session';
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit';
 
 export const GET: APIRoute = async ({ locals, url }) => {
   const env = (locals as { env: Env }).env;
@@ -56,6 +57,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     });
   }
 
+  const limited = checkRateLimit(request, {
+    key: 'reading-history:post',
+    limit: 60,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as {
       articleSlug?: string;
@@ -83,6 +91,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     await createDatabase(env);
     const sessionId = getOrCreateSessionId(cookies);
+    await registerSession(env, sessionId, {
+      userAgent: request.headers.get('user-agent') || '',
+      ip: getClientIp(request),
+    });
 
     // Persist progress per session per story (unique index) and count a
     // completed read at most once per session.

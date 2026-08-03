@@ -3,6 +3,7 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { User } from '../../../db/schema';
 import { verifyAuthToken, verifyPassword, hashPassword } from '../../../lib/auth';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 export const POST: APIRoute = async ({ locals, cookies, request }) => {
   const env = (locals as { env: Env }).env;
@@ -12,6 +13,13 @@ export const POST: APIRoute = async ({ locals, cookies, request }) => {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  const limited = checkRateLimit(request, {
+    key: 'auth:change-password',
+    limit: 10,
+    windowMs: 15 * 60_000,
+  });
+  if (limited) return limited;
 
   const token = cookies.get('auth_token')?.value;
   if (!token) {

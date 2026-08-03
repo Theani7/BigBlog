@@ -84,7 +84,7 @@ const userSchema = new Schema<IUser>({
   updatedAt: { type: Date, default: Date.now },
 });
 
-userSchema.index({ email: 1 });
+userSchema.index({ name: 1 });
 
 export const User: Model<IUser> =
   (mongoose.models.User as Model<IUser>) || mongoose.model<IUser>('User', userSchema);

@@ -7,6 +7,10 @@ import { User, Story, authorFollows } from '../../db/schema';
 import { formatCompactNumber } from '../../lib/formatters';
 import mongoose from 'mongoose';
 
+// Public profile pages are cached by Vercel ISR (revalidated every 10 min).
+// Follow state is resolved client-side, so the cached HTML is user-agnostic.
+export const isr = { expiration: 600 };
+
 const { id } = Astro.params;
 const env = (Astro.locals as { env: Env }).env;
 

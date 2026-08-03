@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { searchEvents } from '../../../db/schema/analytics';
 import { requireAdmin, json } from '../../../lib/admin';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 // =============================================================================
 // POST /api/analytics/search
@@ -12,6 +13,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
   if (!env) {
     return json({ success: false, error: 'Environment not configured' }, 503);
   }
+
+  const limited = checkRateLimit(request, {
+    key: 'analytics:search',
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
 
   try {
     const body = (await request.json()) as {

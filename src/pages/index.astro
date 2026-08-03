@@ -8,6 +8,10 @@ import { homepageSchemas } from '../lib/schema';
 import { createDatabase, type Env } from '../db';
 import { Story } from '../db/schema';
 
+// Revalidate the homepage every 5 minutes instead of hitting Mongo on every
+// visit. ISR serves the cached HTML from Vercel's edge network.
+export const isr = { expiration: 300 };
+
 const pageTitle = 'Home';
 const pageDescription = 'A place to read, write, and deepen your understanding';
 const structuredData = homepageSchemas();

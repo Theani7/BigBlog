@@ -4,8 +4,9 @@ import type { APIRoute, AstroCookies } from 'astro';
 import mongoose from 'mongoose';
 import { createDatabase, type Env } from '../../../db';
 import { comments, commentReactions, commentReports, User } from '../../../db/schema';
-import { getOrCreateSessionId } from '../../../lib/session';
+import { getOrCreateSessionId, registerSession } from '../../../lib/session';
 import { verifyAuthToken } from '../../../lib/auth';
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit';
 import {
   validateComment,
   sanitizeContent,
@@ -13,10 +14,10 @@ import {
   validateReport,
 } from '../../../lib/validation';
 
-const json = (body: unknown, status = 200) =>
+const json = (body: unknown, status = 200, extraHeaders: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   });
 
 const toId = (value: string) => new mongoose.Types.ObjectId(value);
@@ -54,7 +55,9 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     });
 
     if (url.searchParams.get('count') === '1') {
-      return json({ success: true, data: { comments: [], count } });
+      return json({ success: true, data: { comments: [], count } }, 200, {
+        'Cache-Control': 'public, max-age=60, s-maxage=300',
+      });
     }
 
     const items = await comments
@@ -112,6 +115,9 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || 'create';
 
+  const limited = checkRateLimit(request, { key: 'comments:post', limit: 30, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as {
       articleSlug?: unknown;
@@ -124,6 +130,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     };
     await createDatabase(env);
     const sessionId = getOrCreateSessionId(cookies);
+    await registerSession(env, sessionId, {
+      userAgent: request.headers.get('user-agent') || '',
+      ip: getClientIp(request),
+    });
     const token = cookies.get('auth_token')?.value;
     const payload = token ? await verifyAuthToken(token, env) : null;
     const userId = payload?.userId || undefined;

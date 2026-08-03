@@ -1,13 +1,14 @@
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { newsletterSubscribers } from '../../../db/schema';
-import { getOrCreateSessionId } from '../../../lib/session';
+import { getOrCreateSessionId, registerSession } from '../../../lib/session';
 import { getErrorMessage } from '../../../lib/errors';
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit';
 
-const json = (body: unknown, status = 200) =>
+const json = (body: unknown, status = 200, extraHeaders: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   });
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
@@ -42,7 +43,9 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       newsletterSubscribers.countDocuments({ status: 'pending' }),
     ]);
 
-    return json({ success: true, data: { total, confirmed, pending } });
+    return json({ success: true, data: { total, confirmed, pending } }, 200, {
+      'Cache-Control': 'public, max-age=60, s-maxage=120',
+    });
   } catch (error) {
     return json({ success: false, error: getErrorMessage(error) }, 500);
   }
@@ -51,6 +54,13 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
   if (!env) return json({ success: false, error: 'Environment not configured' }, 503);
+
+  const limited = checkRateLimit(request, {
+    key: 'newsletter:post',
+    limit: 20,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
 
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || 'subscribe';
@@ -65,6 +75,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     await createDatabase(env);
     const sessionId = getOrCreateSessionId(cookies);
+    await registerSession(env, sessionId, {
+      userAgent: request.headers.get('user-agent') || '',
+      ip: getClientIp(request),
+    });
 
     if (action === 'unsubscribe') {
       await newsletterSubscribers.updateOne(

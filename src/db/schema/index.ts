@@ -5,6 +5,7 @@ export * from './analytics';
 export * from './user';
 export * from './story';
 export * from './repost';
+export * from './session';
 
 // =============================================================================
 // ANONYMOUS SESSIONS
@@ -264,6 +265,7 @@ const authorFollowsSchema = new Schema({
 
 authorFollowsSchema.index({ authorId: 1 });
 authorFollowsSchema.index({ sessionId: 1 });
+authorFollowsSchema.index({ userId: 1 });
 authorFollowsSchema.index({ authorId: 1, sessionId: 1 }, { unique: true });
 
 export const authorFollows =
@@ -430,14 +432,27 @@ export const DEFAULT_SETTINGS = {
   maintenanceMode: false,
 } as const;
 
+// In-memory cache: site settings change rarely and are read on nearly every
+// request (signup, admin). 30s TTL is enough to avoid a Mongo query per hit
+// while keeping admin edits visible within half a minute.
+let settingsCache: { value: Record<string, unknown>; at: number } | null = null;
+const SETTINGS_TTL_MS = 30_000;
+
 export async function getSiteSettings(): Promise<Record<string, unknown>> {
+  const now = Date.now();
+  if (settingsCache && now - settingsCache.at < SETTINGS_TTL_MS) {
+    return settingsCache.value;
+  }
+
   const rows: ISiteSetting[] = await siteSettings.find().lean();
   const stored: Record<string, unknown> = {};
   for (const row of rows) stored[row.key] = row.value;
-  return { ...DEFAULT_SETTINGS, ...stored };
+  settingsCache = { value: { ...DEFAULT_SETTINGS, ...stored }, at: now };
+  return settingsCache.value;
 }
 
 export async function setSiteSettings(entries: Record<string, unknown>): Promise<void> {
+  settingsCache = null;
   for (const [key, value] of Object.entries(entries)) {
     if (!(key in DEFAULT_SETTINGS)) continue;
     await siteSettings.findOneAndUpdate(

@@ -3,11 +3,27 @@ import Layout from '../layouts/Layout.astro';
 import EditorToolbar from '../components/editor/EditorToolbar.astro';
 import EditorMeta from '../components/editor/EditorMeta.astro';
 import PublishDrawer from '../components/editor/PublishDrawer.astro';
+
+// Auth is enforced server-side (middleware verified the token and set
+// locals.user), so the editor never renders for anonymous visitors and no
+// client-side /api/auth/me round trip is needed.
+const user = (Astro.locals as { user?: { id: string } }).user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/write');
+}
 ---
 
 <Layout title="Write a Blog — BigBlog" description="Publish your thoughts to the world.">
-  <!-- Load Quill.js CSS (Bubble theme for a Medium-like popup toolbar) -->
-  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
+  <!-- Quill CSS loads without blocking first paint -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
+  </noscript>
 
   <div class="write-layout">
     <EditorToolbar />
@@ -64,10 +80,12 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
   <PublishDrawer />
 </Layout>
 
-<!-- Load Quill.js and Markdown extension -->
-<script is:inline src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-<script is:inline src="https://cdn.jsdelivr.net/npm/quilljs-markdown@1.2.0/dist/quilljs-markdown.js"
-></script>
+<!-- Quill.js and Markdown extension load deferred so they don't block parsing -->
+<script is:inline src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js" defer></script>
+<script
+  is:inline
+  src="https://cdn.jsdelivr.net/npm/quilljs-markdown@1.2.0/dist/quilljs-markdown.js"
+  defer></script>
 
 <script>
   import { compressImage } from '../lib/compressImage';
@@ -85,27 +103,14 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
     // Reset quill instance
     quill = null;
 
-    async function checkAuth() {
-      try {
-        const res = await fetch('/api/auth/me');
-        const data = await res.json();
-        if (!data.success || !data.user) {
-          window.location.href = '/login?redirect=/write';
-        } else {
-          const loader = document.getElementById('loading-state');
-          const editorWrap = document.getElementById('editor-container');
-          if (loader) loader.style.display = 'none';
-          if (editorWrap) editorWrap.style.display = 'flex'; // Use flex to match our CSS
+    const loader = document.getElementById('loading-state');
+    const editorWrap = document.getElementById('editor-container');
+    if (loader) loader.style.display = 'none';
+    if (editorWrap) editorWrap.style.display = 'flex'; // Use flex to match our CSS
 
-          // Check if Quill is already initialized in this container to prevent double initialization
-          if (!document.querySelector('.ql-toolbar')) {
-            initQuill();
-          }
-        }
-      } catch (err) {
-        console.error('Failed to authenticate:', err);
-        window.location.href = '/login?redirect=/write';
-      }
+    // Check if Quill is already initialized in this container to prevent double initialization
+    if (!document.querySelector('.ql-toolbar')) {
+      initQuill();
     }
 
     function initQuill() {
@@ -505,8 +510,8 @@ import PublishDrawer from '../components/editor/PublishDrawer.astro';
       }
     });
 
-    // Run auth check which will initialize Quill
-    checkAuth();
+    // Editor is already unlocked server-side (auth check happens in the
+    // page's frontmatter); just initialize.
   });
 </script>
 

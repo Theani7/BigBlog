@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { errorLogs } from '../../../db/schema/analytics';
 import { requireAdmin, json } from '../../../lib/admin';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
 // =============================================================================
 // POST /api/analytics/errors
@@ -13,38 +14,61 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ success: false, error: 'Environment not configured' }, 503);
   }
 
+  const limited = checkRateLimit(request, {
+    key: 'analytics:errors',
+    limit: 120,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as {
       level?: string;
       message?: string;
       stack?: string;
       page?: string;
+      sessionId?: string;
       metadata?: Record<string, unknown>;
+      events?: Array<{
+        level?: string;
+        message?: string;
+        stack?: string;
+        page?: string;
+        sessionId?: string;
+        metadata?: Record<string, unknown>;
+      }>;
     };
-    const { level, message, stack, page, metadata } = body;
-
-    if (!message || typeof message !== 'string') {
-      return json({ error: 'message is required' }, 400);
-    }
+    const rawEvents = Array.isArray(body.events) ? body.events : [body];
 
     const cookieHeader = request.headers.get('cookie') || '';
-    const sessionId = parseCookie(cookieHeader, 'bb_session');
+    const cookieSession = parseCookie(cookieHeader, 'bb_session');
     const userAgent = request.headers.get('user-agent') || '';
 
     await createDatabase(env);
-    const entry: Record<string, unknown> = {
-      level: level === 'warning' || level === 'info' ? level : 'error',
-      message: message.slice(0, 2000),
-      userAgent: userAgent.slice(0, 300),
-      createdAt: new Date(),
-    };
-    if (stack) entry.stack = String(stack).slice(0, 4000);
-    if (page) entry.page = page.slice(0, 500);
-    if (sessionId) entry.sessionId = sessionId;
-    if (metadata) entry.metadata = JSON.stringify(metadata).slice(0, 2000);
-    await errorLogs.create(entry);
 
-    return json({ success: true });
+    const docs: Array<Record<string, unknown>> = [];
+    for (const raw of rawEvents) {
+      const { level, message, stack, page, metadata } = raw;
+      if (!message || typeof message !== 'string') continue;
+
+      const entry: Record<string, unknown> = {
+        level: level === 'warning' || level === 'info' ? level : 'error',
+        message: message.slice(0, 2000),
+        userAgent: userAgent.slice(0, 300),
+        createdAt: new Date(),
+      };
+      const sessionId = raw.sessionId || cookieSession || '';
+      if (sessionId) entry.sessionId = sessionId;
+      if (stack) entry.stack = String(stack).slice(0, 4000);
+      if (page) entry.page = page.slice(0, 500);
+      if (metadata && typeof metadata === 'object') {
+        entry.metadata = JSON.stringify(metadata).slice(0, 2000);
+      }
+      docs.push(entry);
+    }
+
+    if (docs.length > 0) await errorLogs.insertMany(docs);
+    return json({ success: true, recorded: docs.length });
   } catch (error) {
     console.error('Failed to track error', error);
     return json({ error: 'Internal server error' }, 500);

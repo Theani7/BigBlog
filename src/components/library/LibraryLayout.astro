@@ -10,9 +10,27 @@ interface Props {
 }
 
 const { title, description, activeTab } = Astro.props;
+
+// Auth is verified server-side; no /api/auth/me round trip needed.
+const user = (Astro.locals as { user?: { id: string; email: string; name?: string } }).user;
+if (!user) {
+  return Astro.redirect('/login?redirect=/library');
+}
+const libraryUserJson = JSON.stringify({
+  name: user.name || user.email.split('@')[0] || '',
+  email: user.email,
+});
+const libraryInitials = (user.name || user.email.split('@')[0] || '')
+  .split(/\s+/)
+  .map((n) => n[0])
+  .join('')
+  .toUpperCase()
+  .slice(0, 2);
 ---
 
 <Layout title={title} description={description}>
+  <meta name="library-user" content={libraryUserJson} />
+  <meta name="library-user-initials" content={libraryInitials} />
   <!-- Loading state -->
   <div class="library-loading" id="library-loading">
     <div class="loading-spinner"></div>
@@ -73,59 +91,52 @@ const { title, description, activeTab } = Astro.props;
 </Layout>
 
 <script>
-  interface LibraryUser {
-    id: string;
-    email: string;
-    name?: string;
-    role: 'ADMIN' | 'AUTHOR';
-  }
-
-  async function initLibrary() {
+  function initLibrary() {
     const loading = document.getElementById('library-loading');
     const main = document.getElementById('library-main');
 
-    try {
-      const res = await fetch('/api/auth/me');
-      const data = await res.json();
+    // Auth is verified server-side; the meta tag carries display info.
+    const userMeta = document.querySelector<HTMLMetaElement>('meta[name="library-user"]');
+    const initialsMeta = document.querySelector<HTMLMetaElement>(
+      'meta[name="library-user-initials"]'
+    );
+    let displayName = '';
+    let initials = '';
 
-      if (!data.success || !data.user) {
-        window.location.href = '/';
-        return;
+    if (userMeta) {
+      try {
+        const parsed = JSON.parse(userMeta.content) as { name?: string; email?: string };
+        displayName = parsed.name || (parsed.email || '').split('@')[0] || '';
+        initials = displayName
+          .split(/\s+/)
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .slice(0, 2);
+      } catch {
+        /* malformed meta */
       }
+    }
+    initials = initials || initialsMeta?.content || '?';
 
-      const user: LibraryUser = data.user;
+    if (loading) loading.style.display = 'none';
+    if (main) main.style.display = 'grid';
 
-      if (loading) loading.style.display = 'none';
-      if (main) main.style.display = 'grid';
+    // Update user info for list cards if they exist
+    document.querySelectorAll('.list-user-initials').forEach((el) => (el.textContent = initials));
+    document.querySelectorAll('.list-user-name').forEach((el) => (el.textContent = displayName));
 
-      // Update user info for list cards if they exist
-      const displayName = user.name || user.email.split('@')[0];
-      const initials = displayName
-        .split(' ')
-        .map((n: string) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
-
-      document.querySelectorAll('.list-user-initials').forEach((el) => (el.textContent = initials));
-      document.querySelectorAll('.list-user-name').forEach((el) => (el.textContent = displayName));
-
-      const countEl = document.querySelector('.list-card-count');
-      if (countEl) {
-        try {
-          const res = await fetch('/api/bookmarks');
-          const data = await res.json();
+    const countEl = document.querySelector('.list-card-count');
+    if (countEl) {
+      fetch('/api/bookmarks')
+        .then((res) => res.json())
+        .then((data) => {
           if (data.success) {
             const n = data.data?.bookmarks?.length ?? 0;
             countEl.textContent = `${n} ${n === 1 ? 'story' : 'stories'}`;
           }
-        } catch (err) {
-          console.error('Failed to load bookmark count:', err);
-        }
-      }
-    } catch (err) {
-      console.error('Library auth check failed:', err);
-      window.location.href = '/';
+        })
+        .catch(() => {});
     }
   }
 

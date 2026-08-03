@@ -98,22 +98,26 @@ document.addEventListener('astro:page-load', () => {
   // ---------------------------------------------------------
   // AUTH + FOLLOW
   // ---------------------------------------------------------
-  async function checkAuth() {
+  // The server (middleware) verified the auth token and rendered the user
+  // into a meta tag; no /api/auth/me round trip.
+  const currentUserMeta = document.querySelector<HTMLMetaElement>('meta[name="current-user"]');
+  if (currentUserMeta?.content) {
     try {
-      const meRes = await fetch('/api/auth/me');
-      const meData = await meRes.json();
-      if (meData.success && meData.user) {
-        currentUser = {
-          id: meData.user.id,
-          name: meData.user.name,
-          email: meData.user.email,
-        };
-      }
+      const parsed = JSON.parse(currentUserMeta.content) as {
+        id?: string;
+        name?: string;
+        email?: string;
+      };
+      currentUser = {
+        id: parsed.id || '',
+        name: parsed.name || '',
+        email: parsed.email || '',
+      };
     } catch {
       currentUser = null;
     }
-    applyAuthState();
   }
+  applyAuthState();
 
   function applyAuthState() {
     if (commentForm) commentForm.hidden = !isLoggedIn();
@@ -728,7 +732,6 @@ document.addEventListener('astro:page-load', () => {
 
   buildShareLinks();
   (async () => {
-    await checkAuth();
     initFollow();
     loadComments();
     initState();

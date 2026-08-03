@@ -49,7 +49,10 @@ const storySchema = new Schema<IStory>({
 });
 
 storySchema.index({ authorId: 1, status: 1 });
-storySchema.index({ slug: 1 });
+storySchema.index({ status: 1, publishedAt: -1 });
+storySchema.index({ authorId: 1, status: 1, publishedAt: -1 });
+storySchema.index({ authorId: 1, status: 1, updatedAt: -1 });
+storySchema.index({ category: 1, status: 1, publishedAt: -1 });
 
 export const Story: Model<IStory> =
   (mongoose.models.Story as Model<IStory>) || mongoose.model<IStory>('Story', storySchema);

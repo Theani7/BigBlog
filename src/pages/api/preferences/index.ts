@@ -1,8 +1,9 @@
 import type { APIRoute } from 'astro';
 import { createDatabase, type Env } from '../../../db';
 import { userPreferences } from '../../../db/schema';
-import { getOrCreateSessionId } from '../../../lib/session';
+import { getOrCreateSessionId, registerSession } from '../../../lib/session';
 import { getErrorMessage } from '../../../lib/errors';
+import { checkRateLimit, getClientIp } from '../../../lib/rateLimit';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), {
@@ -48,6 +49,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
   if (!env) return json({ success: false, error: 'Environment not configured' }, 503);
 
+  const limited = checkRateLimit(request, {
+    key: 'preferences:post',
+    limit: 30,
+    windowMs: 60_000,
+  });
+  if (limited) return limited;
+
   try {
     const body = (await request.json()) as {
       theme?: string;
@@ -76,6 +84,10 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 
     await createDatabase(env);
     const sessionId = getOrCreateSessionId(cookies);
+    await registerSession(env, sessionId, {
+      userAgent: request.headers.get('user-agent') || '',
+      ip: getClientIp(request),
+    });
 
     const updates: Record<string, unknown> = { updatedAt: new Date() };
     if (theme !== undefined) updates.theme = theme;

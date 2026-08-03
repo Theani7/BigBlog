@@ -5,11 +5,12 @@ import { createDatabase, type Env } from '../../../db';
 import { authorFollows, User } from '../../../db/schema';
 import { getOrCreateSessionId } from '../../../lib/session';
 import { verifyAuthToken } from '../../../lib/auth';
+import { checkRateLimit } from '../../../lib/rateLimit';
 
-const json = (body: unknown, status = 200) =>
+const json = (body: unknown, status = 200, extraHeaders: Record<string, string> = {}) =>
   new Response(JSON.stringify(body), {
     status,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...extraHeaders },
   });
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
@@ -29,6 +30,9 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
   if (!type || (type !== 'followers' && type !== 'following')) {
     return json({ success: false, error: 'Type must be "followers" or "following"' }, 400);
   }
+
+  const limited = checkRateLimit(request, { key: 'follows:list', limit: 60, windowMs: 60_000 });
+  if (limited) return limited;
 
   try {
     await createDatabase(env);
@@ -107,10 +111,14 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
       };
     });
 
-    return json({
-      success: true,
-      data,
-    });
+    return json(
+      {
+        success: true,
+        data,
+      },
+      200,
+      { 'Cache-Control': 'public, max-age=60, s-maxage=300' }
+    );
   } catch (error: unknown) {
     return json({ success: false, error: getErrorMessage(error) }, 500);
   }

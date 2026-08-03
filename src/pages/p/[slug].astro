@@ -26,6 +26,8 @@ if (!story) {
   return Astro.redirect('/404');
 }
 
+const authUser = (Astro.locals as { user?: { id: string; email: string; name?: string } }).user;
+
 // ---------------------------------------------------------
 // SMART DYNAMIC READ TIME CALCULATION
 // ---------------------------------------------------------
@@ -49,8 +51,22 @@ const canonicalUrl = new URL(Astro.url.pathname, Astro.site || 'https://bigblog.
 <Layout title={`${story.title} - BigBlog`} description={plainText.substring(0, 150) + '...'}>
   <meta name="story-slug" content={story.slug} />
   <meta name="story-author" content={authorId} />
-  <!-- Load Quill CSS to maintain identical formatting from the editor -->
-  <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
+  <meta
+    name="current-user"
+    content={authUser
+      ? JSON.stringify({ id: authUser.id, name: authUser.name || '', email: authUser.email })
+      : ''}
+  />
+  <!-- Quill CSS is only needed to style stored editor markup; load it without blocking first paint -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css"
+    rel="stylesheet"
+    media="print"
+    onload="this.media='all'"
+  />
+  <noscript>
+    <link href="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.bubble.css" rel="stylesheet" />
+  </noscript>
 
   <div class="read-layout">
     <Sidebar />
