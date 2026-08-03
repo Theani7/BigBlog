@@ -160,7 +160,7 @@ if (!isAdmin) return Astro.redirect('/dashboard');
 
   interface ListResponse {
     success: boolean;
-    data: any[];
+    data: AdminStory[];
     meta: { total: number; page: number; pages: number };
     error?: string;
   }
@@ -222,6 +222,10 @@ if (!isAdmin) return Astro.redirect('/dashboard');
     setTimeout(() => {
       el.style.display = 'none';
     }, 4000);
+  }
+
+  function errMsg(e: unknown, fallback: string): string {
+    return e instanceof Error && e.message ? e.message : fallback;
   }
 
   function switchTab(tab: string) {
@@ -315,10 +319,10 @@ if (!isAdmin) return Astro.redirect('/dashboard');
           .join('');
       }
       renderPagination(storyPagination, json.meta.pages, storyPage, loadStories);
-    } catch (err: any) {
+    } catch (err: unknown) {
       storyRows.innerHTML =
         '<tr><td colspan="6" class="admin-muted">Failed to load stories.</td></tr>';
-      showAlert(storyAlert, err.message || 'Failed to load stories', 'error');
+      showAlert(storyAlert, errMsg(err, 'Failed to load stories'), 'error');
     }
   }
 
@@ -393,10 +397,10 @@ if (!isAdmin) return Astro.redirect('/dashboard');
           .join('');
       }
       renderPagination(commentPagination, json.meta.pages, commentPage, loadComments);
-    } catch (err: any) {
+    } catch (err: unknown) {
       commentRows.innerHTML =
         '<tr><td colspan="5" class="admin-muted">Failed to load comments.</td></tr>';
-      showAlert(commentAlert, err.message || 'Failed to load comments', 'error');
+      showAlert(commentAlert, errMsg(err, 'Failed to load comments'), 'error');
     }
   }
 

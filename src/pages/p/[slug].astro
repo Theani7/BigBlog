@@ -39,7 +39,10 @@ const wordCount = plainText.split(/\s+/).filter(Boolean).length;
 const readTime = Math.max(1, Math.ceil(wordCount / 225));
 
 const author = story.authorId;
-const authorId = (author as any)?._id?.toString() || '';
+const authorId =
+  typeof author === 'object' && author !== null
+    ? String((author as { _id?: unknown })._id || '')
+    : '';
 const publishDate = new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
   month: 'short',
   day: 'numeric',

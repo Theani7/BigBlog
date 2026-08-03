@@ -15,7 +15,9 @@
     "format:check": "prettier --check .",
     "typecheck": "astro check",
     "seo:audit": "bun run scripts/seo-audit.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@astrojs/mdx": "^7.0.3",
@@ -31,6 +33,7 @@
     "@eslint/js": "^9.0.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/bcryptjs": "^2.4.6",
+    "@types/node": "^26.1.2",
     "@typescript-eslint/eslint-plugin": "^8.65.0",
     "@typescript-eslint/parser": "^8.65.0",
     "eslint": "^9.0.0",
@@ -39,6 +42,10 @@
     "prettier": "^3.4.0",
     "prettier-plugin-astro": "^0.14.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "~5.9.0"
+    "typescript": "~5.9.0",
+    "vitest": "^4.1.10"
+  },
+  "engines": {
+    "node": "24.x"
   }
 }

@@ -1,7 +1,9 @@
 ---
+import type { AuthorSummary } from '../../types/content';
+
 export interface Props {
   title: string;
-  author: any;
+  author: AuthorSummary | null;
   authorId: string;
   publishDate: string;
   readTime: number;

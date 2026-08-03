@@ -1,6 +1,7 @@
 ---
 import { createDatabase, type Env } from '../../db';
 import { Story, User } from '../../db/schema';
+import type { UserSummary } from '../../types/content';
 
 /**
  * Reusable sidebar component for authenticated dashboard pages.
@@ -67,10 +68,13 @@ if (env) {
     }
 
     // Fetch dynamic top 5 authors from User model
-    const userDocs = await User.find({}).select('_id name avatar email').limit(5).lean();
+    const userDocs = (await User.find({})
+      .select('_id name avatar email')
+      .limit(5)
+      .lean()) as unknown as UserSummary[];
 
     if (userDocs && userDocs.length > 0) {
-      authors = userDocs.map((u: any) => ({
+      authors = userDocs.map((u) => ({
         id: String(u._id),
         name: u.name || u.email?.split('@')[0] || 'Author',
         avatar: u.avatar || '',

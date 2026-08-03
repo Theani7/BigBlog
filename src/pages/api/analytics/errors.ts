@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
     return json({ success: false, error: 'Environment not configured' }, 503);
   }
 
-  const limited = checkRateLimit(request, {
+  const limited = await checkRateLimit(request, {
     key: 'analytics:errors',
     limit: 120,
     windowMs: 60_000,

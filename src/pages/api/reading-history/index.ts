@@ -57,7 +57,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     });
   }
 
-  const limited = checkRateLimit(request, {
+  const limited = await checkRateLimit(request, {
     key: 'reading-history:post',
     limit: 60,
     windowMs: 60_000,

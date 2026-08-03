@@ -140,6 +140,10 @@ if (!isAdmin) return Astro.redirect('/dashboard');
     }, 4000);
   }
 
+  function errMsg(e: unknown, fallback: string): string {
+    return e instanceof Error && e.message ? e.message : fallback;
+  }
+
   async function loadUsers(page = 1) {
     if (!rowsEl) return;
     currentPage = page;
@@ -243,9 +247,9 @@ if (!isAdmin) return Astro.redirect('/dashboard');
       }
 
       renderPagination(json.meta.pages);
-    } catch (err: any) {
+    } catch (err: unknown) {
       rowsEl.innerHTML = '<tr><td colspan="5" class="admin-muted">Failed to load users.</td></tr>';
-      showAlert(err.message || 'Failed to load users', 'error');
+      showAlert(errMsg(err, 'Failed to load users'), 'error');
     }
   }
 

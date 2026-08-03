@@ -21,6 +21,7 @@ bun run dev
 | `bun run format`       | Format with Prettier     |
 | `bun run format:check` | Check formatting         |
 | `bun run typecheck`    | Run TypeScript checks    |
+| `bun run test`         | Run unit tests (Vitest)  |
 
 ## Tech Stack
 
@@ -67,6 +68,15 @@ Feature-oriented architecture with:
 - Light/dark/system theme support
 - SEO utilities
 - Accessibility-first markup
+
+## Deployment (Vercel)
+
+- Node runtime is pinned to **24** (`.nvmrc` + `engines` in `package.json`).
+- Required env vars: `MONGO_URI`, `JWT_SECRET` (see `.env.example`).
+- ISR is configured per page (`/` and `/author/[id]` revalidate periodically);
+  user-specific pages render server-side.
+- Rate limits are stored in MongoDB (shared across serverless instances) and
+  fall back to in-memory if the database is unreachable.
 
 ## License
 

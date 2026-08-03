@@ -125,6 +125,10 @@ if (!isAdmin) return Astro.redirect('/dashboard');
     }, 4000);
   }
 
+  function errMsg(e: unknown, fallback: string): string {
+    return e instanceof Error && e.message ? e.message : fallback;
+  }
+
   function toggleValue(el: HTMLElement | null): boolean {
     if (!el) return false;
     const on = el.classList.toggle('admin-toggle--on');
@@ -151,8 +155,8 @@ if (!isAdmin) return Astro.redirect('/dashboard');
       setToggle(newsToggle, !!s.newsletterEnabled);
       setToggle(maintToggle, !!s.maintenanceMode);
       if (commentsSelect) commentsSelect.value = s.commentsModeration || 'approved';
-    } catch (err: any) {
-      showAlert(err.message || 'Failed to load settings', 'error');
+    } catch (err: unknown) {
+      showAlert(errMsg(err, 'Failed to load settings'), 'error');
     }
   }
 
@@ -176,8 +180,8 @@ if (!isAdmin) return Astro.redirect('/dashboard');
         const json = await res.json();
         if (!json.success) throw new Error(json.error || 'Failed to save');
         showAlert('Settings saved', 'success');
-      } catch (err: any) {
-        showAlert(err.message || 'Failed to save settings', 'error');
+      } catch (err: unknown) {
+        showAlert(errMsg(err, 'Failed to save settings'), 'error');
       } finally {
         saveBtn.disabled = false;
       }

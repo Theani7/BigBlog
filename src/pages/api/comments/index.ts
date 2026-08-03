@@ -115,7 +115,11 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || 'create';
 
-  const limited = checkRateLimit(request, { key: 'comments:post', limit: 30, windowMs: 60_000 });
+  const limited = await checkRateLimit(request, {
+    key: 'comments:post',
+    limit: 30,
+    windowMs: 60_000,
+  });
   if (limited) return limited;
 
   try {

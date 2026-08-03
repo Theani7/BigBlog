@@ -7,6 +7,7 @@ import { canonicalUrl } from '../lib/canonical';
 import { homepageSchemas } from '../lib/schema';
 import { createDatabase, type Env } from '../db';
 import { Story } from '../db/schema';
+import type { StorySummary } from '../types/content';
 
 // Revalidate the homepage every 5 minutes instead of hitting Mongo on every
 // visit. ISR serves the cached HTML from Vercel's edge network.
@@ -17,13 +18,13 @@ const pageDescription = 'A place to read, write, and deepen your understanding';
 const structuredData = homepageSchemas();
 
 const env = (Astro.locals as { env: Env }).env;
-let publishedStories: any[] = [];
+let publishedStories: StorySummary[] = [];
 if (env) {
   try {
     await createDatabase(env);
-    publishedStories = await Story.find({ status: 'PUBLISHED' })
+    publishedStories = (await Story.find({ status: 'PUBLISHED' })
       .populate('authorId', 'name avatar')
-      .sort({ publishedAt: -1 });
+      .sort({ publishedAt: -1 })) as unknown as StorySummary[];
   } catch (error) {
     console.error('Failed to load published stories for homepage:', error);
   }

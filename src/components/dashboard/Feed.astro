@@ -1,8 +1,9 @@
 ---
 import { formatCompactNumber } from '../../lib/formatters';
+import type { StorySummary } from '../../types/content';
 
 export interface Props {
-  publishedStories: any[];
+  publishedStories: StorySummary[];
 }
 const { publishedStories } = Astro.props;
 
@@ -25,12 +26,12 @@ const storyInitials = (name: string) =>
     .join('')
     .toUpperCase()
     .slice(0, 2);
-const storyDate = (story: any) =>
+const storyDate = (story: StorySummary) =>
   new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
   });
-const storyExcerpt = (story: any) => {
+const storyExcerpt = (story: StorySummary) => {
   const text = story.content ? story.content.replace(/<[^>]+>/g, '').trim() : '';
   return text.length > 140 ? text.substring(0, 140) + '...' : text || 'No excerpt available';
 };

@@ -148,23 +148,3 @@ export function detectSpam(content: string): { isSpam: boolean; confidence: numb
     confidence: Math.min(spamScore / 100, 1),
   };
 }
-
-/**
- * Validate rate limiting
- */
-export function checkRateLimit(
-  timestamps: number[],
-  windowMs: number,
-  maxRequests: number
-): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const recentTimestamps = timestamps.filter((t) => now - t < windowMs);
-
-  if (recentTimestamps.length >= maxRequests) {
-    const oldest = Math.min(...recentTimestamps);
-    const retryAfter = Math.ceil((oldest + windowMs - now) / 1000);
-    return { allowed: false, retryAfter };
-  }
-
-  return { allowed: true };
-}

@@ -7,6 +7,7 @@ import { createDatabase, type Env } from '../db';
 import { User, Story, Repost, comments, authorFollows, articleBookmarks } from '../db/schema';
 import { verifyAuthToken } from '../lib/auth';
 import { formatCompactNumber } from '../lib/formatters';
+import type { StorySummary } from '../types/content';
 
 const env = (Astro.locals as { env: Env }).env;
 if (!env) {
@@ -53,11 +54,12 @@ const userInitials = (user.name || 'U')
   .slice(0, 2)
   .toUpperCase();
 
-const publishedStories = await Story.find({ authorId: userId, status: 'PUBLISHED' }).sort({
-  createdAt: -1,
-});
+const publishedStories = (await Story.find({
+  authorId: userId,
+  status: 'PUBLISHED',
+}).sort({ createdAt: -1 })) as unknown as StorySummary[];
 const storyCount = publishedStories.length;
-const totalViews = publishedStories.reduce((acc: number, s: any) => acc + (s.views || 0), 0);
+const totalViews = publishedStories.reduce((acc: number, s) => acc + (s.views || 0), 0);
 
 const reposts = await Repost.find({ userId }).populate({
   path: 'storyId',
@@ -67,19 +69,19 @@ const reposts = await Repost.find({ userId }).populate({
 const userComments = await comments.find({ userId }).lean();
 
 const sessionId = Astro.cookies.get('bb_session')?.value;
-let savedStories: any[] = [];
+let savedStories: StorySummary[] = [];
 if (sessionId) {
   try {
     const bookmarks = await articleBookmarks.find({ sessionId }).sort({ createdAt: -1 }).lean();
     if (bookmarks.length) {
-      const slugs = bookmarks.map((b: any) => b.articleSlug);
-      const stories = await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
+      const slugs = bookmarks.map((b) => b.articleSlug);
+      const stories = (await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
         .populate('authorId', 'name avatar')
-        .lean();
-      const storyBySlug = new Map(stories.map((s: any) => [s.slug, s]));
+        .lean()) as unknown as StorySummary[];
+      const storyBySlug = new Map(stories.map((s) => [s.slug, s]));
       savedStories = bookmarks
-        .map((b: any) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
-        .filter((s: any) => s.title);
+        .map((b) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
+        .filter((s): s is StorySummary => Boolean(s.title));
     }
   } catch (err) {
     console.error('Failed to load saved stories:', err);

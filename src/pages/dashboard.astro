@@ -5,6 +5,7 @@ import Feed from '../components/dashboard/Feed.astro';
 import RightSidebar from '../components/dashboard/RightSidebar.astro';
 import { createDatabase, type Env } from '../db';
 import { Story } from '../db/schema';
+import type { StorySummary } from '../types/content';
 
 // Auth is verified in middleware; no client-side /api/auth/me round trip.
 const user = (Astro.locals as { user?: { id: string; email: string; name?: string; role: string } })
@@ -14,13 +15,13 @@ if (!user) {
 }
 
 const env = (Astro.locals as { env: Env }).env;
-let publishedStories: any[] = [];
+let publishedStories: StorySummary[] = [];
 if (env) {
   try {
     await createDatabase(env);
-    publishedStories = await Story.find({ status: 'PUBLISHED' })
+    publishedStories = (await Story.find({ status: 'PUBLISHED' })
       .populate('authorId', 'name avatar')
-      .sort({ publishedAt: -1 });
+      .sort({ publishedAt: -1 })) as unknown as StorySummary[];
   } catch (error) {
     console.error('Failed to load published stories for dashboard feed:', error);
   }

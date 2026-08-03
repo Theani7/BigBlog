@@ -1,7 +1,9 @@
 ---
+import type { StorySummary } from '../../types/content';
+
 export interface Props {
-  featuredStory: any;
-  secondaryStories: any[];
+  featuredStory: StorySummary | null;
+  secondaryStories: StorySummary[];
 }
 const { featuredStory, secondaryStories } = Astro.props;
 
@@ -10,13 +12,13 @@ const fallbackCover =
 const fallbackCoverSecondary =
   'https://images.unsplash.com/photo-1451187580459-43490279c0fa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80';
 
-const formatStoryDate = (story: any) =>
+const formatStoryDate = (story: StorySummary) =>
   new Date(story.publishedAt || story.createdAt).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
-const storyExcerpt = (story: any) => {
+const storyExcerpt = (story: StorySummary) => {
   const text = story.content ? story.content.replace(/<[^>]+>/g, '').trim() : '';
   return text.length > 120 ? text.substring(0, 120) + '...' : text || 'No excerpt available';
 };

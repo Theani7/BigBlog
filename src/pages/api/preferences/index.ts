@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   const env = (locals as { env: Env }).env;
   if (!env) return json({ success: false, error: 'Environment not configured' }, 503);
 
-  const limited = checkRateLimit(request, {
+  const limited = await checkRateLimit(request, {
     key: 'preferences:post',
     limit: 30,
     windowMs: 60_000,

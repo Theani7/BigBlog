@@ -3,9 +3,10 @@ import LibraryLayout from '../../components/library/LibraryLayout.astro';
 import EmptyState from '../../components/library/EmptyState.astro';
 import { createDatabase, type Env } from '../../db';
 import { articleBookmarks, Story } from '../../db/schema';
+import type { StorySummary } from '../../types/content';
 
 const env = (Astro.locals as { env: Env }).env;
-let savedStories: any[] = [];
+let savedStories: StorySummary[] = [];
 if (env) {
   try {
     await createDatabase(env);
@@ -13,14 +14,14 @@ if (env) {
     if (sessionId) {
       const bookmarks = await articleBookmarks.find({ sessionId }).sort({ createdAt: -1 }).lean();
       if (bookmarks.length) {
-        const slugs = bookmarks.map((b: any) => b.articleSlug);
-        const stories = await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
+        const slugs = bookmarks.map((b) => b.articleSlug);
+        const stories = (await Story.find({ slug: { $in: slugs }, status: 'PUBLISHED' })
           .populate('authorId', 'name avatar')
-          .lean();
-        const storyBySlug = new Map(stories.map((s: any) => [s.slug, s]));
+          .lean()) as unknown as StorySummary[];
+        const storyBySlug = new Map(stories.map((s) => [s.slug, s]));
         savedStories = bookmarks
-          .map((b: any) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
-          .filter((s: any) => s.title);
+          .map((b) => ({ ...(storyBySlug.get(b.articleSlug) || {}), savedAt: b.createdAt }))
+          .filter((s): s is StorySummary => Boolean(s.title));
       }
     }
   } catch (error) {

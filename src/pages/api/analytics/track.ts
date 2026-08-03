@@ -20,7 +20,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
     });
   }
 
-  const limited = checkRateLimit(request, { key: 'analytics:track', limit: 120, windowMs: 60_000 });
+  const limited = await checkRateLimit(request, {
+    key: 'analytics:track',
+    limit: 120,
+    windowMs: 60_000,
+  });
   if (limited) return limited;
 
   try {

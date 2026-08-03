@@ -31,7 +31,11 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     return json({ success: false, error: 'Type must be "followers" or "following"' }, 400);
   }
 
-  const limited = checkRateLimit(request, { key: 'follows:list', limit: 60, windowMs: 60_000 });
+  const limited = await checkRateLimit(request, {
+    key: 'follows:list',
+    limit: 60,
+    windowMs: 60_000,
+  });
   if (limited) return limited;
 
   try {

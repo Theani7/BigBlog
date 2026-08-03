@@ -9,6 +9,54 @@ export interface Author {
   website?: string;
 }
 
+export interface AuthorSummary {
+  _id?: string;
+  name?: string;
+  avatar?: string;
+  email?: string;
+}
+
+export interface StoryAuthorRef {
+  _id?: string;
+  name?: string;
+  avatar?: string;
+  email?: string;
+}
+
+/**
+ * Shape of a story document as used across pages/cards (lean results).
+ * `authorId` may be a plain id or a populated author sub-document.
+ */
+export interface StorySummary {
+  _id?: string;
+  title: string;
+  subtitle?: string;
+  excerpt?: string;
+  coverImage?: string;
+  content?: string;
+  slug: string;
+  authorId?: StoryAuthorRef | string;
+  status?: string;
+  views: number;
+  reads?: number;
+  readRatio?: number;
+  category?: string;
+  tags?: string[];
+  publishedAt?: Date;
+  createdAt: Date;
+  updatedAt?: Date;
+  savedAt?: Date;
+  isStaffPick?: boolean;
+}
+
+export interface UserSummary {
+  _id?: string;
+  name?: string;
+  email: string;
+  avatar?: string;
+  role?: string;
+}
+
 export interface Series {
   title: string;
   slug: string;

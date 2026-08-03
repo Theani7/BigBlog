@@ -5,6 +5,7 @@ import FollowsModal from '../../components/profile/FollowsModal.astro';
 import { createDatabase, type Env } from '../../db';
 import { User, Story, authorFollows } from '../../db/schema';
 import { formatCompactNumber } from '../../lib/formatters';
+import type { StorySummary } from '../../types/content';
 import mongoose from 'mongoose';
 
 // Public profile pages are cached by Vercel ISR (revalidated every 10 min).
@@ -53,14 +54,14 @@ const authorFollowerCount = await authorFollows.countDocuments({ authorId: autho
 const authorFollowingCount = await authorFollows.countDocuments({ userId: authorUser._id });
 
 // Fetch all published stories by this author
-const storiesDocs = await Story.find({
+const storiesDocs = (await Story.find({
   authorId: authorUser._id,
   status: 'PUBLISHED',
 })
   .sort({ publishedAt: -1, createdAt: -1 })
-  .lean();
+  .lean()) as unknown as StorySummary[];
 
-const stories = storiesDocs.map((story: any) => {
+const stories = storiesDocs.map((story) => {
   const plainText = story.content ? story.content.replace(/<[^>]+>/g, '') : '';
   const wordCount = plainText.split(/\s+/).filter(Boolean).length;
   const readTime = Math.max(1, Math.ceil(wordCount / 225));
@@ -85,7 +86,7 @@ const stories = storiesDocs.map((story: any) => {
 });
 
 const totalPublished = stories.length;
-const totalReads = stories.reduce((acc: number, s: any) => acc + s.reads, 0);
+const totalReads = stories.reduce((acc: number, s) => acc + (s.reads || 0), 0);
 
 function getInitials(name: string): string {
   if (!name) return 'A';
@@ -282,7 +283,7 @@ function getInitials(name: string): string {
             </div>
           ) : (
             <div class="stories-feed">
-              {stories.map((story: any) => (
+              {stories.map((story) => (
                 <article class="story-feed-card">
                   <div class="story-feed-content">
                     <div class="story-feed-meta">

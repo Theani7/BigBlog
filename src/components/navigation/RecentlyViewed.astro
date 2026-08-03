@@ -15,7 +15,7 @@ interface RecentArticle {
 <script>
   function loadRecentlyViewed() {
     try {
-      const items = JSON.parse(localStorage.getItem('recentlyViewed') || '[]');
+      const items = JSON.parse(localStorage.getItem('recentlyViewed') || '[]') as RecentArticle[];
       const section = document.getElementById('recently-viewed-section');
       const list = document.getElementById('recently-viewed-list');
 
@@ -25,7 +25,7 @@ interface RecentArticle {
       list.innerHTML = items
         .slice(0, 5)
         .map(
-          (item: any) => `
+          (item) => `
         <a href="${item.url}" class="recently-viewed-item">
           <span class="recently-viewed-title">${item.title}</span>
           <span class="recently-viewed-meta">${item.category}</span>

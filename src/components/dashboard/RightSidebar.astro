@@ -1,6 +1,7 @@
 ---
 import { createDatabase, type Env } from '../../db';
 import { Story, User } from '../../db/schema';
+import type { StorySummary } from '../../types/content';
 
 // Ensure User model is registered for Mongoose populate
 void User;
@@ -33,14 +34,17 @@ if (env) {
 
     // Fetch top 3 "Staff Picks" dynamically from Story model
     // (published stories populated with authorId, sorted by views or publishedAt)
-    const picks = await Story.find({ status: 'PUBLISHED' })
+    const picks = (await Story.find({ status: 'PUBLISHED' })
       .populate('authorId', 'name avatar')
       .sort({ views: -1, publishedAt: -1, createdAt: -1 })
       .limit(3)
-      .lean();
+      .lean()) as unknown as StorySummary[];
 
-    staffPicks = picks.map((story: any) => {
-      const author = story.authorId || {};
+    staffPicks = picks.map((story: StorySummary) => {
+      const author =
+        typeof story.authorId === 'object' && story.authorId !== null
+          ? story.authorId
+          : ({} as { name?: string; avatar?: string });
       const authorName = author.name || 'Anonymous';
       const authorAvatar = author.avatar || '';
 

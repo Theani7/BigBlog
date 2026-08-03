@@ -24,6 +24,6 @@ export const createDatabase = async (env: Env) => {
     await mongoose.connection.asPromise();
     return mongoose;
   }
-  await mongoose.connect(env.MONGO_URI);
+  await mongoose.connect(env.MONGO_URI, { serverSelectionTimeoutMS: 5000 });
   return mongoose;
 };

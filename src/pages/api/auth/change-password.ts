@@ -14,7 +14,7 @@ export const POST: APIRoute = async ({ locals, cookies, request }) => {
     });
   }
 
-  const limited = checkRateLimit(request, {
+  const limited = await checkRateLimit(request, {
     key: 'auth:change-password',
     limit: 10,
     windowMs: 15 * 60_000,
